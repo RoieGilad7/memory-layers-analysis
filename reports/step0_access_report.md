@@ -185,7 +185,7 @@ GPT-2 vocab is 50,257, which fits in **uint16 → 2 bytes/token** (uint32 would 
 | Held-out, 5 subjects × 10M | 50,000,000 | 0.10 GB |
 | **Total, 0.5B train + 5×10M held-out** | | **≈ 1.10 GB** |
 
-Negligible against 1,841 GB free. Even with a 2× margin for shuffled/duplicated copies and an index, a full experiment set stays well under 5 GB. The real disk consumers are model weights (B2's checkpoint alone is 2.93 GB) and, if we ever reparameterize MoLE to disk, 3.45 GB per model.
+Negligible against 1,843 GB free. Even with a 2× margin for shuffled/duplicated copies and an index, a full experiment set stays well under 5 GB. The real disk consumers are model weights (B2's checkpoint alone is 2.93 GB) and, if we ever reparameterize MoLE to disk, 3.45 GB per model.
 
 ### 4.4 A4 — SlimPajama backup (PARTIAL)
 
