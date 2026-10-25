@@ -29,3 +29,7 @@ checkpoints/
 
 # os
 .DS_Store
+
+# step 1: training run outputs (checkpoints, read logs, per-step CSVs)
+runs/
+bench/results/*.out

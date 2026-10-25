@@ -1,0 +1,75 @@
+{
+  "config": "memlayers/configs/t1_pkm.yaml",
+  "name": "t1_pkm",
+  "mode": "speed",
+  "read_logging": false,
+  "steps": 20,
+  "warmup_discarded": 5,
+  "steps_measured": 15,
+  "micro_batch_size": 8,
+  "grad_accum_steps": 1,
+  "tokens_per_step": 4096,
+  "ms_per_step_mean": 356.2856918666512,
+  "ms_per_step_median": 355.6366249686107,
+  "ms_per_step_p90": 360.6869999784976,
+  "ms_per_step_min": 352.7030838886276,
+  "tokens_per_s_mean": 11497.19078829087,
+  "tokens_per_s_from_mean_time": 11496.392062617633,
+  "peak_mem_bytes": 7597752320,
+  "peak_mem_GB": 7.59775232,
+  "loss_first": 10.901256561279297,
+  "loss_last": 10.905409812927246,
+  "param_counts": {
+    "embedding": 19495296,
+    "backbone": 9465984,
+    "memory_keys": 262144,
+    "memory_values": 25165824,
+    "memory_other": 393472,
+    "memory_total": 25821440,
+    "non_embedding": 35287424,
+    "total": 54782720
+  },
+  "device_check": {
+    "expected_device": "mps",
+    "tensors_off_device": [],
+    "all_on_device": true
+  },
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "device": "mps",
+    "mps_available": true,
+    "mps_built": true,
+    "cuda_available": false,
+    "mps_fallback_env": "<unset>",
+    "chip": "Apple M5 Pro",
+    "ram_bytes": 68719476736
+  },
+  "out_dir": "runs/bench_t1_pkm",
+  "memory_layers": {
+    "3": {
+      "kind": "pkm",
+      "n_slots": 65536,
+      "heads": 4,
+      "topk": 32,
+      "reads_per_token": 128,
+      "readlog_bytes_per_token_theory": 512
+    }
+  },
+  "slot_usage": {
+    "3": {
+      "n_slots": 65536,
+      "slots_used": 0,
+      "fraction_used": 0.0,
+      "total_reads": 0.0,
+      "max_kl_nats": 11.090354888959125,
+      "kl_from_uniform": 0.0,
+      "normalized_kl": 0.0,
+      "top1_share": 0.0,
+      "top1pct_share": 0.0,
+      "gini": 0.0
+    }
+  }
+}

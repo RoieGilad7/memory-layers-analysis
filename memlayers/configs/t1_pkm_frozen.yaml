@@ -1,0 +1,57 @@
+# T1-pkm-frozen: T1-pkm with freeze_keys=True (random-key twin)
+# Generated for step 1 (training demo on fake data). See reports/step1_demo_report.md.
+#
+# The random-key twin: keys stay at their random init, values still train.
+
+name: t1_pkm_frozen
+
+model:
+    vocab_size: 50257
+    block_size: 512
+    n_layer: 6
+    n_head: 6
+    n_embd: 384
+    dropout: 0.0
+    bias: true
+    tie_embeddings: true
+    memory_layers: [3]
+    memory_kind: pkm
+    memory:
+      num_keys: 256
+      topk: 32
+      heads: 4
+      dim_head: 128
+      query_batchnorm: true
+      freeze_keys: true
+
+data:
+    kind: random            # 'random' = fake data (a); 'repeat' = fake data (b)
+    chunk_len: 16
+    n_distinct: null
+    seed: 1234
+
+train:
+    steps: 300
+    micro_batch_size: 8
+    grad_accum_steps: 1
+    lr: 2.5e-4              # backbone, as in Lample et al. 2019
+    lr_memory_values: 1.0e-3  # memory value table gets 4x the backbone LR
+    lr_memory_keys: null    # null -> same as `lr`
+    weight_decay: 0.1
+    weight_decay_memory: 0.0  # the tables are indexed lookups, treated like embeddings
+    betas: [0.9, 0.95]
+    grad_clip: 1.0
+    warmup_steps: 30
+    min_lr_ratio: 0.1
+    seed: 1337
+    log_every: 10
+    ckpt_every: 0
+    read_logging: false
+    read_log_steps: 0
+    read_log_weights: true
+    track_slot_usage: true
+
+runtime:
+    device: auto            # cuda > mps > cpu
+    out_dir: runs/t1_pkm_frozen
+    compile: false

@@ -1,0 +1,82 @@
+{
+  "config": "memlayers/configs/t1_pkm.yaml",
+  "name": "t1_pkm",
+  "mode": "speed",
+  "read_logging": true,
+  "steps": 12,
+  "warmup_discarded": 2,
+  "steps_measured": 10,
+  "micro_batch_size": 4,
+  "grad_accum_steps": 1,
+  "tokens_per_step": 2048,
+  "ms_per_step_mean": 218.37615410331637,
+  "ms_per_step_median": 218.03187497425824,
+  "ms_per_step_p90": 220.08595801889896,
+  "ms_per_step_min": 216.83166699949652,
+  "tokens_per_s_mean": 9378.671748943243,
+  "tokens_per_s_from_mean_time": 9378.31334382355,
+  "peak_mem_bytes": 4842110976,
+  "peak_mem_GB": 4.842110976,
+  "loss_first": 10.89244270324707,
+  "loss_last": 10.899621963500977,
+  "param_counts": {
+    "embedding": 19495296,
+    "backbone": 9465984,
+    "memory_keys": 262144,
+    "memory_values": 25165824,
+    "memory_other": 393472,
+    "memory_total": 25821440,
+    "non_embedding": 35287424,
+    "total": 54782720
+  },
+  "device_check": {
+    "expected_device": "mps",
+    "tensors_off_device": [],
+    "all_on_device": true
+  },
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "device": "mps",
+    "mps_available": true,
+    "mps_built": true,
+    "cuda_available": false,
+    "mps_fallback_env": "<unset>",
+    "chip": "Apple M5 Pro",
+    "ram_bytes": 68719476736
+  },
+  "out_dir": "runs/bench_t1_pkm_readlog",
+  "memory_layers": {
+    "3": {
+      "kind": "pkm",
+      "n_slots": 65536,
+      "heads": 4,
+      "topk": 32,
+      "reads_per_token": 128,
+      "readlog_bytes_per_token_theory": 512
+    }
+  },
+  "readlog": {
+    "bytes_written": 12582912,
+    "tokens_logged": 24576,
+    "bytes_per_token": 512.0,
+    "GB_per_million_tokens": 0.512
+  },
+  "slot_usage": {
+    "3": {
+      "n_slots": 65536,
+      "slots_used": 64152,
+      "fraction_used": 0.9788818359375,
+      "total_reads": 3145728.0,
+      "max_kl_nats": 11.090354888959125,
+      "entropy_nats": 10.055693667323656,
+      "kl_from_uniform": 1.034661221635469,
+      "normalized_kl": 0.09329378834085048,
+      "top1_share": 0.0017185211181640625,
+      "top1pct_share": 0.1969617207845052,
+      "gini": 0.6830006001497837
+    }
+  }
+}

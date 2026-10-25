@@ -1,0 +1,49 @@
+{
+  "rows": [
+    {
+      "name": "t1_pkm",
+      "read_logging": false,
+      "micro_batch": 8,
+      "emb_M": 19.495296,
+      "backbone_M": 9.465984,
+      "memory_M": 25.82144,
+      "total_M": 54.78272,
+      "ms_step_mean": 356.2856918666512,
+      "ms_step_p90": 360.6869999784976,
+      "tokens_per_s": 11496.392062617633,
+      "peak_GB": 7.59775232,
+      "readlog_GB_per_Mtok": null,
+      "hours_150M": 3.6243254787867345,
+      "hours_500M": 12.081084929289114
+    },
+    {
+      "name": "t1_pkm",
+      "read_logging": true,
+      "micro_batch": 4,
+      "emb_M": 19.495296,
+      "backbone_M": 9.465984,
+      "memory_M": 25.82144,
+      "total_M": 54.78272,
+      "ms_step_mean": 218.37615410331637,
+      "ms_step_p90": 220.08595801889896,
+      "tokens_per_s": 9378.31334382355,
+      "peak_GB": 4.842110976,
+      "readlog_GB_per_Mtok": 0.512,
+      "hours_150M": 4.442874228989997,
+      "hours_500M": 14.809580763299993
+    }
+  ],
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "device": "mps",
+    "mps_available": true,
+    "mps_built": true,
+    "cuda_available": false,
+    "mps_fallback_env": "<unset>",
+    "chip": "Apple M5 Pro",
+    "ram_bytes": 68719476736
+  }
+}

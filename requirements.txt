@@ -30,6 +30,10 @@ faiss-cpu==1.15.1
 # --- required to stream the Pile's .jsonl.zst shards (datasets does NOT pull this in) ---
 zstandard==0.25.0
 
+# --- step 1: configs and tests ---
+PyYAML==6.0.3
+pytest==9.1.1
+
 # --- transitive, pinned for reproducibility ---
 pyarrow==26.0.0
 pandas==3.1.0

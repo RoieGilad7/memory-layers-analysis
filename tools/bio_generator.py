@@ -27,8 +27,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import pathlib
 import random
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator, List, Optional
 
 # ----------------------------------------------------------------------------------
 # name pools -- the product of these is large enough that 100k unique full names
@@ -471,11 +472,50 @@ def _birth_date(rng: random.Random) -> str:
     return f"{MONTHS[m]} {day}, {year}"
 
 
-def generate(n: int, seed: int = 0) -> Iterator[dict]:
-    """Yield n people. The seed fully determines the output."""
+def _one_biography(name: str, attrs: Dict[str, str], rng: random.Random) -> dict:
+    """One wording of one person's biography: its own template draw and sentence order."""
+    order = ATTRIBUTES[:]
+    rng.shuffle(order)
+    sentences, used = [], {}
+    for attr in order:
+        t = rng.choice(TEMPLATES[attr])
+        used[attr] = TEMPLATES[attr].index(t)
+        sentences.append({"attribute": attr,
+                          "template_id": used[attr],
+                          "sentence": t.format(n=name, v=attrs[attr])})
+    return {
+        "sentence_order": order,
+        "template_ids": used,
+        "sentences": [x["sentence"] for x in sentences],
+        "sentence_meta": sentences,
+        "text": " ".join(x["sentence"] for x in sentences),
+    }
+
+
+def generate(n: int, seed: int = 0, rewordings: int = 4,
+             qa_split: bool = False, qa_test_fraction: float = 0.5) -> Iterator[dict]:
+    """Yield n people. The seed fully determines the output.
+
+    rewordings: how many independently worded biographies to emit per person. bioS
+        relies on paraphrase: the same fact stated several ways is what forces the
+        model to store the fact rather than memorize one surface form.
+    qa_split: assign each person to "qa_train" or "qa_test". Training may show the
+        QA pairs of the qa_train half only; extraction accuracy is then measured on
+        the qa_test half, whose facts the model has seen only inside biographies.
+    """
     _check_templates()
+    if rewordings < 1:
+        raise ValueError("rewordings must be >= 1")
     rng = random.Random(seed)
     names = _unique_names(n, rng)
+
+    # draw the split up front from its own stream, so changing `rewordings` does not
+    # move people between halves
+    split_rng = random.Random(seed ^ 0x5F5F5F)
+    order = list(range(n))
+    split_rng.shuffle(order)
+    n_test = int(round(n * qa_test_fraction))
+    test_ids = set(order[:n_test])
 
     for i, name in enumerate(names):
         attrs = {
@@ -486,15 +526,9 @@ def generate(n: int, seed: int = 0) -> Iterator[dict]:
             "employer": rng.choice(EMPLOYERS),
         }
 
-        order = ATTRIBUTES[:]
-        rng.shuffle(order)
-        sentences, used = [], {}
-        for attr in order:
-            t = rng.choice(TEMPLATES[attr])
-            used[attr] = TEMPLATES[attr].index(t)
-            sentences.append({"attribute": attr,
-                              "template_id": used[attr],
-                              "sentence": t.format(n=name, v=attrs[attr])})
+        bios = [_one_biography(name, attrs, rng) for _ in range(rewordings)]
+        for j, b in enumerate(bios):
+            b["rewording_id"] = j
 
         qa = []
         for attr in ATTRIBUTES:
@@ -503,17 +537,59 @@ def generate(n: int, seed: int = 0) -> Iterator[dict]:
                        "question": q.format(n=name),
                        "answer": attrs[attr]})
 
-        yield {
+        rec = {
             "id": i,
             "name": name,
             "attributes": attrs,
-            "sentence_order": order,
-            "template_ids": used,
-            "sentences": [s["sentence"] for s in sentences],
-            "sentence_meta": sentences,
-            "text": " ".join(s["sentence"] for s in sentences),
+            "n_rewordings": rewordings,
+            "biographies": bios,
             "qa": qa,
+            # convenience mirrors of biographies[0], kept so step-0 consumers still work
+            "sentence_order": bios[0]["sentence_order"],
+            "template_ids": bios[0]["template_ids"],
+            "sentences": bios[0]["sentences"],
+            "sentence_meta": bios[0]["sentence_meta"],
+            "text": bios[0]["text"],
         }
+        if qa_split:
+            rec["qa_split"] = "qa_test" if i in test_ids else "qa_train"
+        yield rec
+
+
+# the generative space of birth dates, for the record: 366 day-slots x 61 years
+_BIRTH_DATE_SPACE = sum(DAYS_IN_MONTH) * (YEAR_RANGE[1] - YEAR_RANGE[0] + 1)
+
+POOLS: Dict[str, Optional[List[str]]] = {
+    "birth_city": CITIES,
+    "university": UNIVERSITIES,
+    "major": MAJORS,
+    "employer": EMPLOYERS,
+    "birth_date": None,       # combinatorial; the candidate set is what was observed
+}
+
+
+def attribute_values(people: List[dict]) -> dict:
+    """The candidate set per attribute, for ranking which answer a model stores.
+
+    For the four categorical attributes this is the full generator pool, which is a
+    superset of what any sample contains. birth_date is combinatorial (22,326
+    possibilities), so ranking over the whole space is not useful and the candidate
+    set is the values actually present in this file.
+    """
+    out = {}
+    for attr in ATTRIBUTES:
+        observed = sorted({p["attributes"][attr] for p in people})
+        pool = POOLS[attr]
+        values = sorted(set(pool) | set(observed)) if pool is not None else observed
+        out[attr] = {
+            "n_candidates": len(values),
+            "n_observed": len(observed),
+            "source": "full generator pool (superset of observed)" if pool is not None
+                      else "observed in this file (space is combinatorial)",
+            "generative_space_size": len(pool) if pool is not None else _BIRTH_DATE_SPACE,
+            "values": values,
+        }
+    return {"attributes": out, "attribute_order": ATTRIBUTES, "n_people": len(people)}
 
 
 def main() -> None:
@@ -521,35 +597,65 @@ def main() -> None:
     ap.add_argument("--n", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="data_samples/bios_sample.jsonl")
+    ap.add_argument("--rewordings", type=int, default=4,
+                    help="biographies per person, each with its own templates and order")
+    ap.add_argument("--qa-split", action="store_true",
+                    help="tag each person qa_train / qa_test so extraction can be "
+                         "measured on facts whose QA pairs training never saw")
+    ap.add_argument("--qa-test-fraction", type=float, default=0.5)
     ap.add_argument("--count-tokens", action="store_true",
                     help="tokenize with the GPT-2 encoding and extrapolate to 10k / 100k people")
     args = ap.parse_args()
 
-    people = list(generate(args.n, args.seed))
-    with open(args.out, "w") as f:
+    people = list(generate(args.n, args.seed, rewordings=args.rewordings,
+                           qa_split=args.qa_split,
+                           qa_test_fraction=args.qa_test_fraction))
+    out_path = pathlib.Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w") as f:
         for p in people:
             f.write(json.dumps(p) + "\n")
 
+    values_path = out_path.with_name("attribute_values.json")
+    values_path.write_text(json.dumps(attribute_values(people), indent=2))
+
     names = {p["name"] for p in people}
-    print(f"wrote {len(people)} people to {args.out}")
+    print(f"wrote {len(people)} people to {out_path}")
+    print(f"wrote candidate sets to {values_path}")
     print(f"unique names: {len(names)} (duplicates: {len(people) - len(names)})")
     print(f"pool capacity: {len(GIVEN)} given x {len(SURNAME)} surnames = "
           f"{len(GIVEN) * len(SURNAME):,} two-part names")
-    print("\nexample:")
-    print(json.dumps(people[0], indent=2))
+    print(f"rewordings per person: {args.rewordings} "
+          f"({len(people) * args.rewordings:,} biographies total)")
+    if args.qa_split:
+        from collections import Counter
+        c = Counter(p["qa_split"] for p in people)
+        print(f"qa split: {dict(c)}")
+    av = attribute_values(people)["attributes"]
+    print("candidate sets: " + ", ".join(
+        f"{a}={v['n_candidates']} (observed {v['n_observed']})" for a, v in av.items()))
+
+    print("\nexample (first person, first two rewordings):")
+    ex = dict(people[0])
+    ex["biographies"] = ex["biographies"][:2]
+    for k in ("sentence_meta", "sentences", "sentence_order", "template_ids"):
+        ex.pop(k, None)
+    print(json.dumps(ex, indent=2))
 
     if args.count_tokens:
         import tiktoken
         enc = tiktoken.get_encoding("gpt2")
-        bio = sum(len(enc.encode(p["text"])) for p in people)
+        bio = sum(len(enc.encode(b["text"])) for p in people for b in p["biographies"])
         qa = sum(len(enc.encode(q["question"] + " " + q["answer"]))
                  for p in people for q in p["qa"])
-        print(f"\n--- tokens (GPT-2 encoding), measured on {len(people)} people ---")
-        print(f"biography text : {bio:,} tok  ({bio / len(people):.1f} / person)")
-        print(f"QA pairs       : {qa:,} tok  ({qa / len(people):.1f} / person)")
-        print(f"total          : {bio + qa:,} tok  ({(bio + qa) / len(people):.1f} / person)")
+        n = len(people)
+        print(f"\n--- tokens (GPT-2 encoding), measured on {n} people "
+              f"x {args.rewordings} rewordings ---")
+        print(f"biography text : {bio:,} tok  ({bio / n:.1f} / person)")
+        print(f"QA pairs       : {qa:,} tok  ({qa / n:.1f} / person)")
+        print(f"total          : {bio + qa:,} tok  ({(bio + qa) / n:.1f} / person)")
         for scale in (10_000, 100_000):
-            f = scale / len(people)
+            f = scale / n
             print(f"\n{scale:,} people -> bios {bio * f / 1e6:.2f}M tok, "
                   f"QA {qa * f / 1e6:.2f}M tok, total {(bio + qa) * f / 1e6:.2f}M tok "
                   f"({(bio + qa) * f * 2 / 1e6:.1f} MB as uint16)")

@@ -1,0 +1,105 @@
+{
+  "config": "/Users/roieg/studies/ms/year1/courses/algos_in_llms/final_project/memlayers/configs/t1_pkm_frozen.yaml",
+  "ladder": [
+    4,
+    8,
+    16,
+    32
+  ],
+  "attempts": [
+    {
+      "micro_batch_size": 4,
+      "ok": true,
+      "peak_mem_bytes": 4842110976,
+      "device_check": {
+        "expected_device": "mps",
+        "tensors_off_device": [],
+        "all_on_device": true
+      },
+      "param_counts": {
+        "embedding": 19495296,
+        "backbone": 9465984,
+        "memory_keys": 262144,
+        "memory_values": 25165824,
+        "memory_other": 393472,
+        "memory_total": 25821440,
+        "non_embedding": 35287424,
+        "total": 54782720
+      }
+    },
+    {
+      "micro_batch_size": 8,
+      "ok": true,
+      "peak_mem_bytes": 7589363712,
+      "device_check": {
+        "expected_device": "mps",
+        "tensors_off_device": [],
+        "all_on_device": true
+      },
+      "param_counts": {
+        "embedding": 19495296,
+        "backbone": 9465984,
+        "memory_keys": 262144,
+        "memory_values": 25165824,
+        "memory_other": 393472,
+        "memory_total": 25821440,
+        "non_embedding": 35287424,
+        "total": 54782720
+      }
+    },
+    {
+      "micro_batch_size": 16,
+      "ok": true,
+      "peak_mem_bytes": 13597704192,
+      "device_check": {
+        "expected_device": "mps",
+        "tensors_off_device": [],
+        "all_on_device": true
+      },
+      "param_counts": {
+        "embedding": 19495296,
+        "backbone": 9465984,
+        "memory_keys": 262144,
+        "memory_values": 25165824,
+        "memory_other": 393472,
+        "memory_total": 25821440,
+        "non_embedding": 35287424,
+        "total": 54782720
+      }
+    },
+    {
+      "micro_batch_size": 32,
+      "ok": true,
+      "peak_mem_bytes": 23531913216,
+      "device_check": {
+        "expected_device": "mps",
+        "tensors_off_device": [],
+        "all_on_device": true
+      },
+      "param_counts": {
+        "embedding": 19495296,
+        "backbone": 9465984,
+        "memory_keys": 262144,
+        "memory_values": 25165824,
+        "memory_other": 393472,
+        "memory_total": 25821440,
+        "non_embedding": 35287424,
+        "total": 54782720
+      }
+    }
+  ],
+  "largest_micro_batch": 32,
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "device": "mps",
+    "mps_available": true,
+    "mps_built": true,
+    "cuda_available": false,
+    "mps_fallback_env": "<unset>",
+    "chip": "Apple M5 Pro",
+    "ram_bytes": 68719476736
+  }
+}
