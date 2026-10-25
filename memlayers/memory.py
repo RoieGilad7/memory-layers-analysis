@@ -227,7 +227,9 @@ class PKMMemory(MemoryLayer):
     def __init__(self, dim: int, num_keys: int = 256, topk: int = 32, heads: int = 4,
                  dim_head: int = 128, query_batchnorm: bool = True,
                  freeze_keys: bool = False, value_dropout: float = 0.0,
-                 non_competitive_gates: bool = False) -> None:
+                 non_competitive_gates: bool = False,
+                 mask_slots: Optional[Iterable[int]] = None,
+                 renormalize_after_mask: bool = False) -> None:
         super().__init__()
         self.pkm = _PKM(
             dim=dim, heads=heads, dim_head=dim_head, num_keys=num_keys, topk=topk,
@@ -242,6 +244,7 @@ class PKMMemory(MemoryLayer):
             self.pkm.norm = QueryBatchNorm(dim_head)
         if freeze_keys:
             self.freeze_keys()
+        self.set_mask_slots(mask_slots, renormalize_after_mask)
 
         self._hook = self.pkm.values.register_forward_pre_hook(
             self._values_pre_hook, with_kwargs=True)
@@ -317,7 +320,9 @@ class PEERMemory(MemoryLayer):
     def __init__(self, dim: int, num_experts: int = 65_536, topk: int = 32,
                  heads: int = 4, dim_key: int = 128, pre_rmsnorm: bool = True,
                  non_competing_scores: bool = False, freeze_keys: bool = False,
-                 dropout: float = 0.0, separate_embed_per_head: bool = False) -> None:
+                 dropout: float = 0.0, separate_embed_per_head: bool = False,
+                 mask_slots: Optional[Iterable[int]] = None,
+                 renormalize_after_mask: bool = False) -> None:
         super().__init__()
         self.peer = _PEER(
             dim=dim, heads=heads, num_experts=num_experts,
@@ -335,6 +340,7 @@ class PEERMemory(MemoryLayer):
                 f"{heads * topk}.", stacklevel=2)
         if freeze_keys:
             self.freeze_keys()
+        self.set_mask_slots(mask_slots, renormalize_after_mask)
 
         # indices come through weight_down_embed, scores do not -- two hooks needed
         self._idx_hook = self.peer.weight_down_embed.register_forward_pre_hook(

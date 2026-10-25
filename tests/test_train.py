@@ -192,3 +192,46 @@ def test_resume_restores_optimizer_state_not_just_weights(tmp_path):
     assert st, "optimizer state was empty after resume"
     any_state = next(iter(st.values()))
     assert "exp_avg" in any_state and int(any_state["step"]) == 10
+
+
+@pytest.mark.parametrize("kind", ["pkm", "peer"])
+def test_slot_usage_is_tracked_without_the_full_read_log(tmp_path, kind):
+    """track_slot_usage alone must still produce real counts.
+
+    Regression test: the layers only expose their reads when read logging is enabled
+    on them, so a config with track_slot_usage=True but read_logging=False used to
+    report every slot as unread.
+    """
+    d = _tiny_cfg_dict(str(tmp_path / "u"), steps=6, kind=kind)
+    d["train"]["track_slot_usage"] = True
+    d["train"]["read_logging"] = False
+    tr = Trainer(load_config_from_dict(d, tmp_path))
+    tr.train(progress=False)
+
+    assert tr.usage is not None
+    layer = next(iter(tr.model.memory_layers))
+    counts = tr.usage.counts[layer]
+    assert int(counts.sum()) > 0, "slot usage counts were all zero"
+    mem = tr.model.memory_layers[layer]
+    expected = (6 * tr.cfg.train.micro_batch_size * tr.gpt_config.block_size
+                * mem.n_heads * mem.topk)
+    assert int(counts.sum()) == expected
+    st = json.loads((tr.out_dir / "slot_usage.json").read_text())[str(layer)]
+    assert st["slots_used"] > 0 and 0 < st["fraction_used"] <= 1
+    assert st["kl_from_uniform"] > 0
+    # and no full read log was written
+    assert not (tr.out_dir / "readlog").exists()
+
+
+def test_nothing_is_captured_when_both_switches_are_off(tmp_path):
+    """The speed baseline must capture nothing at all."""
+    d = _tiny_cfg_dict(str(tmp_path / "off"), steps=4, kind="pkm")
+    d["train"]["track_slot_usage"] = False
+    d["train"]["read_logging"] = False
+    tr = Trainer(load_config_from_dict(d, tmp_path))
+    tr.train(progress=False)
+    assert tr.usage is None and tr.read_writer is None
+    mem = next(iter(tr.model.memory_layers.values()))
+    assert not mem.read_logging
+    assert mem.last_read() is None
+    assert not (tr.out_dir / "slot_usage.json").exists()

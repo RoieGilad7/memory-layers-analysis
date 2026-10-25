@@ -216,7 +216,11 @@ class Trainer:
                 heads={i: m.n_heads for i, m in mem.items()},
                 topk={i: m.topk for i, m in mem.items()},
                 store_weights=cfg.train.read_log_weights)
-        self.model.set_read_logging(bool(cfg.train.read_logging) and bool(mem))
+        # the layers must expose their reads for EITHER consumer; slot-usage tracking
+        # alone is much cheaper than the full log (a bincount, no disk write) but it
+        # still costs a device->host copy per step, so it is off for the speed baseline
+        self.model.set_read_logging(
+            bool(mem) and (bool(cfg.train.read_logging) or bool(cfg.train.track_slot_usage)))
 
         self.csv_path = self.out_dir / "log.csv"
         self._csv_started = self.csv_path.exists()

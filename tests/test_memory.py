@@ -198,3 +198,32 @@ def test_keys_train_when_not_frozen(kind):
     opt.step()
     assert any(not torch.equal(p.detach(), b)
                for p, b in zip(mem.key_parameters(), before))
+
+
+@pytest.mark.parametrize("kind", ["pkm", "peer"])
+def test_mask_slots_can_be_set_from_the_config(kind):
+    """mask_slots and renormalize_after_mask are constructor options too, so a YAML
+    config can switch slots off without any post-hoc call."""
+    victims = [0, 1, 2, 3, 4]
+    m = make_model(kind, memory={"mask_slots": victims,
+                                 "renormalize_after_mask": True})
+    mem = next(iter(m.memory_layers.values()))
+    assert mem.renormalize_after_mask is True
+    assert mem.masked_slot_ids.tolist() == victims
+    assert mem.slot_mask is not None and int(mem.slot_mask.sum()) == len(victims)
+
+    # and it actually bites: force those slots to be read by zeroing nothing else,
+    # then check they carry no weight
+    mem.set_read_logging(True)
+    x = torch.randn(2, 16, m.config.n_embd)
+    with torch.no_grad():
+        mem(x)
+    r = mem.last_read()
+    hit = torch.isin(r.indices, torch.tensor(victims))
+    if hit.any():
+        assert float(r.weights[hit].abs().max()) == 0.0
+
+    # default is no mask at all
+    plain = next(iter(make_model(kind).memory_layers.values()))
+    assert plain.slot_mask is None
+    assert plain.renormalize_after_mask is False

@@ -135,6 +135,9 @@ def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int
     ov = list(overrides or []) + [
         f"train.steps={steps}", "train.log_every=25",
         f"train.read_logging={'true' if read_logging else 'false'}",
+        # the baseline must capture nothing at all, so slot-usage tracking is off too;
+        # with read logging on it stays on, as part of the cost being measured
+        f"train.track_slot_usage={'true' if read_logging else 'false'}",
         f"runtime.out_dir=runs/bench_{Path(cfg_path).stem}{'_readlog' if read_logging else ''}",
     ]
     if micro:
@@ -200,6 +203,9 @@ def learn(cfg_path: str, steps: int = 1000, micro: Optional[int] = None,
           overrides=None) -> dict:
     ov = list(overrides or []) + [
         f"train.steps={steps}", "data.kind=repeat", "train.log_every=25",
+        # slot-usage fraction and KL-from-uniform are required outputs of this phase,
+        # so the histogram is on; the full per-token read log is not needed here
+        "train.track_slot_usage=true", "train.read_logging=false",
         f"runtime.out_dir=runs/learn_{Path(cfg_path).stem}",
     ]
     if micro:
