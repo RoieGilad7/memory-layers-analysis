@@ -1,0 +1,82 @@
+{
+  "repo": "JieShibo/MoLE-160M-4E",
+  "code": "github.com/JieShibo/MoLE -> external/MoLE",
+  "device": "mps",
+  "device_note": "mps",
+  "repo_files_GB": 0.78,
+  "note_repo_form": "training-phase weights (pre-reparameterization)",
+  "load_code": "import sys; sys.path.insert(0, \"external/MoLE\")   # github.com/JieShibo/MoLE\nfrom transformers import AutoTokenizer\nfrom modeling_mole import MoleForCausalLM                      # training form\nfrom modeling_mole_rep import MoleForCausalLM as MoleForCausalLM_rep   # inference form\n\ntok   = AutoTokenizer.from_pretrained(\"JieShibo/MoLE-160M-4E\")\nmodel = MoleForCausalLM.from_pretrained(\"JieShibo/MoLE-160M-4E\", torch_dtype=torch.float32,\n                                        attn_implementation=\"eager\").to(\"mps\")\nout   = model(**tok(\"The capital of France is Paris, and the capital of Germany is\", return_tensors=\"pt\").to(\"mps\"))",
+  "load_seconds_cpu": 0.36,
+  "config": {
+    "vocab_size": 50304,
+    "hidden_size": 768,
+    "num_hidden_layers": 12,
+    "num_experts": 4,
+    "intermediate_size": 3072,
+    "num_attention_heads": 12,
+    "max_position_embeddings": 2048
+  },
+  "params_training_form": 388759296,
+  "to_device_seconds": 0.28,
+  "prompt": "The capital of France is Paris, and the capital of Germany is",
+  "prompt_n_tokens": 13,
+  "forward_training_form": {
+    "status": "PASS",
+    "seconds": 0.283,
+    "logits_shape": [
+      1,
+      13,
+      50304
+    ],
+    "logits_finite": true,
+    "top1_next_token": " Berlin"
+  },
+  "mps_driver_alloc_GB_after_training_form": 2.56,
+  "reparameterize_code": "# reparameterize.py, with device_map=\"cuda\" -> MPS/CPU and no save_pretrained:\nwith torch.no_grad():\n    output_all = []\n    for layer in model.model.layers:\n        token_embeds = layer.expert_layernorm(model.model.embed_tokens.weight)  # [V, d]\n        output_layer = torch.stack([expert(token_embeds) for expert in layer.experts], dim=1)\n        output_all.append(output_layer.cpu())                                   # [V, E, d]\n    output_all = torch.stack(output_all, dim=1)                   # [V, L, E, d]\n    output_all = output_all.reshape(output_all.size(0), -1)       # [V, L*E*d]\nstate_dict = {\"model.moe_table.weight\": output_all}\nmodel_rep.load_state_dict(state_dict, False)",
+  "reparameterize_seconds": 25.48,
+  "lookup_tables": {
+    "tensor_name": "model.moe_table.weight",
+    "module": "MoleModel.moe_table = nn.Embedding(vocab_size, hidden_size * num_hidden_layers * num_experts)",
+    "shape": [
+      50304,
+      36864
+    ],
+    "shape_formula": "[vocab_size, hidden_size*num_hidden_layers*num_experts] = [50304, 768*12*4=36864]",
+    "logical_view": "[vocab_size, num_hidden_layers, num_experts, hidden_size] = [50304, 12, 4, 768]",
+    "n_elements": 1854406656,
+    "bytes_fp32": 7417626624,
+    "bytes_fp16_as_saved": 3708813312,
+    "size_fp16_as_saved": "3.45 GB",
+    "dtype_on_disk": "float16 (reparameterize.py calls .half() before save_pretrained)",
+    "indexed_by": "input_ids -- one LUT row per VOCAB TOKEN, not per hidden state",
+    "how_read": "MoleModel.forward: moe_output = self.moe_table(input_ids) then .view(B, L, num_layers, num_experts, hidden_size); layer idx gets moe_output[:, :, idx], which the decoder layer combines with softmax(router(h)) weights",
+    "key_structural_note": "MoLE is NOT a product-key memory: there is no learned key table and no top-k search. The 'address' is the input token id itself and ALL num_experts entries for that token are read and mixed by the router softmax. So its value table is a per-token lookup, which is why it reparameterizes exactly.",
+    "stats": {
+      "mean": 7e-06,
+      "std": 0.526655,
+      "absmax": 244.5153
+    }
+  },
+  "rep_unexpected_keys": [],
+  "rep_missing_keys_count": 111,
+  "params_inference_form": 2016664320,
+  "params_inference_form_note": "larger than the training form: the 4 small expert MLPs per layer are replaced by the dense [V, L*E*d] LUT, which is the whole point -- compute goes down, memory goes up",
+  "forward_device_used_rep": "mps",
+  "forward_inference_form": {
+    "mps_driver_alloc_GB": 9.49,
+    "mps": {
+      "status": "PASS",
+      "seconds": 0.035,
+      "logits_shape": [
+        1,
+        13,
+        50304
+      ],
+      "logits_finite": true,
+      "top1_next_token": " Berlin",
+      "max_abs_diff_vs_training_form": 3e-05,
+      "argmax_agrees_with_training_form": true
+    }
+  },
+  "status": "PASS"
+}

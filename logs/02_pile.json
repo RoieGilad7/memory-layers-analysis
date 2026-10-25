@@ -1,0 +1,194 @@
+{
+  "repo": "monology/pile-uncopyrighted",
+  "load_code": "load_dataset(\"monology/pile-uncopyrighted\", split=\"train\", streaming=True)",
+  "open_seconds": 3.73,
+  "docs_read": 50000,
+  "seconds": 23.6,
+  "docs_per_sec": 2115.8,
+  "tokens_per_sec": 3406614.9,
+  "total_tokens_gpt2": 80504221,
+  "mean_tokens_per_doc": 1610.1,
+  "n_subjects": 17,
+  "per_subject": {
+    "PubMed Central": {
+      "docs": 1555,
+      "tokens_gpt2": 15780528,
+      "chars": 49963678,
+      "pct_docs": 3.11,
+      "pct_tokens": 19.602,
+      "mean_tokens_per_doc": 10148.2,
+      "chars_per_token": 3.166,
+      "saved_to_sample": 200
+    },
+    "Pile-CC": {
+      "docs": 14939,
+      "tokens_gpt2": 15138982,
+      "chars": 65965226,
+      "pct_docs": 29.878,
+      "pct_tokens": 18.805,
+      "mean_tokens_per_doc": 1013.4,
+      "chars_per_token": 4.357,
+      "saved_to_sample": 200
+    },
+    "Github": {
+      "docs": 5170,
+      "tokens_gpt2": 11895420,
+      "chars": 26543964,
+      "pct_docs": 10.34,
+      "pct_tokens": 14.776,
+      "mean_tokens_per_doc": 2300.9,
+      "chars_per_token": 2.231,
+      "saved_to_sample": 200
+    },
+    "ArXiv": {
+      "docs": 641,
+      "tokens_gpt2": 11092636,
+      "chars": 31285746,
+      "pct_docs": 1.282,
+      "pct_tokens": 13.779,
+      "mean_tokens_per_doc": 17305.2,
+      "chars_per_token": 2.82,
+      "saved_to_sample": 200
+    },
+    "StackExchange": {
+      "docs": 8292,
+      "tokens_gpt2": 6264513,
+      "chars": 18140815,
+      "pct_docs": 16.584,
+      "pct_tokens": 7.782,
+      "mean_tokens_per_doc": 755.5,
+      "chars_per_token": 2.896,
+      "saved_to_sample": 200
+    },
+    "FreeLaw": {
+      "docs": 1408,
+      "tokens_gpt2": 5400008,
+      "chars": 20723455,
+      "pct_docs": 2.816,
+      "pct_tokens": 6.708,
+      "mean_tokens_per_doc": 3835.2,
+      "chars_per_token": 3.838,
+      "saved_to_sample": 200
+    },
+    "Wikipedia (en)": {
+      "docs": 4767,
+      "tokens_gpt2": 3517337,
+      "chars": 14873535,
+      "pct_docs": 9.534,
+      "pct_tokens": 4.369,
+      "mean_tokens_per_doc": 737.9,
+      "chars_per_token": 4.229,
+      "saved_to_sample": 200
+    },
+    "USPTO Backgrounds": {
+      "docs": 3095,
+      "tokens_gpt2": 2625578,
+      "chars": 12553702,
+      "pct_docs": 6.19,
+      "pct_tokens": 3.261,
+      "mean_tokens_per_doc": 848.3,
+      "chars_per_token": 4.781,
+      "saved_to_sample": 200
+    },
+    "PubMed Abstracts": {
+      "docs": 8264,
+      "tokens_gpt2": 2399507,
+      "chars": 10990335,
+      "pct_docs": 16.528,
+      "pct_tokens": 2.981,
+      "mean_tokens_per_doc": 290.4,
+      "chars_per_token": 4.58,
+      "saved_to_sample": 200
+    },
+    "DM Mathematics": {
+      "docs": 549,
+      "tokens_gpt2": 2167818,
+      "chars": 4498506,
+      "pct_docs": 1.098,
+      "pct_tokens": 2.693,
+      "mean_tokens_per_doc": 3948.7,
+      "chars_per_token": 2.075,
+      "saved_to_sample": 200
+    },
+    "Gutenberg (PG-19)": {
+      "docs": 17,
+      "tokens_gpt2": 1908025,
+      "chars": 7002909,
+      "pct_docs": 0.034,
+      "pct_tokens": 2.37,
+      "mean_tokens_per_doc": 112236.8,
+      "chars_per_token": 3.67,
+      "saved_to_sample": 17
+    },
+    "EuroParl": {
+      "docs": 34,
+      "tokens_gpt2": 944853,
+      "chars": 2491571,
+      "pct_docs": 0.068,
+      "pct_tokens": 1.174,
+      "mean_tokens_per_doc": 27789.8,
+      "chars_per_token": 2.637,
+      "saved_to_sample": 34
+    },
+    "HackerNews": {
+      "docs": 444,
+      "tokens_gpt2": 548286,
+      "chars": 2074845,
+      "pct_docs": 0.888,
+      "pct_tokens": 0.681,
+      "mean_tokens_per_doc": 1234.9,
+      "chars_per_token": 3.784,
+      "saved_to_sample": 200
+    },
+    "Ubuntu IRC": {
+      "docs": 10,
+      "tokens_gpt2": 240392,
+      "chars": 734626,
+      "pct_docs": 0.02,
+      "pct_tokens": 0.299,
+      "mean_tokens_per_doc": 24039.2,
+      "chars_per_token": 3.056,
+      "saved_to_sample": 10
+    },
+    "NIH ExPorter": {
+      "docs": 517,
+      "tokens_gpt2": 226029,
+      "chars": 1129416,
+      "pct_docs": 1.034,
+      "pct_tokens": 0.281,
+      "mean_tokens_per_doc": 437.2,
+      "chars_per_token": 4.997,
+      "saved_to_sample": 200
+    },
+    "PhilPapers": {
+      "docs": 19,
+      "tokens_gpt2": 197958,
+      "chars": 792868,
+      "pct_docs": 0.038,
+      "pct_tokens": 0.246,
+      "mean_tokens_per_doc": 10418.8,
+      "chars_per_token": 4.005,
+      "saved_to_sample": 19
+    },
+    "Enron Emails": {
+      "docs": 279,
+      "tokens_gpt2": 156351,
+      "chars": 553874,
+      "pct_docs": 0.558,
+      "pct_tokens": 0.194,
+      "mean_tokens_per_doc": 560.4,
+      "chars_per_token": 3.543,
+      "saved_to_sample": 200
+    }
+  },
+  "sample_file": "data_samples/pile_sample.jsonl",
+  "sample_bytes": 7960733,
+  "a3_disk": {
+    "bytes_per_token_uint16": 2,
+    "note": "GPT-2 vocab 50257 fits in uint16; uint32 would be 4 B/token",
+    "train_150M_tokens_GB": 0.3,
+    "train_0.5B_tokens_GB": 1.0,
+    "heldout_1M_per_subject_GB_per_subject": 0.002,
+    "heldout_10M_per_subject_GB_per_subject": 0.02
+  }
+}

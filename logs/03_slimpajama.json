@@ -1,0 +1,43 @@
+{
+  "candidates_tried": [
+    {
+      "repo": "MBZUAI-LLM/SlimPajama-627B-DC",
+      "result": "DatasetNotFoundError: Dataset 'MBZUAI-LLM/SlimPajama-627B-DC' doesn't exist on the Hub or cannot be accessed."
+    },
+    {
+      "repo": "cerebras/SlimPajama-627B",
+      "result": "DatasetNotFoundError: Dataset 'cerebras/SlimPajama-627B' doesn't exist on the Hub or cannot be accessed."
+    },
+    {
+      "repo": "venketh/SlimPajama-62B",
+      "result": "OK"
+    }
+  ],
+  "n_target": 1000,
+  "repo": "venketh/SlimPajama-62B",
+  "load_code": "load_dataset(\"venketh/SlimPajama-62B\", split=\"train\", streaming=True)",
+  "record_keys": [
+    "meta",
+    "text"
+  ],
+  "example_meta": {
+    "redpajama_set_name": "RedPajamaC4"
+  },
+  "status": "PARTIAL (fallback repo)",
+  "records_read": 1000,
+  "seconds": 0.6,
+  "docs_per_sec": 1778.5,
+  "source_label_field": "meta['redpajama_set_name']",
+  "has_source_label": true,
+  "labels_seen": {
+    "RedPajamaC4": 562,
+    "RedPajamaCommonCrawl": 317,
+    "RedPajamaStackExchange": 47,
+    "RedPajamaWikipedia": 41,
+    "RedPajamaGithub": 30,
+    "RedPajamaArXiv": 2,
+    "RedPajamaBook": 1
+  },
+  "sample_file": "data_samples/slimpajama_sample.jsonl",
+  "sample_bytes": 261578
+}

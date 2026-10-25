@@ -1,20 +1,40 @@
-# env
+# ---------------------------------------------------------------- environments
 .venv/
 .venv-mole/
 .venv*/
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
 .env
 .env.*
 
-# data & samples (tiny samples are regenerable; keep repo clean)
-data_samples/
-logs/
+# ------------------------------------------------------------------ tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
 
-# external code checkouts
+# ----------------------------------------------------------- generated datasets
+# Tiny, fully regenerable: `python tools/bio_generator.py`, and the step-0 checks
+# re-stream their samples. Kept out of the repo to keep a clone small.
+data_samples/
+
+# -------------------------------------------------------- external code checkouts
+# github.com/JieShibo/MoLE, cloned by the step-0 B1 check. Not vendored.
 external/
 
-# model weights / caches
+# -------------------------------------------------------------- run artifacts
+# Checkpoints, read logs and per-step CSVs from training runs. Large and
+# regenerable; the committed summaries in bench/results/ are the durable record.
+runs/
+
+# Step-0 and step-1 console transcripts. The machine-readable results next to
+# them (logs/*.json) ARE committed -- they are the evidence the reports cite.
+logs/*.out
+logs/*.log
+logs/nohup.out
+
+# ------------------------------------------------- model weights and big arrays
 *.safetensors
 *.bin
 *.pt
@@ -27,9 +47,6 @@ hf_cache/
 .cache/
 checkpoints/
 
-# os
+# ------------------------------------------------------------------------- os
 .DS_Store
-
-# step 1: training run outputs (checkpoints, read logs, per-step CSVs)
-runs/
-bench/results/*.out
+Thumbs.db

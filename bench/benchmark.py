@@ -26,6 +26,7 @@ import statistics
 import subprocess
 import sys
 import time
+import pathlib
 from pathlib import Path
 from typing import List, Optional
 
@@ -40,6 +41,14 @@ from memlayers.train import Trainer, load_config  # noqa: E402
 
 RESULTS = ROOT / "bench" / "results"
 BATCH_LADDER = [4, 8, 16, 32]
+
+
+def rel(p) -> str:
+    """Path relative to the repo root, so result files are portable across machines."""
+    try:
+        return str(pathlib.Path(p).resolve().relative_to(ROOT))
+    except (ValueError, OSError):
+        return str(p)
 
 
 def env_info() -> dict:
@@ -75,6 +84,33 @@ def _out_path(cfg_path: str, mode: str, tag: str = "") -> Path:
     return RESULTS / f"{name}__{mode}{('__' + tag) if tag else ''}.json"
 
 
+FORCE = False
+
+
+def _save(cfg_path: str, mode: str, res: dict, tag: str = "") -> Path:
+    """Write a result, refusing to replace a longer run with a shorter one.
+
+    bench/results/ is committed evidence that the reports cite, so an ad-hoc smoke run
+    must not silently overwrite a full benchmark. Pass --force to override.
+    """
+    path = _out_path(cfg_path, mode, tag)
+    new_steps = res.get("steps")
+    if path.exists() and not FORCE and isinstance(new_steps, int):
+        try:
+            old_steps = json.loads(path.read_text()).get("steps")
+        except Exception:
+            old_steps = None
+        if isinstance(old_steps, int) and old_steps > new_steps:
+            alt = path.with_name(path.stem + f"__{new_steps}steps.json")
+            alt.write_text(json.dumps(res, indent=2))
+            print(f"[kept] {path.name} holds a longer run ({old_steps} steps); "
+                  f"wrote this {new_steps}-step run to {alt.name} instead "
+                  f"(use --force to overwrite)")
+            return alt
+    path.write_text(json.dumps(res, indent=2))
+    return path
+
+
 def check_all_on_device(trainer: Trainer) -> dict:
     """Confirm no parameter or buffer quietly stayed on the CPU."""
     want = trainer.device.type
@@ -91,7 +127,7 @@ def probe_one(cfg_path: str, micro: int, steps: int = 3,
     ov = list(overrides or []) + [f"train.micro_batch_size={micro}",
                                   "train.grad_accum_steps=1",
                                   "train.log_every=0",
-                                  f"runtime.out_dir=/tmp/probe_{Path(cfg_path).stem}_{micro}"]
+                                  f"runtime.out_dir=runs/_probe_{Path(cfg_path).stem}_{micro}"]
     cfg = load_config(cfg_path, ov)
     tr = Trainer(cfg)
     for _ in range(steps):
@@ -122,9 +158,9 @@ def probe(cfg_path: str, ladder: List[int] = None, overrides=None) -> dict:
             attempts.append({"micro_batch_size": micro, "ok": False,
                              "error": tail[-1] if tail else "unknown"})
             break
-    res = {"config": cfg_path, "ladder": ladder, "attempts": attempts,
+    res = {"config": rel(cfg_path), "ladder": ladder, "attempts": attempts,
            "largest_micro_batch": best, "env": env_info()}
-    _out_path(cfg_path, "probe").write_text(json.dumps(res, indent=2))
+    _save(cfg_path, "probe", res)
     return res
 
 
@@ -153,7 +189,7 @@ def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int
     tokens_per_step = cfg.tokens_per_step
 
     res = {
-        "config": cfg_path, "name": cfg.name, "mode": "speed",
+        "config": rel(cfg_path), "name": cfg.name, "mode": "speed",
         "read_logging": read_logging,
         "steps": steps, "warmup_discarded": warmup, "steps_measured": len(kept),
         "micro_batch_size": cfg.train.micro_batch_size,
@@ -171,7 +207,7 @@ def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int
         "param_counts": tr.model.param_counts(),
         "device_check": dev_check,
         "env": env_info(),
-        "out_dir": str(tr.out_dir),
+        "out_dir": rel(tr.out_dir),
     }
     mem = tr.model.memory_layers
     if mem:
@@ -194,7 +230,7 @@ def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int
     if (tr.out_dir / "slot_usage.json").exists():
         res["slot_usage"] = json.loads((tr.out_dir / "slot_usage.json").read_text())
     empty_cache(tr.device)
-    _out_path(cfg_path, "speed", tag).write_text(json.dumps(res, indent=2))
+    _save(cfg_path, "speed", res, tag)
     return res
 
 
@@ -219,7 +255,7 @@ def learn(cfg_path: str, steps: int = 1000, micro: Optional[int] = None,
     random_level = math.log(tr.gpt_config.vocab_size)
     tail = losses[-25:]
     res = {
-        "config": cfg_path, "name": cfg.name, "mode": "learn",
+        "config": rel(cfg_path), "name": cfg.name, "mode": "learn",
         "dataset": "repeat (fake data b)",
         "chunk_len": cfg.data.chunk_len,
         "steps": steps, "micro_batch_size": cfg.train.micro_batch_size,
@@ -238,12 +274,12 @@ def learn(cfg_path: str, steps: int = 1000, micro: Optional[int] = None,
         "peak_mem_GB": tr.peak_mem / 1e9,
         "param_counts": tr.model.param_counts(),
         "env": env_info(),
-        "out_dir": str(tr.out_dir),
+        "out_dir": rel(tr.out_dir),
     }
     if (tr.out_dir / "slot_usage.json").exists():
         res["slot_usage"] = json.loads((tr.out_dir / "slot_usage.json").read_text())
     empty_cache(tr.device)
-    _out_path(cfg_path, "learn").write_text(json.dumps(res, indent=2))
+    _save(cfg_path, "learn", res)
     return res
 
 
@@ -299,7 +335,12 @@ def main(argv=None) -> int:
     ap.add_argument("--warmup", type=int, default=30)
     ap.add_argument("--read-logging", action="store_true")
     ap.add_argument("--set", nargs="*", default=[], dest="overrides")
+    ap.add_argument("--force", action="store_true",
+                    help="allow overwriting a longer existing result in bench/results/")
     a = ap.parse_args(argv)
+
+    global FORCE
+    FORCE = a.force
 
     if a.mode == "summarize":
         summarize()

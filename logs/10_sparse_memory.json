@@ -1,0 +1,179 @@
+{
+  "repo": "fechyy/sparse-memory-lm-B-16M",
+  "code": "github.com/re133/sparse-memory-lm",
+  "full_model_run_attempted": false,
+  "why_not": "model card: 'It needs the Triton kernels from the repo, so it doesn't load with transformers.' Those kernels are CUDA/ROCm only. Per the roadmap the full model is deliberately NOT run here.",
+  "files": {
+    "values_q4.bin": {
+      "bytes": 3221225472,
+      "size": "3.22 GB"
+    },
+    "rest.pt": {
+      "bytes": 284037408,
+      "size": "284.04 MB"
+    },
+    "hot_rows.npy": {
+      "bytes": 134217856,
+      "size": "134.22 MB"
+    },
+    "scales_q4.bin": {
+      "bytes": 33554432,
+      "size": "33.55 MB"
+    },
+    "README.md": {
+      "bytes": 3171,
+      "size": "3.17 KB"
+    },
+    ".gitattributes": {
+      "bytes": 1519,
+      "size": "1.52 KB"
+    },
+    "meta.json": {
+      "bytes": 840,
+      "size": "840.00 B"
+    }
+  },
+  "total_bytes": 3673040698,
+  "total_size": "3.67 GB",
+  "over_2GB_files": {
+    "values_q4.bin": "3.22 GB"
+  },
+  "download_decision": "values_q4.bin is 3.22 GB (> the 2 GB ask-first threshold). User chose: ranged header read only, no full download.",
+  "meta_json": {
+    "model": "B-16M-sparse (github.com/re133/sparse-memory-lm)",
+    "rows": 16777216,
+    "dim": 384,
+    "table_keys": [
+      "layers.2.ffn.values.weight",
+      "layers.6.ffn.values.weight",
+      "layers.10.ffn.values.weight"
+    ],
+    "q4": "kernels.quantize_q4: per row d = fp16(max-abs value with sign / -8), code = clamp(round(w/d),-8,7)+8, low nibble = dims 0..dim/2-1, high nibble = dims dim/2..dim-1",
+    "cpu_vs_gpu_q4_check": {
+      "rows": 1048576,
+      "packed_equal": true,
+      "scales_equal": true
+    },
+    "sha256": {
+      "hot_rows.npy": "7380ad9608603d05289e3698259a69472056723c7a35bb0fe925833b3e109fb5",
+      "rest.pt": "c7ff78fa2b2afe3eaaab29e993d2b988628a858436e8d629364161cca242dbc8",
+      "scales_q4.bin": "3a260537dc23ef4c7d73cfd358f9bd4dd9bd95ce89aede4d48ae73a683271294",
+      "values_q4.bin": "67f8900ba65e34a2b6d93116f61636fd9ce43d13c96d5ed870f955bd6c54916c"
+    }
+  },
+  "value_table": {
+    "tensor_keys_in_model": [
+      "layers.2.ffn.values.weight",
+      "layers.6.ffn.values.weight",
+      "layers.10.ffn.values.weight"
+    ],
+    "rows": 16777216,
+    "dim": 384,
+    "logical_shape": [
+      16777216,
+      384
+    ],
+    "stored_dtype": "uint8, two 4-bit nibbles per byte",
+    "bytes_per_row": 192,
+    "expected_values_q4_bytes": 3221225472,
+    "actual_values_q4_bytes": 3221225472,
+    "size_matches_shape": true,
+    "scales_dtype": "float16, one scale per row",
+    "expected_scales_bytes": 33554432,
+    "actual_scales_bytes": 33554432,
+    "quantization_scheme": "kernels.quantize_q4: per row d = fp16(max-abs value with sign / -8), code = clamp(round(w/d),-8,7)+8, low nibble = dims 0..dim/2-1, high nibble = dims dim/2..dim-1",
+    "nibble_order": "low nibble  = dims 0 .. dim/2-1 ; high nibble = dims dim/2 .. dim-1  (NOT interleaved)",
+    "dequant": "value = (code - 8) * d,  where code in [0,15] and d = scales[row]",
+    "fp32_equivalent_bytes": 25769803776,
+    "fp32_equivalent_size": "25.77 GB",
+    "shared_by": "one table shared by the 3 memory layers ['layers.2.ffn.values.weight', 'layers.6.ffn.values.weight', 'layers.10.ffn.values.weight']"
+  },
+  "architecture_from_model_card": {
+    "d": 384,
+    "layers": 12,
+    "heads": 6,
+    "context": 1024,
+    "memory_layers": "layers 3, 7 and 11 replace the FFN with a memory layer",
+    "routing": "4 heads, top 32 of 4096^2 product keys, one table shared by 3 layers",
+    "table_params": "16,777,216 x 384 = 6.44B parameters; ~33M active per token",
+    "val_ppl": "19.96 fp32 table / 19.98 this 4-bit table (Wikipedia)",
+    "trained_on": "500M tokens of wikimedia/wikipedia 20231101.en, GPT-2 tokenizer"
+  },
+  "ranged_probe": {
+    "http_status": 206,
+    "range_bytes_requested": 786432,
+    "range_bytes_received": 786432,
+    "seconds": 1.38,
+    "content_range_header": "bytes 0-786431/3221225472",
+    "ranged_read_supported": true,
+    "packed_shape": [
+      4096,
+      192
+    ],
+    "codes_shape": [
+      4096,
+      384
+    ],
+    "codes_min": 0,
+    "codes_max": 15,
+    "codes_in_0_15": true,
+    "code_histogram_first_4096_rows": [
+      5663,
+      6742,
+      16813,
+      37102,
+      71555,
+      121737,
+      179435,
+      227134,
+      245297,
+      227312,
+      179238,
+      121431,
+      71786,
+      36704,
+      16773,
+      8142
+    ],
+    "scales_file_bytes": 33554432,
+    "scales_shape": [
+      16777216
+    ],
+    "scales_len_equals_rows": true,
+    "dequantized_shape": [
+      4096,
+      384
+    ],
+    "dequantized_dtype": "float32",
+    "dequantized_stats": {
+      "mean": 0.000591,
+      "std": 0.09217,
+      "absmax": 0.813965,
+      "all_finite": true
+    },
+    "numpy_load_confirmed": true,
+    "full_table_numpy_recipe": "np.memmap('values_q4.bin', dtype=np.uint8, mode='r', shape=(16777216, 192)) -- 3.22 GB on disk, no RAM copy; dequantize a row slice with ((lo,hi nibbles) - 8) * scales[rows, None]. The full fp32 table would be 25.77 GB, so slice or memmap rather than materializing it.",
+    "status": "PASS"
+  },
+  "colab_t4_requirements": {
+    "gpu": "NVIDIA T4, 16 GB VRAM, compute capability 7.5",
+    "steps": [
+      "git clone https://github.com/re133/sparse-memory-lm.git",
+      "pip install torch (CUDA wheel) + -r requirements.txt + huggingface_hub",
+      "python scripts/demo_generate.py --download --table ram   # or --table vram"
+    ],
+    "table_placement": {
+      "--table vram": "3.22 GB of 4-bit table in 16 GB VRAM: fits, with ~12 GB spare. Fastest option (~200 tok/s on the author's RX 9070).",
+      "--table ram": "Colab free tier gives ~12.7 GB system RAM; the 3.22 GB table plus hot_rows.npy (134 MB) fits. Safe fallback.",
+      "--table nvme": "needs a local SSD path; Colab's disk is network-backed, so expect far worse than the author's 140 tok/s."
+    },
+    "blockers_to_check": [
+      "Triton: the kernels are written for Triton 3.5/3.8. Colab's preinstalled Triton version must match or the kernels need a rebuild -- this is the main risk.",
+      "T4 is sm_75 and has no bf16; if the kernels assume bf16 or sm_80+ features (e.g. async copies) they will not compile. Check the repo's requirements first.",
+      "Total download is 3.67 GB, inside Colab's disk budget but slow on a free session."
+    ],
+    "verdict": "Should fit a T4 on memory grounds. The real risk is Triton/arch compatibility, not capacity. For OUR purposes we do not need to run it: the values are what we want, and they load into numpy on this Mac."
+  },
+  "offline_numpy_analysis_possible": true,
+  "status": "PASS"
+}

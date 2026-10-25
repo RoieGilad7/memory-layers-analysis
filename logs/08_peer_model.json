@@ -1,0 +1,206 @@
+{
+  "repo": "jaivial/dna-diskchat-2b-peer-v21",
+  "checkpoint": "checkpoints/final_113738.pt",
+  "checkpoint_bytes": 2929502511,
+  "checkpoint_size": "2.73 GB",
+  "all_checkpoints_in_repo": [
+    "ckpt_8000",
+    "ckpt_20000",
+    "ckpt_40000",
+    "ckpt_60000",
+    "ckpt_80000",
+    "ckpt_100000",
+    "ckpt_113738",
+    "final_113738 (<- the final one, used here)"
+  ],
+  "load_code": "import sys, torch\nfrom huggingface_hub import hf_hub_download\nck_path = hf_hub_download(\"jaivial/dna-diskchat-2b-peer-v21\", \"checkpoints/final_113738.pt\")              # 2.93 GB\nsys.path.insert(0, <snapshot>/scripts)                      # repo scripts hardcode /root/dna\nfrom model_dna_peer_v21 import DnaPeerV21, peer_counts\nck  = torch.load(ck_path, map_location=\"cpu\", weights_only=False)\ncfg = ck[\"config\"]      # {vocab:32000, d:512, layers:16, ff:1536, a:2048, b:2048,\n                        #   nk:704, dk:128, topk:8, pheads:1, peer_layers:[4,8,12]}\nmodel = DnaPeerV21(**cfg)\nmissing, unexpected = model.load_state_dict(ck[\"model\"], strict=False)\nmodel.eval()\n# DnaChat has no forward(); features() + head2 is the entry point\nh, balance, rows = model.features(ids)\nlogits = model.head2(h)",
+  "torch_load_seconds": 0.3,
+  "checkpoint_top_level_keys": [
+    "config",
+    "model",
+    "step",
+    "tokens",
+    "valid_ce"
+  ],
+  "config": {
+    "vocab": 32000,
+    "d": 512,
+    "layers": 16,
+    "ff": 1536,
+    "a": 2048,
+    "b": 2048,
+    "nk": 704,
+    "dk": 128,
+    "topk": 8,
+    "pheads": 1,
+    "peer_layers": [
+      4,
+      8,
+      12
+    ]
+  },
+  "training_step": 113738,
+  "valid_ce": 3.7246,
+  "tokens_trained": 1162402360,
+  "build_and_load_seconds": 9.3,
+  "missing_keys": [],
+  "unexpected_keys": [],
+  "params": {
+    "all_parameters": 598145536,
+    "controller_total_peer_counts": 598145536,
+    "active_per_token_peer_counts": 70541312,
+    "expert_pool_params": 507510784,
+    "buffers": 536872579
+  },
+  "peer_tensors": {
+    "shared_expert_pool": {
+      "pool.up.weight": [
+        495616,
+        512
+      ],
+      "pool.down.weight": [
+        495616,
+        512
+      ],
+      "dtype": "torch.float32",
+      "num_experts": 495616,
+      "nk_subkeys_per_half": 704,
+      "note": "ONE pool of nk^2 = 704^2 = 495616 rank-1 experts, shared by the 3 PEER layers [4, 8, 12]. Each expert is a rank-1 MLP: row i of pool.up (d=512, the 'read' direction) and row i of pool.down (d=512, the 'write'/value direction). pool.down rows are the VALUES in our sense.",
+      "aliased_state_dict_keys": [
+        "blocks.4.ffn.pool.up.weight",
+        "blocks.4.ffn.pool.down.weight",
+        "blocks.8.ffn.pool.up.weight",
+        "blocks.8.ffn.pool.down.weight",
+        "blocks.12.ffn.pool.up.weight",
+        "blocks.12.ffn.pool.down.weight"
+      ],
+      "alias_note": "the per-block blocks.{4,8,12}.ffn.pool.* entries are the SAME shared module saved once per block; at load time they are one tensor (verified below)"
+    },
+    "product_keys_per_peer_layer": {
+      "blocks.4.ffn.Ka": [
+        1,
+        704,
+        128
+      ],
+      "blocks.4.ffn.Kb": [
+        1,
+        704,
+        128
+      ],
+      "blocks.8.ffn.Ka": [
+        1,
+        704,
+        128
+      ],
+      "blocks.8.ffn.Kb": [
+        1,
+        704,
+        128
+      ],
+      "blocks.12.ffn.Ka": [
+        1,
+        704,
+        128
+      ],
+      "blocks.12.ffn.Kb": [
+        1,
+        704,
+        128
+      ]
+    },
+    "product_key_note": "Ka / Kb are the two halves of the product key: [pheads, nk, dk] = [1, 704, 128]. expert_id = argtop(qa.Ka)*nk + argtop(qb.Kb), so Ka x Kb addresses nk^2 experts. Keys are PER LAYER; the value pool is SHARED.",
+    "query_projection_per_peer_layer": {
+      "blocks.4.ffn.q.weight": [
+        256,
+        512
+      ],
+      "blocks.8.ffn.q.weight": [
+        256,
+        512
+      ],
+      "blocks.12.ffn.q.weight": [
+        256,
+        512
+      ]
+    },
+    "query_batchnorm_per_peer_layer": {
+      "blocks.4.ffn.qbn.weight": [
+        256
+      ],
+      "blocks.4.ffn.qbn.bias": [
+        256
+      ],
+      "blocks.4.ffn.qbn.running_mean": [
+        256
+      ],
+      "blocks.4.ffn.qbn.running_var": [
+        256
+      ],
+      "blocks.8.ffn.qbn.weight": [
+        256
+      ],
+      "blocks.8.ffn.qbn.bias": [
+        256
+      ],
+      "blocks.8.ffn.qbn.running_mean": [
+        256
+      ],
+      "blocks.8.ffn.qbn.running_var": [
+        256
+      ],
+      "blocks.12.ffn.qbn.weight": [
+        256
+      ],
+      "blocks.12.ffn.qbn.bias": [
+        256
+      ],
+      "blocks.12.ffn.qbn.running_mean": [
+        256
+      ],
+      "blocks.12.ffn.qbn.running_var": [
+        256
+      ]
+    },
+    "separate_codon_memory_table": {
+      "codons": [
+        4194304,
+        128
+      ],
+      "codons_dtype": "torch.uint8",
+      "codebook": [
+        4,
+        256,
+        4
+      ],
+      "note": "this is the model's OTHER memory: the DNA codon table, a=2048 x b=2048 = 4,194,304 rows x 128 uint8 codons, decoded through a 4 x 256 x 4 positional codebook. Separate from the PEER expert pool."
+    }
+  },
+  "pool_is_shared_object": true,
+  "forward_device_used": "mps",
+  "forward": {
+    "mps_driver_alloc_GB": 3.16,
+    "mps": {
+      "status": "PASS",
+      "seconds": 0.17,
+      "forward_code": "h, balance, rows = model.features(ids); logits = model.head2(h)",
+      "hidden_shape": [
+        1,
+        16,
+        512
+      ],
+      "logits_shape": [
+        1,
+        16,
+        32000
+      ],
+      "routed_codon_rows_shape": [
+        16,
+        2
+      ],
+      "logits_finite": true,
+      "logits_mean": -6.3647,
+      "balance_loss": 144.1582
+    }
+  },
+  "status": "PASS"
+}

@@ -1,5 +1,5 @@
 {
-  "config": "/Users/roieg/studies/ms/year1/courses/algos_in_llms/final_project/memlayers/configs/t1_pkm.yaml",
+  "config": "memlayers/configs/t1_pkm.yaml",
   "name": "t1_pkm",
   "mode": "learn",
   "dataset": "repeat (fake data b)",

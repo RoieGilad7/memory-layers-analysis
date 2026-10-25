@@ -8,10 +8,34 @@ SAMPLES.mkdir(exist_ok=True)
 LOGS.mkdir(exist_ok=True)
 
 
+def rel(p):
+    """Path relative to the repo root, so result files are portable across machines."""
+    try:
+        return str(pathlib.Path(p).resolve().relative_to(ROOT))
+    except (ValueError, OSError):
+        return str(p)
+
+
+def _relativize(obj):
+    """Rewrite any absolute path under the repo root into a relative one.
+
+    Applied to every result before it is written, so the committed JSON does not
+    record one machine's directory layout.
+    """
+    root = str(ROOT)
+    if isinstance(obj, str):
+        return obj.replace(root + "/", "").replace(root, ".") if root in obj else obj
+    if isinstance(obj, dict):
+        return {k: _relativize(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_relativize(v) for v in obj]
+    return obj
+
+
 def jdump(name, obj):
     """Persist a check's machine-readable result so the report builder can read it."""
     p = LOGS / f"{name}.json"
-    p.write_text(json.dumps(obj, indent=2, default=str))
+    p.write_text(json.dumps(_relativize(obj), indent=2, default=str))
     print(f"\n[wrote] {p}")
     return p
 

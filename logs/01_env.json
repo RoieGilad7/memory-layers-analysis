@@ -1,0 +1,32 @@
+{
+  "macos": "26.6.2",
+  "build": "25G83",
+  "chip": "Apple M5 Pro",
+  "cpu_cores": "18",
+  "ram_bytes": 68719476736,
+  "python": "3.12.14 | packaged by Anaconda, Inc. | (main, Aug 27 2026, 14:38:15) [Clang 20.1.8 ]",
+  "python_exe": ".venv/bin/python",
+  "free_disk_gb_home": 1843.0,
+  "versions": {
+    "torch": "2.14.1",
+    "numpy": "2.5.4",
+    "transformers": "5.20.2",
+    "datasets": "5.1.0",
+    "huggingface_hub": "2.3.0",
+    "accelerate": "1.15.0",
+    "tiktoken": "0.14.0",
+    "faiss": "1.15.1",
+    "product_key_memory": "installed (no __version__)",
+    "PEER_pytorch": "installed (no __version__)"
+  },
+  "torch_backends": {
+    "mps_is_available": true,
+    "mps_is_built": true,
+    "cuda_is_available": false
+  },
+  "ram_gb": 68.7,
+  "hf_user": "roieg",
+  "hf_auth": "PASS",
+  "mps_matmul_ok": true,
+  "mps_device_used": "mps"
+}

@@ -1,0 +1,114 @@
+{
+  "device": "mps",
+  "device_note": "mps",
+  "config": {
+    "dim": 512,
+    "heads": 4,
+    "dim_head": 128,
+    "num_keys": 256,
+    "topk": 32,
+    "batch": 2,
+    "seq": 128
+  },
+  "load_code": "from product_key_memory import PKM\npkm = PKM(dim=512, heads=4, dim_head=128, num_keys=256, topk=32)   # num_keys**2 = 65536 slots",
+  "num_memories": 65536,
+  "param_shapes": {
+    "keys": [
+      4,
+      256,
+      2,
+      128
+    ],
+    "to_queries.weight": [
+      1024,
+      512
+    ],
+    "norm.weight": [
+      128
+    ],
+    "norm.bias": [
+      128
+    ],
+    "values.weight": [
+      65536,
+      512
+    ]
+  },
+  "n_params": 34341120,
+  "key_param_name": "keys",
+  "value_param_name": "values.weight",
+  "forward_seconds": 0.048,
+  "output_shape": [
+    2,
+    128,
+    512
+  ],
+  "backward_seconds": 0.0246,
+  "grads": {
+    "keys": {
+      "grad_norm": 2.9e-05,
+      "nonzero": 262144,
+      "is_sparse": false
+    },
+    "to_queries.weight": {
+      "grad_norm": 9.9e-05,
+      "nonzero": 524288,
+      "is_sparse": false
+    },
+    "norm.weight": {
+      "grad_norm": 6e-06,
+      "nonzero": 128,
+      "is_sparse": false
+    },
+    "norm.bias": {
+      "grad_norm": 2e-06,
+      "nonzero": 128,
+      "is_sparse": false
+    },
+    "values.weight": {
+      "grad_norm": 3.4e-05,
+      "nonzero": 12950528,
+      "is_sparse": false
+    }
+  },
+  "grad_reaches_keys": true,
+  "grad_reaches_values": true,
+  "index_readout": {
+    "method": "forward pre-hook on pkm.values (nn.EmbeddingBag), with_kwargs=True",
+    "captured": true,
+    "indices_shape": [
+      256,
+      128
+    ],
+    "indices_dtype": "torch.int64",
+    "layout": "[(batch*seq), (heads*topk)] -- reshape to [b, t, heads, topk]",
+    "min": 0,
+    "max": 65531,
+    "in_range": true,
+    "unique_slots_this_batch": 25294,
+    "gate_weights_shape": [
+      256,
+      128
+    ],
+    "exposed_by_package": false,
+    "smallest_source_change": "product_key_memory/product_key_memory.py, PKM.forward: add a `return_indices = False` kwarg and, at the end, `if return_indices: return out_reshaped, rearrange(value_indices, '(b t) hk -> b t hk', b = b), rearrange(attn, '(b t) hk -> b t hk', b = b)`. One kwarg + one branch; nothing else changes. The hook above avoids even that."
+  },
+  "c1_status": "PASS",
+  "c3_freeze_code": "pkm.keys.requires_grad_(False)   # sub-key table frozen\n# everything else, incl. pkm.values.weight and pkm.to_queries, still trains\nopt = torch.optim.Adam([p for p in pkm.parameters() if p.requires_grad], lr=1e-2)",
+  "c3_requires_grad": {
+    "keys": false,
+    "to_queries.weight": true,
+    "norm.weight": true,
+    "norm.bias": true,
+    "values.weight": true
+  },
+  "c3_after_one_step": {
+    "keys_max_abs_change": 0.0,
+    "keys_bit_identical": true,
+    "keys_grad_is_none": true,
+    "values_max_abs_change": 0.009535565972328186,
+    "values_changed": true,
+    "to_queries_max_abs_change": 0.009863357990980148
+  },
+  "c3_status": "PASS"
+}

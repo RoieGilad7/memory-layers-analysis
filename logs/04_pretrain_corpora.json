@@ -1,0 +1,61 @@
+{
+  "wikipedia": {
+    "attempts": [],
+    "load_code": "load_dataset(\"wikimedia/wikipedia\", \"20231101.en\", split=\"train\", streaming=True)",
+    "record_keys": [
+      "id",
+      "text",
+      "title",
+      "url"
+    ],
+    "status": "PASS",
+    "docs_saved": 200,
+    "seconds": 1.4,
+    "docs_per_sec": 146.5,
+    "mean_tokens_per_doc": 6761.9,
+    "sample_file": "data_samples/wikipedia_sample.jsonl",
+    "sample_bytes": 933997
+  },
+  "fineweb_edu": {
+    "attempts": [],
+    "load_code": "load_dataset(\"HuggingFaceFW/fineweb-edu\", \"sample-10BT\", split=\"train\", streaming=True)",
+    "record_keys": [
+      "dump",
+      "file_path",
+      "id",
+      "int_score",
+      "language",
+      "language_score",
+      "score",
+      "text",
+      "token_count",
+      "url"
+    ],
+    "status": "PASS",
+    "docs_saved": 200,
+    "seconds": 0.8,
+    "docs_per_sec": 252.7,
+    "mean_tokens_per_doc": 837.8,
+    "sample_file": "data_samples/fineweb_edu_sample.jsonl",
+    "sample_bytes": 563332
+  },
+  "cosmopedia": {
+    "attempts": [],
+    "load_code": "load_dataset(\"HuggingFaceTB/cosmopedia\", \"web_samples_v2\", split=\"train\", streaming=True)",
+    "record_keys": [
+      "audience",
+      "format",
+      "prompt",
+      "seed_data",
+      "text",
+      "text_token_length"
+    ],
+    "status": "PASS",
+    "docs_saved": 200,
+    "seconds": 1.5,
+    "docs_per_sec": 136.9,
+    "mean_tokens_per_doc": 734.4,
+    "sample_file": "data_samples/cosmopedia_sample.jsonl",
+    "sample_bytes": 786432
+  }
+}

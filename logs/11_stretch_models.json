@@ -1,0 +1,482 @@
+{
+  "meituan-longcat/LongCat-Flash-Lite": {
+    "repo": "meituan-longcat/LongCat-Flash-Lite",
+    "weights_downloaded": false,
+    "n_files": 41,
+    "total_bytes": 138189352064,
+    "total_size": "138.19 GB",
+    "largest_files": [
+      {
+        "file": "model-00004-of-00026.safetensors",
+        "size": "5.32 GB"
+      },
+      {
+        "file": "model-00025-of-00026.safetensors",
+        "size": "5.32 GB"
+      },
+      {
+        "file": "model-00019-of-00026.safetensors",
+        "size": "5.32 GB"
+      },
+      {
+        "file": "model-00018-of-00026.safetensors",
+        "size": "5.32 GB"
+      },
+      {
+        "file": "model-00024-of-00026.safetensors",
+        "size": "5.32 GB"
+      },
+      {
+        "file": "model-00016-of-00026.safetensors",
+        "size": "5.32 GB"
+      },
+      {
+        "file": "model-00017-of-00026.safetensors",
+        "size": "5.32 GB"
+      },
+      {
+        "file": "model-00015-of-00026.safetensors",
+        "size": "5.32 GB"
+      }
+    ],
+    "small_files": [
+      ".gitattributes",
+      ".gitignore",
+      "LICENSE",
+      "README.md",
+      "config.json",
+      "configuration_longcat_ngram.py",
+      "generation_config.json",
+      "model_hashes.txt",
+      "modeling_longcat_ngram.py",
+      "parse_model_response.py",
+      "special_tokens_map.json",
+      "tech_report.pdf",
+      "tokenizer_config.json"
+    ],
+    "index_json": "model.safetensors.index.json",
+    "n_tensors": 11160,
+    "index_total_size_field": 138179712000,
+    "memory_like_tensor_names": [
+      "model.ngram_embeddings.embedders.0.weight",
+      "model.ngram_embeddings.embedders.1.weight",
+      "model.ngram_embeddings.embedders.10.weight",
+      "model.ngram_embeddings.embedders.11.weight",
+      "model.ngram_embeddings.embedders.2.weight",
+      "model.ngram_embeddings.embedders.3.weight",
+      "model.ngram_embeddings.embedders.4.weight",
+      "model.ngram_embeddings.embedders.5.weight",
+      "model.ngram_embeddings.embedders.6.weight",
+      "model.ngram_embeddings.embedders.7.weight",
+      "model.ngram_embeddings.embedders.8.weight",
+      "model.ngram_embeddings.embedders.9.weight",
+      "model.ngram_embeddings.post_projs.0.weight",
+      "model.ngram_embeddings.post_projs.1.weight",
+      "model.ngram_embeddings.post_projs.10.weight",
+      "model.ngram_embeddings.post_projs.11.weight",
+      "model.ngram_embeddings.post_projs.2.weight",
+      "model.ngram_embeddings.post_projs.3.weight",
+      "model.ngram_embeddings.post_projs.4.weight",
+      "model.ngram_embeddings.post_projs.5.weight",
+      "model.ngram_embeddings.post_projs.6.weight",
+      "model.ngram_embeddings.post_projs.7.weight",
+      "model.ngram_embeddings.post_projs.8.weight",
+      "model.ngram_embeddings.post_projs.9.weight"
+    ],
+    "n_memory_like_tensors": 24,
+    "shards_containing_memory_tensors": [
+      {
+        "shard": "model-00000-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5313604160,
+        "n_tensors_in_shard": 31,
+        "n_memory_tensors_in_shard": 2,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00001-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5313604768,
+        "n_tensors_in_shard": 32,
+        "n_memory_tensors_in_shard": 2,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00002-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5313604016,
+        "n_tensors_in_shard": 30,
+        "n_memory_tensors_in_shard": 2,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00003-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5313604136,
+        "n_tensors_in_shard": 31,
+        "n_memory_tensors_in_shard": 2,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00004-of-00026.safetensors",
+        "size": "5.32 GB",
+        "bytes": 5315503392,
+        "n_tensors_in_shard": 15,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00005-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5313604136,
+        "n_tensors_in_shard": 31,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00006-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5313604136,
+        "n_tensors_in_shard": 31,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00007-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5313604760,
+        "n_tensors_in_shard": 32,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00008-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5313604216,
+        "n_tensors_in_shard": 32,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00009-of-00026.safetensors",
+        "size": "5.32 GB",
+        "bytes": 5315105048,
+        "n_tensors_in_shard": 15,
+        "n_memory_tensors_in_shard": 2,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00010-of-00026.safetensors",
+        "size": "5.32 GB",
+        "bytes": 5315104024,
+        "n_tensors_in_shard": 15,
+        "n_memory_tensors_in_shard": 2,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00011-of-00026.safetensors",
+        "size": "5.32 GB",
+        "bytes": 5315103008,
+        "n_tensors_in_shard": 15,
+        "n_memory_tensors_in_shard": 2,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00012-of-00026.safetensors",
+        "size": "5.32 GB",
+        "bytes": 5315190600,
+        "n_tensors_in_shard": 719,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00013-of-00026.safetensors",
+        "size": "5.32 GB",
+        "bytes": 5315190584,
+        "n_tensors_in_shard": 719,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00014-of-00026.safetensors",
+        "size": "5.32 GB",
+        "bytes": 5315190384,
+        "n_tensors_in_shard": 719,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00020-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5314674968,
+        "n_tensors_in_shard": 791,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      },
+      {
+        "shard": "model-00021-of-00026.safetensors",
+        "size": "5.31 GB",
+        "bytes": 5314674952,
+        "n_tensors_in_shard": 791,
+        "n_memory_tensors_in_shard": 1,
+        "shard_is_memory_only": false
+      }
+    ],
+    "memory_shards_total_bytes": 90344571288,
+    "memory_shards_total_size": "90.34 GB",
+    "separately_downloadable": false,
+    "tensor_name_prefixes_top": {
+      "model.layers": 11116,
+      "model.ngram_embeddings": 24,
+      "model.mtp": 17,
+      "model.norm": 1,
+      "model.embed_tokens": 1,
+      "lm_head.weight": 1
+    },
+    "biggest_shards_with_tensor_counts": [
+      {
+        "shard": "model-00004-of-00026.safetensors",
+        "size": "5.32 GB",
+        "n_tensors": 15,
+        "sample_tensors": [
+          "model.layers.4.mlp.experts.223.down_proj.weight",
+          "model.layers.4.self_attn.1.kv_a_proj_with_mqa.weight",
+          "model.layers.5.mlp.experts.1.gate_proj.weight",
+          "model.layers.5.mlp.experts.204.down_proj.weight",
+          "model.layers.5.mlp.experts.80.up_proj.weight",
+          "model.layers.6.mlp.experts.21.gate_proj.weight"
+        ]
+      },
+      {
+        "shard": "model-00025-of-00026.safetensors",
+        "size": "5.32 GB",
+        "n_tensors": 791,
+        "sample_tensors": [
+          "model.layers.0.mlp.experts.1.up_proj.weight",
+          "model.layers.0.mlp.experts.100.gate_proj.weight",
+          "model.layers.0.mlp.experts.102.gate_proj.weight",
+          "model.layers.0.mlp.experts.104.gate_proj.weight",
+          "model.layers.0.mlp.experts.109.gate_proj.weight",
+          "model.layers.0.mlp.experts.116.up_proj.weight"
+        ]
+      },
+      {
+        "shard": "model-00019-of-00026.safetensors",
+        "size": "5.32 GB",
+        "n_tensors": 790,
+        "sample_tensors": [
+          "model.layers.0.mlp.experts.101.down_proj.weight",
+          "model.layers.0.mlp.experts.103.gate_proj.weight",
+          "model.layers.0.mlp.experts.110.gate_proj.weight",
+          "model.layers.0.mlp.experts.111.gate_proj.weight",
+          "model.layers.0.mlp.experts.113.gate_proj.weight",
+          "model.layers.0.mlp.experts.122.down_proj.weight"
+        ]
+      },
+      {
+        "shard": "model-00018-of-00026.safetensors",
+        "size": "5.32 GB",
+        "n_tensors": 790,
+        "sample_tensors": [
+          "model.layers.0.mlp.experts.0.down_proj.weight",
+          "model.layers.0.mlp.experts.10.gate_proj.weight",
+          "model.layers.0.mlp.experts.109.down_proj.weight",
+          "model.layers.0.mlp.experts.11.down_proj.weight",
+          "model.layers.0.mlp.experts.11.up_proj.weight",
+          "model.layers.0.mlp.experts.119.down_proj.weight"
+        ]
+      }
+    ],
+    "status": "PASS"
+  },
+  "deepseek-ai/DeepSeek-V4.1-Flash": {
+    "repo": "deepseek-ai/DeepSeek-V4.1-Flash",
+    "weights_downloaded": false,
+    "n_files": 90,
+    "total_bytes": 510313372827,
+    "total_size": "510.31 GB",
+    "largest_files": [
+      {
+        "file": "model-00048-of-00048.safetensors",
+        "size": "101.54 GB"
+      },
+      {
+        "file": "model-00047-of-00048.safetensors",
+        "size": "101.54 GB"
+      },
+      {
+        "file": "model-00017-of-00048.safetensors",
+        "size": "7.41 GB"
+      },
+      {
+        "file": "model-00005-of-00048.safetensors",
+        "size": "7.41 GB"
+      },
+      {
+        "file": "model-00011-of-00048.safetensors",
+        "size": "7.41 GB"
+      },
+      {
+        "file": "model-00023-of-00048.safetensors",
+        "size": "7.40 GB"
+      },
+      {
+        "file": "model-00027-of-00048.safetensors",
+        "size": "7.40 GB"
+      },
+      {
+        "file": "model-00031-of-00048.safetensors",
+        "size": "7.40 GB"
+      }
+    ],
+    "small_files": [
+      ".gitattributes",
+      ".gitignore",
+      "LICENSE",
+      "README.md",
+      "assets/dsv41_agentic_performance.png",
+      "assets/dsv41_kv_cache.png",
+      "chat_template.jinja",
+      "config.json",
+      "encoding/README.md",
+      "encoding/encoding.py",
+      "encoding/test_encoding.py",
+      "encoding/tests/test_input_1.json",
+      "encoding/tests/test_input_2.json",
+      "encoding/tests/test_input_3.json",
+      "encoding/tests/test_input_4.json",
+      "encoding/tests/test_input_5.json",
+      "encoding/tests/test_output_1.txt",
+      "encoding/tests/test_output_2.txt",
+      "encoding/tests/test_output_3.txt",
+      "encoding/tests/test_output_4.txt",
+      "encoding/tests/test_output_5.txt",
+      "evaluation/README.md",
+      "evaluation/dsh-minimal.patch",
+      "inference/README.md",
+      "inference/config.json",
+      "inference/convert.py",
+      "inference/engram.py",
+      "inference/examples/example.txt",
+      "inference/examples/example_harmony.json",
+      "inference/examples/images/carrots.jpeg",
+      "inference/examples/images/corn.jpeg",
+      "inference/generate.py",
+      "inference/image_processor.py",
+      "inference/kernel.py",
+      "inference/model.py",
+      "inference/requirements.txt",
+      "inference/run.sh",
+      "inference/vision.py",
+      "tokenizer_config.json"
+    ],
+    "index_json": "model.safetensors.index.json",
+    "n_tensors": 96085,
+    "index_total_size_field": 510286023000,
+    "memory_like_tensor_names": [
+      "layers.1.engram.embed.scale",
+      "layers.1.engram.embed.weight",
+      "layers.1.engram.k_weight",
+      "layers.1.engram.q_weight",
+      "layers.1.engram.wkv.scale",
+      "layers.1.engram.wkv.weight",
+      "layers.14.engram.embed.scale",
+      "layers.14.engram.embed.weight",
+      "layers.14.engram.k_weight",
+      "layers.14.engram.q_weight",
+      "layers.14.engram.wkv.scale",
+      "layers.14.engram.wkv.weight"
+    ],
+    "n_memory_like_tensors": 12,
+    "shards_containing_memory_tensors": [
+      {
+        "shard": "model-00047-of-00048.safetensors",
+        "size": "101.54 GB",
+        "bytes": 101535150936,
+        "n_tensors_in_shard": 6,
+        "n_memory_tensors_in_shard": 6,
+        "shard_is_memory_only": true
+      },
+      {
+        "shard": "model-00048-of-00048.safetensors",
+        "size": "101.54 GB",
+        "bytes": 101537926640,
+        "n_tensors_in_shard": 6,
+        "n_memory_tensors_in_shard": 6,
+        "shard_is_memory_only": true
+      }
+    ],
+    "memory_shards_total_bytes": 203073077576,
+    "memory_shards_total_size": "203.07 GB",
+    "separately_downloadable": true,
+    "tensor_name_prefixes_top": {
+      "layers.14": 2348,
+      "layers.8": 2342,
+      "layers.2": 2342,
+      "layers.20": 2341,
+      "layers.1": 2340,
+      "layers.24": 2337,
+      "layers.32": 2337,
+      "layers.28": 2337,
+      "layers.36": 2337,
+      "layers.6": 2334,
+      "layers.22": 2334,
+      "layers.30": 2334
+    },
+    "biggest_shards_with_tensor_counts": [
+      {
+        "shard": "model-00048-of-00048.safetensors",
+        "size": "101.54 GB",
+        "n_tensors": 6,
+        "sample_tensors": [
+          "layers.14.engram.embed.scale",
+          "layers.14.engram.embed.weight",
+          "layers.14.engram.k_weight",
+          "layers.14.engram.q_weight",
+          "layers.14.engram.wkv.scale",
+          "layers.14.engram.wkv.weight"
+        ]
+      },
+      {
+        "shard": "model-00047-of-00048.safetensors",
+        "size": "101.54 GB",
+        "n_tensors": 6,
+        "sample_tensors": [
+          "layers.1.engram.embed.scale",
+          "layers.1.engram.embed.weight",
+          "layers.1.engram.k_weight",
+          "layers.1.engram.q_weight",
+          "layers.1.engram.wkv.scale",
+          "layers.1.engram.wkv.weight"
+        ]
+      },
+      {
+        "shard": "model-00017-of-00048.safetensors",
+        "size": "7.41 GB",
+        "n_tensors": 2342,
+        "sample_tensors": [
+          "layers.14.attn.attn_sink",
+          "layers.14.attn.compressor.norm.weight",
+          "layers.14.attn.compressor.wgate.weight",
+          "layers.14.attn.compressor.wkv.weight",
+          "layers.14.attn.indexer.k_norm.weight",
+          "layers.14.attn.indexer.weights_proj.weight"
+        ]
+      },
+      {
+        "shard": "model-00011-of-00048.safetensors",
+        "size": "7.41 GB",
+        "n_tensors": 2342,
+        "sample_tensors": [
+          "layers.8.attn.attn_sink",
+          "layers.8.attn.compressor.norm.weight",
+          "layers.8.attn.compressor.wgate.weight",
+          "layers.8.attn.compressor.wkv.weight",
+          "layers.8.attn.indexer.k_norm.weight",
+          "layers.8.attn.indexer.weights_proj.weight"
+        ]
+      }
+    ],
+    "status": "PASS"
+  }
+}

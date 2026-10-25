@@ -1,0 +1,68 @@
+{
+  "faiss_version": "1.15.1",
+  "n": 1000000,
+  "d": 256,
+  "nq": 1000,
+  "k": 32,
+  "threads": 18,
+  "data_gen_seconds": 0.82,
+  "database_bytes": 1024000000,
+  "database_GB": 1.024,
+  "rss_after_data_GB": 1.08,
+  "IndexFlatIP": {
+    "load_code": "index = faiss.IndexFlatIP(256); index.add(xb)",
+    "build_seconds": 0.094,
+    "ntotal": 1000000,
+    "rss_after_build_GB": 2.1,
+    "search_seconds": 0.644,
+    "ms_per_query": 0.644,
+    "qps": 1552.8,
+    "result_shapes": [
+      [
+        1000,
+        32
+      ],
+      [
+        1000,
+        32
+      ]
+    ],
+    "index_bytes_in_ram_est": 1024000000
+  },
+  "IndexIVFPQ": {
+    "nlist": 4096,
+    "m_subquantizers": 32,
+    "nbits": 8,
+    "load_code": "quant = faiss.IndexFlatIP(256)\nindex = faiss.IndexIVFPQ(quant, 256, 4096, 32, 8, faiss.METRIC_INNER_PRODUCT)\nindex.train(xb[:262144]); index.add(xb); index.nprobe = 32",
+    "train_seconds": 18.97,
+    "n_train_vectors": 262144,
+    "add_seconds": 5.24,
+    "build_seconds": 24.21,
+    "ntotal": 1000000,
+    "rss_after_build_GB": 2.39,
+    "codes_bytes_est": 32000000,
+    "codes_MB_est": 32.0,
+    "compression_vs_flat": "32.0x",
+    "nprobe_8": {
+      "search_seconds": 0.019,
+      "ms_per_query": 0.019,
+      "qps": 52534.1,
+      "recall_at_32_vs_flat": 0.0226
+    },
+    "nprobe_32": {
+      "search_seconds": 0.013,
+      "ms_per_query": 0.013,
+      "qps": 79991.5,
+      "recall_at_32_vs_flat": 0.0493
+    },
+    "nprobe_128": {
+      "search_seconds": 0.031,
+      "ms_per_query": 0.031,
+      "qps": 32191.1,
+      "recall_at_32_vs_flat": 0.0866
+    },
+    "status": "PASS"
+  },
+  "peak_rss_GB": 2.39,
+  "status": "PASS"
+}

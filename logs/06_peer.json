@@ -1,0 +1,118 @@
+{
+  "device": "mps",
+  "device_note": "mps",
+  "config": {
+    "dim": 512,
+    "heads": 8,
+    "num_experts": 65536,
+    "num_experts_per_head": 16,
+    "dim_key": 128,
+    "batch": 2,
+    "seq": 128
+  },
+  "load_code": "from PEER_pytorch import PEER\npeer = PEER(dim=512, heads=8, num_experts=65536, num_experts_per_head=16, dim_key=128, pre_rmsnorm=True)",
+  "num_keys_per_half": 256,
+  "param_shapes": {
+    "keys": [
+      8,
+      256,
+      2,
+      128
+    ],
+    "norm.gamma": [
+      512
+    ],
+    "weight_down_embed.weight": [
+      65536,
+      512
+    ],
+    "weight_up_embed.weight": [
+      65536,
+      512
+    ],
+    "to_queries.0.weight": [
+      2048,
+      512
+    ]
+  },
+  "n_params": 68682240,
+  "key_param_name": "keys",
+  "value_param_names": [
+    "weight_down_embed.weight",
+    "weight_up_embed.weight"
+  ],
+  "effective_experts_per_head": 1,
+  "product_key_topk": 16,
+  "forward_seconds": 0.1042,
+  "output_shape": [
+    2,
+    128,
+    512
+  ],
+  "backward_seconds": 0.0157,
+  "grads": {
+    "keys": {
+      "grad_norm": 1623.26757812,
+      "nonzero": 221568,
+      "is_sparse": false
+    },
+    "norm.gamma": {
+      "grad_norm": 229.32946777,
+      "nonzero": 512,
+      "is_sparse": false
+    },
+    "weight_down_embed.weight": {
+      "grad_norm": 75.60321808,
+      "nonzero": 732745,
+      "is_sparse": false
+    },
+    "weight_up_embed.weight": {
+      "grad_norm": 8.55189323,
+      "nonzero": 615424,
+      "is_sparse": false
+    },
+    "to_queries.0.weight": {
+      "grad_norm": 1303.55664062,
+      "nonzero": 1048576,
+      "is_sparse": false
+    }
+  },
+  "grad_reaches_keys": true,
+  "grad_reaches_values": true,
+  "index_readout": {
+    "method": "forward pre-hook on peer.weight_down_embed (nn.Embedding)",
+    "captured": true,
+    "indices_shape": [
+      2,
+      128,
+      8,
+      1
+    ],
+    "indices_dtype": "torch.int64",
+    "layout": "[batch, seq, heads, num_experts_per_head_topk]",
+    "min": 0,
+    "max": 65497,
+    "in_range": true,
+    "unique_experts_this_batch": 2010,
+    "exposed_by_package": false,
+    "smallest_source_change": "PEER_pytorch/PEER.py, PEER.forward: add a `return_indices = False` kwarg and `if return_indices: return out, indices, scores` at the end. One kwarg + one branch. The hook above avoids even that."
+  },
+  "c2_status": "PASS",
+  "c3_freeze_code": "peer.keys.requires_grad_(False)   # product-key table frozen\n# weight_down_embed / weight_up_embed (the experts) still train\nopt = torch.optim.Adam([p for p in peer.parameters() if p.requires_grad], lr=1e-2)",
+  "c3_requires_grad": {
+    "keys": false,
+    "norm.gamma": true,
+    "weight_down_embed.weight": true,
+    "weight_up_embed.weight": true,
+    "to_queries.0.weight": true
+  },
+  "c3_after_one_step": {
+    "keys_max_abs_change": 0.0,
+    "keys_bit_identical": true,
+    "keys_grad_is_none": true,
+    "weight_down_max_abs_change": 0.010000228881835938,
+    "weight_up_max_abs_change": 0.010000228881835938,
+    "experts_changed": true
+  },
+  "c3_status": "PASS"
+}

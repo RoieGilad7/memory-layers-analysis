@@ -1,0 +1,18 @@
+# Project metadata and tool config. There is no package to install: run things from the
+# repo root (`python -m memlayers.train`, `python -m pytest tests/`). This file exists so
+# pytest picks up a consistent configuration wherever it is invoked from.
+
+[project]
+name = "memlayers"
+version = "0.1.0"
+description = "What do memory-layer values store? PKM / PEER read-log analysis (COMS E6998 final project)"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+# tests/conftest.py puts the repo root on sys.path, so `memlayers` imports without install
+pythonpath = ["."]
+filterwarnings = [
+    "error::DeprecationWarning:memlayers.*",
+]

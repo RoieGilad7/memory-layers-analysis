@@ -643,8 +643,8 @@ hf auth login                      # if not already logged in
 | `step0_access/check_12_stretch_tensors.py` | B4 — ranged safetensors headers |
 | `step0_access/check_13_mps_train.py` | Task D local smoke test |
 | `tools/bio_generator.py` | C5 |
-| `logs/*.json` | machine-readable result of every check |
-| `logs/*.out` | stdout of each check, as `run_all.sh` captured it |
+| `logs/*.json` | machine-readable result of every check (**committed** — the evidence for this report) |
+| `logs/*.out` | stdout of each check as `run_all.sh` captured it (git-ignored; re-run to regenerate) |
 | `data_samples/` | 14 MB of tiny samples (git-ignored) |
 
 Two re-runnability fixes were needed to make `run_all.sh` reliable, both worth knowing about:

@@ -1,5 +1,5 @@
 {
-  "config": "/Users/roieg/studies/ms/year1/courses/algos_in_llms/final_project/memlayers/configs/t2_pkm_262k.yaml",
+  "config": "memlayers/configs/t2_pkm_262k.yaml",
   "ladder": [
     4,
     8,
