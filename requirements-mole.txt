@@ -1,0 +1,12 @@
+# SECOND venv, needed only for B1 (MoLE). The MoLE modeling code (github.com/JieShibo/MoLE)
+# is written against transformers 4.38.2 and fails on transformers 5.x: LlamaConfig no longer
+# exposes `rope_theta` as a top-level attribute.
+#   conda create -y -p .venv-mole python=3.12
+#   .venv-mole/bin/pip install -r requirements-mole.txt
+transformers==4.38.2
+tokenizers==0.15.2
+huggingface_hub==0.23.5
+torch==2.14.1
+numpy==2.2.6
+accelerate==1.15.0
+safetensors==0.8.0

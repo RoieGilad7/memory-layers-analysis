@@ -1,0 +1,31 @@
+# env
+.venv/
+.venv-mole/
+.venv*/
+__pycache__/
+*.pyc
+.env
+.env.*
+
+# data & samples (tiny samples are regenerable; keep repo clean)
+data_samples/
+logs/
+
+# external code checkouts
+external/
+
+# model weights / caches
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.gguf
+*.npy
+*.npz
+hf_cache/
+.cache/
+checkpoints/
+
+# os
+.DS_Store
