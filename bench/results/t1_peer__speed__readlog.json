@@ -1,0 +1,84 @@
+{
+  "config": "/Users/roieg/studies/ms/year1/courses/algos_in_llms/final_project/memlayers/configs/t1_peer.yaml",
+  "name": "t1_peer",
+  "mode": "speed",
+  "read_logging": true,
+  "steps": 300,
+  "warmup_discarded": 30,
+  "steps_measured": 270,
+  "micro_batch_size": 32,
+  "grad_accum_steps": 1,
+  "tokens_per_step": 16384,
+  "ms_per_step_mean": 1199.8802221811343,
+  "ms_per_step_median": 1199.605062021874,
+  "ms_per_step_p90": 1203.5255000228062,
+  "ms_per_step_min": 1193.8905830029398,
+  "tokens_per_s_mean": 13654.768444274865,
+  "tokens_per_s_from_mean_time": 13654.69627478089,
+  "peak_mem_bytes": 36383260672,
+  "peak_mem_GB": 36.383260672,
+  "loss_first": 10.902148246765137,
+  "loss_last": 10.833500862121582,
+  "param_counts": {
+    "embedding": 19495296,
+    "backbone": 9465984,
+    "memory_keys": 262144,
+    "memory_values": 50331648,
+    "memory_other": 393600,
+    "memory_total": 50987392,
+    "non_embedding": 60453376,
+    "total": 79948672
+  },
+  "device_check": {
+    "expected_device": "mps",
+    "tensors_off_device": [],
+    "all_on_device": true
+  },
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "device": "mps",
+    "mps_available": true,
+    "mps_built": true,
+    "cuda_available": false,
+    "mps_fallback_env": "<unset>",
+    "chip": "Apple M5 Pro",
+    "ram_bytes": 68719476736
+  },
+  "out_dir": "runs/bench_t1_peer_readlog",
+  "memory_layers": {
+    "3": {
+      "kind": "peer",
+      "n_slots": 65536,
+      "heads": 4,
+      "topk": 32,
+      "reads_per_token": 128,
+      "readlog_bytes_per_token_theory": 512
+    }
+  },
+  "readlog": {
+    "bytes_written": 2516582400,
+    "tokens_logged": 4915200,
+    "bytes_per_token": 512.0,
+    "GB_per_million_tokens": 0.512
+  },
+  "slot_usage": {
+    "3": {
+      "n_slots": 65536,
+      "slots_used": 65354,
+      "fraction_used": 0.997222900390625,
+      "total_reads": 629145600.0,
+      "max_kl_nats": 11.090354888959125,
+      "entropy_nats": 5.934833414507634,
+      "kl_from_uniform": 5.155521474451491,
+      "normalized_kl": 0.46486532902423267,
+      "top1_share": 0.0074141502380371095,
+      "top1pct_share": 0.9486948776245117,
+      "gini": 0.984908372632829,
+      "kl_from_uniform_weighted": 5.335143204349178,
+      "normalized_kl_weighted": 0.4810615402091883
+    }
+  }
+}

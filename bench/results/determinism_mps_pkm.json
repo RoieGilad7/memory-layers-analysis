@@ -1,0 +1,26 @@
+{
+  "device": "mps",
+  "steps": 40,
+  "kind": "pkm",
+  "repeat": {
+    "loss_a": 10.852363586425781,
+    "loss_b": 10.852502822875977,
+    "abs_diff": 0.0001392364501953125,
+    "param_checksum_a": 213.58612882715494,
+    "param_checksum_b": 213.6889618553833,
+    "checksum_abs_diff": 0.10283302822836049,
+    "bit_identical": false,
+    "within_1e-4": false
+  },
+  "resume": {
+    "loss_straight": 10.85336685180664,
+    "loss_resumed": 10.865891456604004,
+    "abs_diff": 0.012524604797363281,
+    "final_step_straight": 40,
+    "final_step_resumed": 40,
+    "lr_match": true,
+    "data_order_match": true,
+    "bit_identical": false,
+    "within_1e-4": false
+  }
+}

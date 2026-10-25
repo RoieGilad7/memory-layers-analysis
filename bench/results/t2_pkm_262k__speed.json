@@ -1,0 +1,61 @@
+{
+  "config": "/Users/roieg/studies/ms/year1/courses/algos_in_llms/final_project/memlayers/configs/t2_pkm_262k.yaml",
+  "name": "t2_pkm_262k",
+  "mode": "speed",
+  "read_logging": false,
+  "steps": 300,
+  "warmup_discarded": 30,
+  "steps_measured": 270,
+  "micro_batch_size": 32,
+  "grad_accum_steps": 1,
+  "tokens_per_step": 16384,
+  "ms_per_step_mean": 1908.0202785238657,
+  "ms_per_step_median": 1904.4681040686555,
+  "ms_per_step_p90": 1921.247374964878,
+  "ms_per_step_min": 1897.1608330029994,
+  "tokens_per_s_mean": 8587.41107844771,
+  "tokens_per_s_from_mean_time": 8586.910833398182,
+  "peak_mem_bytes": 29596876800,
+  "peak_mem_GB": 29.5968768,
+  "loss_first": 10.933591842651367,
+  "loss_last": 10.83368968963623,
+  "param_counts": {
+    "embedding": 25993728,
+    "backbone": 23120384,
+    "memory_keys": 524288,
+    "memory_values": 134217728,
+    "memory_other": 524544,
+    "memory_total": 135266560,
+    "non_embedding": 158386944,
+    "total": 184380672
+  },
+  "device_check": {
+    "expected_device": "mps",
+    "tensors_off_device": [],
+    "all_on_device": true
+  },
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "device": "mps",
+    "mps_available": true,
+    "mps_built": true,
+    "cuda_available": false,
+    "mps_fallback_env": "<unset>",
+    "chip": "Apple M5 Pro",
+    "ram_bytes": 68719476736
+  },
+  "out_dir": "runs/bench_t2_pkm_262k",
+  "memory_layers": {
+    "4": {
+      "kind": "pkm",
+      "n_slots": 262144,
+      "heads": 4,
+      "topk": 32,
+      "reads_per_token": 128,
+      "readlog_bytes_per_token_theory": 768
+    }
+  }
+}

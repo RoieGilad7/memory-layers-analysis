@@ -49,7 +49,8 @@ def main() -> int:
         "tokens_seen": tr.tokens_seen,
         "next_batch_sum": int(x.sum()),
         "batch_at_start_sum": int(probe.sum()),
-        "param_checksum": float(sum(p.detach().double().sum()
+        # .cpu() first: MPS has no float64, so .double() must happen on the host
+        "param_checksum": float(sum(p.detach().cpu().double().sum()
                                     for p in tr.model.parameters())),
     }, indent=2))
     return 0

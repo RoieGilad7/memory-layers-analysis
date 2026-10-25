@@ -1,0 +1,26 @@
+{
+  "device": "mps",
+  "steps": 40,
+  "kind": "peer",
+  "repeat": {
+    "loss_a": 10.840843200683594,
+    "loss_b": 10.841062545776367,
+    "abs_diff": 0.0002193450927734375,
+    "param_checksum_a": -860.6693915457843,
+    "param_checksum_b": -862.0715284548073,
+    "checksum_abs_diff": 1.4021369090230564,
+    "bit_identical": false,
+    "within_1e-4": false
+  },
+  "resume": {
+    "loss_straight": 10.841062545776367,
+    "loss_resumed": 10.840843200683594,
+    "abs_diff": 0.0002193450927734375,
+    "final_step_straight": 40,
+    "final_step_resumed": 40,
+    "lr_match": true,
+    "data_order_match": true,
+    "bit_identical": false,
+    "within_1e-4": false
+  }
+}

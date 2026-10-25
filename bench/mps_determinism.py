@@ -30,14 +30,19 @@ from memlayers.devices import pick_device  # noqa: E402
 WORKER = ROOT / "tests" / "_resume_worker.py"
 
 
-def cfg_dict(out_dir: str, steps: int, device: str) -> dict:
+def cfg_dict(out_dir: str, steps: int, device: str, kind: str = "pkm") -> dict:
+    model = {"vocab_size": 50257, "block_size": 128, "n_layer": 4, "n_head": 4,
+             "n_embd": 256, "dropout": 0.0, "bias": True, "tie_embeddings": True}
+    if kind != "dense":
+        model["memory_layers"] = [2]
+        model["memory_kind"] = kind
+        model["memory"] = ({"num_keys": 64, "topk": 16, "heads": 4, "dim_head": 64,
+                            "query_batchnorm": True} if kind == "pkm"
+                           else {"num_experts": 4096, "topk": 16, "heads": 4,
+                                 "dim_key": 64, "non_competing_scores": False})
     return {
-        "name": "mps-determinism",
-        "model": {"vocab_size": 50257, "block_size": 128, "n_layer": 4, "n_head": 4,
-                  "n_embd": 256, "dropout": 0.0, "bias": True, "tie_embeddings": True,
-                  "memory_layers": [2], "memory_kind": "pkm",
-                  "memory": {"num_keys": 64, "topk": 16, "heads": 4, "dim_head": 64,
-                             "query_batchnorm": True}},
+        "name": f"determinism-{kind}",
+        "model": model,
         "data": {"kind": "repeat", "chunk_len": 8, "n_distinct": None, "seed": 7},
         "train": {"steps": steps, "micro_batch_size": 4, "grad_accum_steps": 1,
                   "lr": 1e-3, "lr_memory_values": 4e-3, "weight_decay": 0.1,
@@ -64,17 +69,18 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--steps", type=int, default=40)
     ap.add_argument("--device", default=None)
+    ap.add_argument("--kind", default="pkm", choices=["dense", "pkm", "peer"])
     a = ap.parse_args()
     device = a.device or pick_device().type
 
-    out = {"device": device, "steps": a.steps}
+    out = {"device": device, "steps": a.steps, "kind": a.kind}
     with tempfile.TemporaryDirectory() as td:
         td = Path(td)
 
         # --- property 1: two identical fresh runs
         for tag in ("r1", "r2"):
             p = td / f"{tag}.yaml"
-            p.write_text(yaml.safe_dump(cfg_dict(str(td / tag), a.steps, device)))
+            p.write_text(yaml.safe_dump(cfg_dict(str(td / tag), a.steps, device, a.kind)))
         x1 = run(td / "r1.yaml", td / "x1.json", a.steps)
         x2 = run(td / "r2.yaml", td / "x2.json", a.steps)
         out["repeat"] = {
@@ -92,9 +98,9 @@ def main() -> int:
         # --- property 2: straight vs. resumed
         half = a.steps // 2
         sp = td / "s.yaml"
-        sp.write_text(yaml.safe_dump(cfg_dict(str(td / "straight"), a.steps, device)))
+        sp.write_text(yaml.safe_dump(cfg_dict(str(td / "straight"), a.steps, device, a.kind)))
         gp = td / "g.yaml"
-        gp.write_text(yaml.safe_dump(cfg_dict(str(td / "split"), a.steps, device)))
+        gp.write_text(yaml.safe_dump(cfg_dict(str(td / "split"), a.steps, device, a.kind)))
         st = run(sp, td / "st.json", a.steps)
         run(gp, td / "h1.json", half, save=td / "half.pt")
         h2 = run(gp, td / "h2.json", a.steps - half, resume=td / "half.pt")
@@ -108,13 +114,13 @@ def main() -> int:
         out["resume"]["bit_identical"] = out["resume"]["abs_diff"] == 0.0
         out["resume"]["within_1e-4"] = out["resume"]["abs_diff"] < 1e-4
 
-    (ROOT / "bench" / "results" / f"determinism_{device}.json").write_text(
+    (ROOT / "bench" / "results" / f"determinism_{device}_{a.kind}.json").write_text(
         json.dumps(out, indent=2))
     print(json.dumps(out, indent=2))
     r, s = out["repeat"], out["resume"]
-    print(f"\n[{device}] repeat: |diff| = {r['abs_diff']:.3e}  "
+    print(f"\n[{device}/{a.kind}] repeat: |diff| = {r['abs_diff']:.3e}  "
           f"bit-identical={r['bit_identical']}  within 1e-4={r['within_1e-4']}")
-    print(f"[{device}] resume: |diff| = {s['abs_diff']:.3e}  "
+    print(f"[{device}/{a.kind}] resume: |diff| = {s['abs_diff']:.3e}  "
           f"bit-identical={s['bit_identical']}  within 1e-4={s['within_1e-4']}  "
           f"lr_match={s['lr_match']}  data_order_match={s['data_order_match']}")
     return 0

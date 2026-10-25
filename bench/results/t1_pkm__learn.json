@@ -1,0 +1,222 @@
+{
+  "config": "/Users/roieg/studies/ms/year1/courses/algos_in_llms/final_project/memlayers/configs/t1_pkm.yaml",
+  "name": "t1_pkm",
+  "mode": "learn",
+  "dataset": "repeat (fake data b)",
+  "chunk_len": 16,
+  "steps": 1000,
+  "micro_batch_size": 32,
+  "tokens_seen": 16384000,
+  "random_token_level_nats": 10.82490511970208,
+  "task_loss_floor_nats": 0.33827828499069,
+  "loss_first": 10.920656204223633,
+  "loss_final": 4.029534339904785,
+  "loss_final_mean_last25": 4.082426557540893,
+  "loss_min": 3.9630813598632812,
+  "clearly_below_random": true,
+  "curve_every_25": [
+    {
+      "step": 25,
+      "loss": 10.606765747070312
+    },
+    {
+      "step": 50,
+      "loss": 10.442970275878906
+    },
+    {
+      "step": 75,
+      "loss": 10.361440658569336
+    },
+    {
+      "step": 100,
+      "loss": 10.293569564819336
+    },
+    {
+      "step": 125,
+      "loss": 10.216131210327148
+    },
+    {
+      "step": 150,
+      "loss": 10.056772232055664
+    },
+    {
+      "step": 175,
+      "loss": 9.807656288146973
+    },
+    {
+      "step": 200,
+      "loss": 9.16894245147705
+    },
+    {
+      "step": 225,
+      "loss": 8.7135009765625
+    },
+    {
+      "step": 250,
+      "loss": 8.319550514221191
+    },
+    {
+      "step": 275,
+      "loss": 7.729461669921875
+    },
+    {
+      "step": 300,
+      "loss": 7.025103569030762
+    },
+    {
+      "step": 325,
+      "loss": 6.604129791259766
+    },
+    {
+      "step": 350,
+      "loss": 6.28936243057251
+    },
+    {
+      "step": 375,
+      "loss": 6.033785820007324
+    },
+    {
+      "step": 400,
+      "loss": 5.745389938354492
+    },
+    {
+      "step": 425,
+      "loss": 5.537392616271973
+    },
+    {
+      "step": 450,
+      "loss": 5.449162483215332
+    },
+    {
+      "step": 475,
+      "loss": 5.26765251159668
+    },
+    {
+      "step": 500,
+      "loss": 5.119123935699463
+    },
+    {
+      "step": 525,
+      "loss": 4.970013618469238
+    },
+    {
+      "step": 550,
+      "loss": 4.829392433166504
+    },
+    {
+      "step": 575,
+      "loss": 4.713274955749512
+    },
+    {
+      "step": 600,
+      "loss": 4.552535533905029
+    },
+    {
+      "step": 625,
+      "loss": 4.653452396392822
+    },
+    {
+      "step": 650,
+      "loss": 4.43949031829834
+    },
+    {
+      "step": 675,
+      "loss": 4.393103122711182
+    },
+    {
+      "step": 700,
+      "loss": 4.428393840789795
+    },
+    {
+      "step": 725,
+      "loss": 4.339768409729004
+    },
+    {
+      "step": 750,
+      "loss": 4.3118720054626465
+    },
+    {
+      "step": 775,
+      "loss": 4.284224033355713
+    },
+    {
+      "step": 800,
+      "loss": 4.4189252853393555
+    },
+    {
+      "step": 825,
+      "loss": 4.129277229309082
+    },
+    {
+      "step": 850,
+      "loss": 4.159448623657227
+    },
+    {
+      "step": 875,
+      "loss": 4.0926833152771
+    },
+    {
+      "step": 900,
+      "loss": 4.036276817321777
+    },
+    {
+      "step": 925,
+      "loss": 4.122931003570557
+    },
+    {
+      "step": 950,
+      "loss": 4.066294193267822
+    },
+    {
+      "step": 975,
+      "loss": 4.082887649536133
+    },
+    {
+      "step": 1000,
+      "loss": 4.029534339904785
+    }
+  ],
+  "ms_per_step_mean": 1221.065314351485,
+  "peak_mem_GB": 23.540301824,
+  "param_counts": {
+    "embedding": 19495296,
+    "backbone": 9465984,
+    "memory_keys": 262144,
+    "memory_values": 25165824,
+    "memory_other": 393472,
+    "memory_total": 25821440,
+    "non_embedding": 35287424,
+    "total": 54782720
+  },
+  "env": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "device": "mps",
+    "mps_available": true,
+    "mps_built": true,
+    "cuda_available": false,
+    "mps_fallback_env": "<unset>",
+    "chip": "Apple M5 Pro",
+    "ram_bytes": 68719476736
+  },
+  "out_dir": "runs/learn_t1_pkm",
+  "slot_usage": {
+    "3": {
+      "n_slots": 65536,
+      "slots_used": 65536,
+      "fraction_used": 1.0,
+      "total_reads": 2097152000.0,
+      "max_kl_nats": 11.090354888959125,
+      "entropy_nats": 8.92297706387147,
+      "kl_from_uniform": 2.167377825087655,
+      "normalized_kl": 0.19542907749916671,
+      "top1_share": 0.0020480098724365236,
+      "top1pct_share": 0.527381805896759,
+      "gini": 0.7703614799645879,
+      "kl_from_uniform_weighted": 2.0693160525054424,
+      "normalized_kl_weighted": 0.1865870004363455
+    }
+  }
+}

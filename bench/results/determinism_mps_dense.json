@@ -1,0 +1,26 @@
+{
+  "device": "mps",
+  "steps": 40,
+  "kind": "dense",
+  "repeat": {
+    "loss_a": 10.819757461547852,
+    "loss_b": 10.819757461547852,
+    "abs_diff": 0.0,
+    "param_checksum_a": 3634.644434027046,
+    "param_checksum_b": 3634.6455422211757,
+    "checksum_abs_diff": 0.001108194129756157,
+    "bit_identical": false,
+    "within_1e-4": true
+  },
+  "resume": {
+    "loss_straight": 10.819757461547852,
+    "loss_resumed": 10.819756507873535,
+    "abs_diff": 9.5367431640625e-07,
+    "final_step_straight": 40,
+    "final_step_resumed": 40,
+    "lr_match": true,
+    "data_order_match": true,
+    "bit_identical": false,
+    "within_1e-4": true
+  }
+}
