@@ -102,6 +102,45 @@ class DataConfig:
         self.ngram_n = int(dd["ngram_n"])
         self.ngram_drop_threshold = float(dd["ngram_drop_threshold"])
 
+        b = c.get("bios")
+        self.bios = b
+        if b is not None:
+            self.bio_attributes: List[str] = list(b["attributes"])
+            self.bio_genders: List[str] = list(b["genders"])
+            pe = b["people"]
+            self.bio_n_train = self._scaled(pe["n_train"])
+            self.bio_n_control = self._scaled(pe["n_control"])
+            self.bio_tiers = [
+                {"name": t["name"],
+                 "n_people": self._scaled(t["n_people"]),
+                 "exposures": int(t["exposures"])}
+                for t in pe["tiers"]]
+            self.bio_control_tier = pe["control_tier"]
+            self.bio_name_candidates_per_gender = self._scaled(
+                pe["name_candidates_per_gender"])
+            rw = b["rewordings"]
+            self.bio_n_rewordings = int(rw["n_train"])
+            self.bio_discovery_rewordings = list(rw["discovery_rewordings"])
+            self.bio_test_rewordings = list(rw["test_rewordings"])
+            self.bio_heldout_role = rw["heldout_role"]
+            self.bio_heldout_context_rewording = int(rw["heldout_context_rewording"])
+            tp = b["templates"]
+            self.bio_n_templates = int(tp["n_train_per_attribute"])
+            self.bio_n_heldout_templates = int(tp["n_heldout_per_attribute"])
+            v = b["values"]
+            self.bio_value_targets = {a: int(v[a]) for a in self.bio_attributes}
+            self.bio_year_range = tuple(v["birth_year_range"])
+            self.bio_first_token_unique = list(v["first_token_unique"])
+            self.bio_first_two_tokens_unique = list(v["first_two_tokens_unique"])
+            nc = b["name_check"]
+            self.bio_name_check = bool(nc["enabled"])
+            self.bio_name_check_dirs = list(nc["corpus_dirs"])
+            self.bio_name_check_case_sensitive = bool(nc["case_sensitive"])
+            if sum(t["n_people"] for t in self.bio_tiers) != self.bio_n_train:
+                raise ValueError(
+                    "bios.people.tiers must sum to bios.people.n_train "
+                    f"({sum(t['n_people'] for t in self.bio_tiers)} != {self.bio_n_train})")
+
         p = c["paths"]
         base = Path(c["small"]["root"]) if self.small else Path(p["root"])
         self.root = ROOT / base
@@ -116,6 +155,8 @@ class DataConfig:
         self.heldout_pool_dir = under("heldout_pool")
         self.heldout_dir = under("heldout")
         self.reports_dir = under("reports")
+        self.bios_dir = self.root / "bios"
+        self.samples_dir = self.root / "samples"
 
     # -- helpers -----------------------------------------------------------
     def _scaled(self, n: Any) -> int:
@@ -142,10 +183,32 @@ class DataConfig:
     def subjects_for(self, split: str) -> List[str]:
         return self.train_subjects if split == "train" else self.all_subjects
 
-    def fingerprint(self) -> str:
-        """sha256 of the resolved config -- recorded in every manifest."""
+    # Which config sections each stage's output actually depends on. Scoping the
+    # fingerprint this way is what keeps an edit to one stage's numbers from
+    # invalidating another stage's completed work -- adding the `bios` section
+    # must not make `pile_extract` think its 1.27 GB archive is stale.
+    _SCOPE_DROP = {"pile": ("bios",)}
+    _SCOPE_KEEP = {"bios": ("version", "seed", "tokenizer", "bios")}
+
+    def fingerprint(self, scope: str = "all") -> str:
+        """sha256 of the resolved config, or of the part one stage depends on.
+
+        `scope="all"` hashes everything. `"pile"` drops the `bios` section;
+        `"bios"` keeps only the sections biographies are built from. Each stage
+        records its own scope, so `--stage pile` and `--stage bios` cannot
+        invalidate each other.
+        """
+        if scope == "all":
+            raw = self.raw
+        elif scope in self._SCOPE_DROP:
+            drop = self._SCOPE_DROP[scope]
+            raw = {k: v for k, v in self.raw.items() if k not in drop}
+        elif scope in self._SCOPE_KEEP:
+            raw = {k: self.raw[k] for k in self._SCOPE_KEEP[scope] if k in self.raw}
+        else:
+            raise ValueError(f"unknown fingerprint scope {scope!r}")
         payload = json.dumps(
-            {"raw": self.raw, "small": self.small}, sort_keys=True, ensure_ascii=False)
+            {"raw": raw, "small": self.small}, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def doc_id(self, subject: str, filename: str, line: int) -> str:

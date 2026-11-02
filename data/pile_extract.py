@@ -97,11 +97,11 @@ def _empty_split_state(cfg: DataConfig, split: str) -> Dict[str, Any]:
 def _load_state(cfg: DataConfig, path: Path) -> Dict[str, Any]:
     if path.exists():
         state = json.loads(path.read_text())
-        if state.get("config_fingerprint") == cfg.fingerprint():
+        if state.get("config_fingerprint") == cfg.fingerprint("pile"):
             return state
         print(f"[extract] state fingerprint mismatch -> starting over ({path})")
     return {
-        "config_fingerprint": cfg.fingerprint(),
+        "config_fingerprint": cfg.fingerprint("pile"),
         "revision": cfg.revision,
         "dataset": cfg.dataset,
         "splits": {s: _empty_split_state(cfg, s) for s in ("train", "heldout")},
@@ -370,7 +370,7 @@ def run(cfg: DataConfig, splits: Tuple[str, ...] = ("train", "heldout")) -> Dict
 
     manifest = {
         "stage": "pile_extract",
-        "config_fingerprint": cfg.fingerprint(),
+        "config_fingerprint": cfg.fingerprint("pile"),
         "small": cfg.small,
         "dataset": cfg.dataset,
         "revision": cfg.revision,

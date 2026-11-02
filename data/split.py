@@ -77,7 +77,7 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
 
     out = {
         "stage": "split",
-        "config_fingerprint": cfg.fingerprint(),
+        "config_fingerprint": cfg.fingerprint("pile"),
         "small": cfg.small,
         "seed": cfg.seed,
         "halves": halves,

@@ -42,7 +42,7 @@ def _check_disk(where: str) -> None:
 def run_pile(cfg: DataConfig) -> Dict[str, Any]:
     t0 = time.time()
     print(f"[build] root={cfg.root}  small={cfg.small}  "
-          f"fingerprint={cfg.fingerprint()[:16]}", flush=True)
+          f"fingerprint={cfg.fingerprint('pile')[:16]}", flush=True)
     print(f"[build] train target {cfg.train_tokens_per_subject:,} tok/subject "
           f"(collect {cfg.collect_train_tokens_per_subject:,}), held-out "
           f"{cfg.heldout_tokens_per_subject:,} tok/subject "
@@ -60,7 +60,7 @@ def run_pile(cfg: DataConfig) -> Dict[str, Any]:
         "stage": "pile",
         "version": cfg.version,
         "small": cfg.small,
-        "config_fingerprint": cfg.fingerprint(),
+        "config_fingerprint": cfg.fingerprint("pile"),
         "seed": cfg.seed,
         "dataset": cfg.dataset,
         "revision": cfg.revision,

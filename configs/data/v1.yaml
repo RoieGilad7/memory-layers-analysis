@@ -116,6 +116,69 @@ dedup:
                                 # occur in the train docs of the same subject
     ngram_scope: same_subject
 
+# --- biographies (data prompt 2) ------------------------------------------
+# Made-up people whose facts are uniformly random, so the model can only answer
+# by having stored them. 10% of the 150M training budget. `data/bios.py` writes
+# the people, the biography rewordings and the fact prompts; prompt 3 places the
+# exposure copies and tokenizes.
+bios:
+    attributes: ["birth_date", "birth_city", "university", "major", "employer"]
+    genders: ["female", "male"]
+
+    people:
+        n_train: 2000
+        n_control: 500          # never enter training: the guessing floor
+        # Exposure = biography copies in training, one rewording per copy.
+        # Balanced by gender inside every tier.
+        tiers:
+            - {name: rare,     n_people: 1000, exposures: 30}
+            - {name: normal,   n_people: 700,  exposures: 100}
+            - {name: frequent, n_people: 300,  exposures: 300}
+        control_tier: control   # tier label for control people (0 exposures)
+        # Candidates are generated before the Pile name check; the first
+        # survivors in draw order become the people, so this slack absorbs
+        # whatever the check rejects.
+        name_candidates_per_gender: 1500
+
+    rewordings:
+        n_train: 4              # training rewordings per person
+        # Roles drive the fact-dependence metric: slots are picked on
+        # "discovery" prompts and ablated on "test" prompts.
+        discovery_rewordings: [0, 1]
+        test_rewordings: [2, 3]
+        heldout_role: paraphrase
+        # Which rewording supplies the other four sentences around a held-out
+        # template, so only the structure of one sentence is new.
+        heldout_context_rewording: 0
+
+    templates:
+        n_train_per_attribute: 20
+        n_heldout_per_attribute: 4
+
+    values:
+        # Target list sizes. The builder drops values whose first GPT-2 token
+        # collides with an earlier value in the same list, and near-duplicates,
+        # then reports what it dropped -- so a realised list can come in under
+        # target. birth_date is generated; the other four are curated real names.
+        birth_date: 200
+        birth_city: 200
+        university: 300
+        major: 100
+        employer: 250
+        birth_year_range: [1940, 2000]
+        # Uniqueness of a value's first GPT-2 token (" " + value) within its
+        # list. birth_date CANNOT satisfy that -- "March 4, 1987" starts with
+        # one of only 12 month tokens -- so dates are required to be unique on
+        # their first TWO tokens (month + day) instead. See the report.
+        first_token_unique: ["birth_city", "university", "major", "employer"]
+        first_two_tokens_unique: ["birth_date"]
+
+    name_check:
+        # Reject any full name that occurs in prompt 1's cleaned Pile text.
+        enabled: true
+        corpus_dirs: ["train", "heldout_pool"]
+        case_sensitive: true
+
 # --- outputs --------------------------------------------------------------
 paths:
     root: data/v1

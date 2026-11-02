@@ -248,7 +248,7 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
     ngram = _pass_b(cfg, enc, log)
     out = {
         "stage": "dedup",
-        "config_fingerprint": cfg.fingerprint(),
+        "config_fingerprint": cfg.fingerprint("pile"),
         "small": cfg.small,
         "max_tokens": cfg.max_tokens,
         "min_tokens": cfg.min_tokens,

@@ -122,3 +122,25 @@ def test_config_subject_labels_are_the_fixed_five_plus_one():
                                   "FreeLaw", "Wikipedia (en)"]
     assert cfg.heldout_only_subjects == ["USPTO Backgrounds"]
     assert cfg.doc_id("Pile-CC", "train/00.jsonl.zst", 7) == "pile_cc-train00-7"
+
+
+def test_fingerprint_scopes_isolate_the_stages():
+    """Editing bios numbers must not make the pile stage re-extract 1.27 GB."""
+    import copy
+    cfg = load_config(CONFIG)
+    other = load_config(CONFIG)
+    other.raw = copy.deepcopy(other.raw)
+    other.raw["bios"]["people"]["n_control"] += 1
+    assert other.fingerprint("pile") == cfg.fingerprint("pile")
+    assert other.fingerprint("bios") != cfg.fingerprint("bios")
+    assert other.fingerprint() != cfg.fingerprint()
+
+    other2 = load_config(CONFIG)
+    other2.raw = copy.deepcopy(other2.raw)
+    other2.raw["document"]["min_tokens"] += 1
+    assert other2.fingerprint("pile") != cfg.fingerprint("pile")
+    assert other2.fingerprint("bios") == cfg.fingerprint("bios")
+
+    # the pile scope is exactly "the config without bios", so the hash recorded
+    # by the prompt-1 build is still the hash this code computes
+    assert cfg.fingerprint("pile").startswith("106869163e9dbb03")

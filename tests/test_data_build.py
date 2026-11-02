@@ -72,7 +72,7 @@ def test_manifest_records_the_pinned_revision_and_fingerprint(tmp_path):
     dedup.run(cfg)
     rep = split.run(cfg)
     log = json.loads((cfg.reports_dir / "dedup_log.json").read_text())
-    assert log["config_fingerprint"] == cfg.fingerprint() == rep["config_fingerprint"]
+    assert log["config_fingerprint"] == cfg.fingerprint("pile") == rep["config_fingerprint"]
     assert cfg.revision == "3be90335b66f24456a5d6659d9c8d208c0357119"
 
 
