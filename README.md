@@ -72,7 +72,7 @@ step0_access/           one re-runnable script per step-0 access check
 
 logs/*.json             committed: the evidence behind the step-0 report
 tools/bio_generator.py  bioS-style synthetic biographies + QA pairs
-tests/                  95 pytest tests
+tests/                  96 pytest tests
 reports/                the three step reports
 ```
 
@@ -121,7 +121,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 95 tests, CPU, ~10 s
+.venv/bin/python -m pytest tests/ -q                 # 96 tests, CPU, ~12 s
 
 # train one config
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml

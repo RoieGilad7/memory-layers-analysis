@@ -23,7 +23,7 @@ __all__ = [
     "DataConfig", "load_config", "clean_text", "get_encoder", "count_tokens",
     "cap_to_max_tokens", "text_sha256", "ngram_hashes", "overlap_rate",
     "heldout_half", "open_write", "CHARS_PER_TOKEN_BOUND", "open_read", "write_jsonl", "read_jsonl",
-    "dumps_record", "free_disk_gb", "ROOT",
+    "dumps_record", "free_disk_gb", "merge_gz", "ROOT",
 ]
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -354,10 +354,17 @@ def free_disk_gb(path: Path | str = ROOT) -> float:
     return shutil.disk_usage(str(path)).free / 1e9
 
 
-def concat_gz(parts: Iterable[Path], out: Path) -> None:
-    """Concatenate gzip members into one file (a valid gzip stream)."""
+def merge_gz(parts: Iterable[Path], out: Path) -> None:
+    """Merge gzip part files into ONE gzip member, in the order given.
+
+    Simply concatenating the parts would also be a valid gzip stream, but the
+    member layout -- and therefore the file's bytes -- would then depend on
+    where the extractor happened to checkpoint. Recompressing into a single
+    member makes the archive byte-identical for the same documents however the
+    run was blocked, interrupted or resumed.
+    """
     out.parent.mkdir(parents=True, exist_ok=True)
-    with open(out, "wb") as dst:
+    with gzip.GzipFile(filename=str(out), mode="wb", compresslevel=6, mtime=0) as dst:
         for p in parts:
-            with open(p, "rb") as src:
+            with gzip.open(p, "rb") as src:
                 shutil.copyfileobj(src, dst, length=1 << 20)

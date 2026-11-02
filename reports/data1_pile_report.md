@@ -13,10 +13,10 @@ own JSON by `python -m data.report_tables`; no figure in this report was typed
 by hand.
 
 ```bash
-python -m data.build --config configs/data/v1.yaml --stage pile            # 6.0 min
+python -m data.build --config configs/data/v1.yaml --stage pile            # 8.0 min
 python -m data.build --config configs/data/v1.yaml --stage pile --small    # 7 s, 1%
 python -m data.make_sample --config configs/data/v1.yaml                   # the bundle
-python -m pytest tests/test_data_*.py                                      # 36 tests, no network
+python -m pytest tests/test_data_*.py                                      # 37 tests, no network
 ```
 
 ---
@@ -95,7 +95,7 @@ data/build.py          runs the three in order, writes manifest.json
 **Extract.** One pass over `train/00.jsonl.zst` for training text and one over
 `val.jsonl.zst` for held-out text. A subject stops being collected once it
 reaches **target + 20% slack**; the pass ends as soon as every subject is full,
-which is why only 537,289 of the shard's lines were ever read. The archive under
+which is why only 536,888 of the shard's roughly 6.2M lines were ever read. The archive under
 `raw/` holds the **untouched source text** — cleaning and the cap are recomputed
 there only to make the budget accurate. That archive is the frozen bundle's
 input: a rebuild never touches the Pile again.
@@ -163,10 +163,10 @@ Read out of `data/v1/manifest.json` and `data/v1/reports/*.json` by
 |data seed|20261102|
 |config fingerprint|`106869163e9dbb03`|
 |tokenizer|GPT-2 (`tiktoken`), vocab 50,257|
-|lines read, train / held-out|537,289 / 136,269|
+|lines read, train / held-out|536,888 / 136,259|
 |compressed bytes downloaded|1.27 GB|
-|runtime, total|6.0 min|
-|runtime, extract / dedup / split|122 s / 236 s / 4 s|
+|runtime, total|8.0 min|
+|runtime, extract / dedup / split|234 s / 244 s / 4 s|
 |output on disk|788 MB|
 
 ### 4.2 Training subjects: collected -> cleaned -> deduped
@@ -232,7 +232,7 @@ Target: **5,000,000** tokens per subject, **2,500,000** per half, minimum **500*
 |train|227.2 MB|
 |work|60.0 MB|
 |compressed downloaded|1.27 GB|
-|free disk after the build|1843.2 GB|
+|free disk after the build|1843.9 GB|
 
 ### 4.7 Problems reported by the build
 
@@ -260,11 +260,11 @@ they are gone from the pool. The gap between `mean / doc` (16.9%) and
 `median / doc` (6.6%) for `FreeLaw` says the same thing — a long tail of heavily
 quoting opinions, not a uniformly contaminated subject.
 
-**Timing.** 6.0 minutes end to end on this Mac: 122 s of streaming (96 s for
-537,289 lines of `train/00`, 26 s for 136,269 lines of `val`), 236 s of cleaning
+**Timing.** 8.0 minutes end to end on this Mac: 234 s of streaming (153 s for
+536,888 lines of `train/00`, 50 s for 136,259 lines of `val`), 244 s of cleaning
 + capping + dedup (pass A ~2 min over 177,718 documents, pass B 16–20 s per
 subject), 4 s to cut the halves. 1.27 GB downloaded for a 788 MB output tree, of
-which `_work/` (60 MB) is scratch and can be deleted.
+which `_work/` (60 MB) is scratch and can be deleted. Peak RSS 115 MB.
 
 
 ---
@@ -310,9 +310,21 @@ The build is a pure function of the config. Evidence:
 | check | result |
 |---|---|
 | 1% build, two runs from scratch, sha256 of all 40 non-JSON output files | **identical** |
-| Full build, two runs from scratch (second one re-downloading and re-extracting), sha256 of all 40 non-JSON output files | **identical** |
+| Full build, two runs from scratch (the second re-downloading and re-extracting), sha256 of all 40 non-JSON output files | **identical** |
+| Extract with 500-line checkpoint blocks vs. the default 100,000, sha256 of the 11 raw archive files | **identical** |
+| Extract killed with `SIGKILL` mid-stream, then resumed, vs. never interrupted | **identical** |
 | `tests/test_data_build.py::test_same_config_gives_byte_identical_output` | pass |
 | `tests/test_data_build.py::test_gzip_outputs_carry_no_timestamp` | pass |
+| `tests/test_data_build.py::test_merge_gz_does_not_depend_on_how_the_parts_were_split` | pass |
+
+Rows 3, 4 and 7 are the resume guarantee, and getting them to hold took three
+fixes (§8). The property they encode is worth stating precisely: **the archive
+is the set of documents of a wanted subject, in line order, whose subject was
+still under budget at that line** — a pure function of the stream, independent
+of the tokenizer batch size, of the checkpoint block size, and of where a run
+was interrupted. The resume check was run by starting the extract, killing it
+with `SIGKILL` after two seconds, re-running the same command, and comparing
+sha256 of the finished archive against an uninterrupted run.
 
 Three things make that hold, and all three are easy to get wrong:
 
@@ -399,12 +411,34 @@ Open questions, all also in `docs/interfaces.md` §3:
 - **`.jsonl.gz` has two suffixes.** `Path.stem` on `train00-000000.jsonl.gz`
   leaves `train00-000000.jsonl`, which crashed the part-file sort at the end of
   the first extract. Caught by the `--small` run before any real time was spent.
+- **The extractor could read a whole shard for nothing.** `all_full()` was only
+  checked after a *buffer-full* flush. A checkpoint also flushes the buffer, so
+  if the last hungry subject filled there, no subject was hungry afterwards,
+  nothing more entered the buffer, the buffer never filled again, and the loop
+  ran to EOF — on `train/00` that is 10 GB of pointless download. Found by
+  deliberately interrupting an extract with small checkpoint blocks, which is
+  the only configuration where it shows up. Fixed by checking `all_full()` at
+  the checkpoint too.
+- **The archive's contents depended on the batch size.** Whether a document
+  entered the tokenizer buffer was decided against *stale* token counts (those
+  as of the last flush), so the set of archived documents shifted slightly with
+  `TOKENIZE_BATCH` and `BLOCK_LINES`. Now every wanted-subject document enters
+  the buffer and all decisions — hungry, archive, count — are made inside the
+  flush strictly in line order against live counts. The archive is a pure
+  function of the stream, verified three ways in §6.
+- **And then the archive's *bytes* depended on the block size.** Content was
+  identical, but the finalize step concatenated gzip members, so a run
+  checkpointed into 13 parts and one checkpointed into 1 produced different
+  files with the same contents. Finalize now recompresses into a single gzip
+  member. Confirmed harmless downstream: after the change, all 29 non-archive
+  output files are byte-for-byte what the previous full run produced, and only
+  the 11 archive files moved.
 - **Nothing was short.** `val` turned out to hold enough of all six subjects —
   136,269 of its lines covered 7M tokens each — so neither
   `train_fallback_files` nor `heldout_fallback_files` was ever opened. The
   fallback path is therefore **implemented and unexercised**; worth knowing if a
   later config asks for more than 7M held-out tokens per subject.
-- **Disk was never a concern.** Free space moved 1,844.0 → 1,843.2 GB over the run. The 20 GB
+- **Disk was never a concern.** Free space moved 1,844.8 → 1,843.9 GB over the run. The 20 GB
   floor is checked at every stage boundary and every 100,000 lines of streaming;
   it never came close.
 
@@ -423,8 +457,8 @@ Open questions, all also in `docs/interfaces.md` §3:
 | `data/make_sample.py`, `data/report_tables.py` | the sample bundle and this report's tables |
 | `data/v1_sample/` | **committed**, 7.4 MB, the 1% build + a README per file |
 | `data/v1/` | not committed (788 MB); rebuild from the config |
-| `tests/test_data_{clean,dedup,split,build}.py` | 36 tests, no network |
-| `logs/data1_full.out`, `logs/data1_small.out` | console transcripts |
+| `tests/test_data_{clean,dedup,split,build}.py` | 37 tests, no network |
+| `logs/data1_full.out`, `logs/data1_small.out`, `logs/data1_resume.out` | console transcripts, including the interrupt/resume check |
 
-`python -m pytest` → **95 passed** (59 pre-existing + 36 new). Nothing in
+`python -m pytest` → **96 passed** (59 pre-existing + 37 new). Nothing in
 `memlayers/`, `bench/` or `tools/` was touched.

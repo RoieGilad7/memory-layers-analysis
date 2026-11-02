@@ -93,3 +93,36 @@ def test_real_config_loads_and_is_self_consistent():
     assert set(cfg.source_tags) >= set(cfg.train_files + cfg.heldout_files)
     assert "train/00.jsonl.zst" not in cfg.train_fallback_files
     assert "train/00.jsonl.zst" not in cfg.heldout_fallback_files
+
+
+def test_merge_gz_does_not_depend_on_how_the_parts_were_split(tmp_path):
+    """The raw archive's bytes must not depend on where the extractor blocked.
+
+    This is the no-network half of the resume guarantee: the same documents,
+    checkpointed into different numbers of part files, must merge to the same
+    file. Concatenating gzip members would pass the content check and fail this.
+    """
+    from data.common import dumps_record, merge_gz, open_write, read_jsonl
+    recs = [{"doc_id": f"x-y-{i}", "line": i, "text": f"document {i} " * 40}
+            for i in range(60)]
+
+    outs = []
+    for n_parts, label in ((1, "one"), (4, "four"), (60, "each")):
+        parts = []
+        per = -(-len(recs) // n_parts)
+        for p in range(n_parts):
+            chunk = recs[p * per:(p + 1) * per]
+            if not chunk:
+                continue
+            path = tmp_path / label / f"part-{p:04d}.jsonl.gz"
+            with open_write(path) as fh:
+                for r in chunk:
+                    fh.write(dumps_record(r))
+            parts.append(path)
+        # same basename in each variant: gzip stores it in the header, so a
+        # different name is a legitimate byte difference and not what is tested
+        out = tmp_path / label / "merged.jsonl.gz"
+        merge_gz(parts, out)
+        assert [r["doc_id"] for r in read_jsonl(out)] == [r["doc_id"] for r in recs]
+        outs.append(hashlib.sha256(out.read_bytes()).hexdigest())
+    assert len(set(outs)) == 1, "merged archive depends on the part layout"

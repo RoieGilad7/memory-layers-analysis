@@ -4,16 +4,16 @@
   "max_tokens": 4096,
   "min_tokens": 50,
   "revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
-  "seconds": 4.9,
+  "seconds": 3.2,
   "small": true,
   "splits": {
     "heldout": {
-      "bytes_downloaded": 3014725,
+      "bytes_downloaded": 3276875,
       "fallback_files_used": [],
       "files_used": [
         "val.jsonl.zst"
       ],
-      "lines_read": 1514,
+      "lines_read": 1617,
       "short_subjects": [],
       "subjects": {
         "FreeLaw": {
@@ -69,12 +69,12 @@
       }
     },
     "train": {
-      "bytes_downloaded": 12189975,
+      "bytes_downloaded": 11141375,
       "fallback_files_used": [],
       "files_used": [
         "train/00.jsonl.zst"
       ],
-      "lines_read": 6767,
+      "lines_read": 6063,
       "short_subjects": [],
       "subjects": {
         "FreeLaw": {

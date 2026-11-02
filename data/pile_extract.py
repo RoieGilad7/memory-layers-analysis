@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import re
 import sys
 import time
@@ -29,11 +30,13 @@ import requests
 import zstandard as zstd
 from huggingface_hub import hf_hub_url
 
-from data.common import (CHARS_PER_TOKEN_BOUND, DataConfig, clean_text, concat_gz,
+from data.common import (CHARS_PER_TOKEN_BOUND, DataConfig, clean_text, merge_gz,
                          dumps_record, free_disk_gb, get_encoder, load_config,
                          open_write, write_json)
 
-BLOCK_LINES = 100_000          # state checkpoint granularity
+# State checkpoint granularity. Overridable so the resume path can be exercised
+# against a real stream without reading 100,000 lines first.
+BLOCK_LINES = int(os.environ.get("DATA_BLOCK_LINES", 100_000))
 TOKENIZE_BATCH = 128           # docs per tiktoken batch call
 STREAM_RETRIES = 4
 MIN_FREE_DISK_GB = 20.0
@@ -161,8 +164,9 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
 
     bytes_at_start = st["bytes_downloaded"]
     handles: Dict[str, Any] = {}
-    # (subject, line, raw text, cleaned text clipped to a safe char prefix)
-    buf: List[Tuple[str, int, str, str]] = []
+    # (subject, line, raw text) -- every document of a wanted subject goes in,
+    # full or not, so that the archive does not depend on TOKENIZE_BATCH
+    buf: List[Tuple[str, int, str]] = []
     char_limit = cfg.max_tokens * CHARS_PER_TOKEN_BOUND
     t0 = time.time()
     attempt = 0
@@ -175,18 +179,31 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
         handles.clear()
 
     def flush_buffer() -> None:
-        """Tokenize a batch, then archive in line order while budget remains."""
+        """Clean, tokenize and archive one batch, strictly in line order.
+
+        Every decision -- is the subject still hungry, is the document archived,
+        does it count toward the budget -- is made here, in line order, against
+        counts that are live as of that line. That is what makes the archive a
+        pure function of the stream: it does not depend on TOKENIZE_BATCH, on
+        BLOCK_LINES, or on where a run was interrupted and resumed.
+        """
         if not buf:
             return
-        counts = enc.encode_ordinary_batch([c for _, _, _, c in buf], num_threads=8)
-        for (subject, line, raw, cleaned), toks in zip(buf, counts):
+        cleaned_all = [clean_text(raw, cfg.unicode_form,
+                                  cfg.max_consecutive_newlines)[:char_limit]
+                       for _, _, raw in buf]
+        counts = enc.encode_ordinary_batch(cleaned_all, num_threads=8)
+        for (subject, line, raw), cleaned, toks in zip(buf, cleaned_all, counts):
             if not hungry(subject):
+                continue
+            s = stats[subject]
+            if not cleaned:
+                s["docs_under_min"] += 1
                 continue
             # `cleaned` is a char prefix long enough to hold max_tokens tokens,
             # so this count is exact below the cap and saturates above it.
             truncated = len(toks) > cfg.max_tokens
             n_tok = min(len(toks), cfg.max_tokens)
-            s = stats[subject]
             key = cfg.slug(subject)
             if key not in handles:
                 handles[key] = open_write(
@@ -241,6 +258,12 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
                       f"{time.time() - t0:.0f}s "
                       + " ".join(f"{cfg.slug(s)}={stats[s]['tokens'] / 1e6:.1f}M"
                                  for s in cfg.subjects_for(split)), flush=True)
+                # A checkpoint flushes the buffer, so the last subject can fill
+                # here rather than on a buffer-full flush. Without this check the
+                # buffer would never fill again (no subject is hungry, so nothing
+                # is appended) and the loop would read the shard to EOF.
+                if all_full():
+                    break
                 if free_disk_gb() < MIN_FREE_DISK_GB:
                     raise RuntimeError(
                         f"free disk {free_disk_gb():.1f} GB < {MIN_FREE_DISK_GB} GB "
@@ -250,14 +273,9 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
             except json.JSONDecodeError:                        # pragma: no cover
                 continue
             subject = rec.get("meta", {}).get("pile_set_name")
-            if subject not in wanted or not hungry(subject):
+            if subject not in wanted:
                 continue
-            raw = rec.get("text") or ""
-            cleaned = clean_text(raw, cfg.unicode_form, cfg.max_consecutive_newlines)
-            if not cleaned:
-                stats[subject]["docs_under_min"] += 1
-                continue
-            buf.append((subject, idx, raw, cleaned[:char_limit]))
+            buf.append((subject, idx, rec.get("text") or ""))
             if len(buf) >= TOKENIZE_BATCH:
                 flush_buffer()
                 if all_full():
@@ -294,7 +312,7 @@ def _finalize_split(cfg: DataConfig, split: str, st: Dict[str, Any]) -> None:
                        key=lambda p: (order.get(_part_key(p)[0], 99),
                                       _part_key(p)[1]))
         out = cfg.raw_dir / split / f"{cfg.slug(subject)}.jsonl.gz"
-        concat_gz(parts, out)
+        merge_gz(parts, out)
         for p in parts:
             p.unlink()
         if pdir.exists() and not any(pdir.iterdir()):

@@ -1,12 +1,12 @@
 {
-  "bytes_downloaded": 15204700,
+  "bytes_downloaded": 14418250,
   "config_fingerprint": "cf669c71b1a42699878433eff90d4b5711f13c116c6b80d67922ce8e2443935d",
   "dataset": "monology/pile-uncopyrighted",
   "disk_bytes": {
     "heldout": 446513,
     "heldout_pool": 616941,
-    "raw": 4031983,
-    "total": 8025670,
+    "raw": 4031962,
+    "total": 8025649,
     "train": 2299254,
     "work": 616083
   },
@@ -14,7 +14,7 @@
     "max_tokens": 4096,
     "min_tokens": 50
   },
-  "free_disk_gb": 1844.0,
+  "free_disk_gb": 1844.7,
   "problems": {
     "fallback_files_used": {
       "heldout": [],
@@ -27,7 +27,7 @@
     "train_subjects_below_target": []
   },
   "revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
-  "seconds": 6.8,
+  "seconds": 5.2,
   "seed": 20261102,
   "small": true,
   "stage": "pile",

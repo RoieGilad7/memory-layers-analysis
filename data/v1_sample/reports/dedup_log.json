@@ -211,7 +211,7 @@
       }
     }
   },
-  "seconds": 1.8,
+  "seconds": 1.9,
   "small": true,
   "stage": "dedup",
   "train_subjects_below_target": [],
