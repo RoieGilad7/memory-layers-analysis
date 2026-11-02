@@ -23,10 +23,11 @@ the whole comparison hangs on:
 | **0 — confirm access** | every dataset, model, package and tool reachable and runnable on an Apple-Silicon Mac | [`reports/step0_access_report.md`](reports/step0_access_report.md) |
 | **1 — training demo on fake data** | reusable training code, proven end to end, speed/memory measured to size the real runs | [`reports/step1_demo_report.md`](reports/step1_demo_report.md) |
 | **2a — real data, the Pile part** | 161.7M training tokens over 5 subjects + 12 held-out halves of 2.5M, from a pinned revision, byte-identical on rebuild | [`reports/data1_pile_report.md`](reports/data1_pile_report.md) |
-| 2b | biographies, tokenization/packing, the loader | not started |
+| **2b — made-up biographies** | 2,500 people with uniformly random facts, 4 rewordings each, 100k fact prompts; 14.6M tokens at the tier exposure targets | [`reports/data2_bios_report.md`](reports/data2_bios_report.md) |
+| 2c | tokenization/packing and the loader | not started |
 | 3–5 | training runs, read-log analysis | not started |
 
-All three reports are self-contained and carry the numbers; start there.
+All four reports are self-contained and carry the numbers; start there.
 The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
 ---
@@ -58,6 +59,9 @@ data/                   the dataset build (step 2a: the Pile part)
   dedup.py              clean + cap + exact dedup + the 50% 13-gram contamination rule
   split.py              held-out label/test halves by seeded hash, trimmed to budget
   build.py              one entry point: --stage pile [--small]
+  bios.py               bioS-style made-up people: facts, rewordings, fact prompts
+  bios_data.py          name pools, value candidates, 20+4 templates per attribute
+  bios_sample.py        a hand-reviewable markdown sample of generated biographies
   make_sample.py        packages the 1% build as data/v1_sample/
   report_tables.py      regenerates the data report's tables from the build's JSON
   v1_sample/            committed: the 1% build (7.4 MB) + a README per file
@@ -71,9 +75,8 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tools/bio_generator.py  bioS-style synthetic biographies + QA pairs
 tests/                  96 pytest tests
-reports/                the three step reports
+reports/                the four step reports
 ```
 
 Two result directories, both committed, because the reports cite them: `logs/*.json` for
@@ -149,9 +152,9 @@ caffeinate -i .venv/bin/python -m data.build --config configs/data/v1.yaml --sta
 # step-0 access checks
 ./step0_access/run_all.sh           # all; or `run_all.sh 05 06` for specific ones
 
-# synthetic biographies (regenerates data_samples/, which is gitignored)
-.venv/bin/python tools/bio_generator.py --n 1000 --rewordings 4 --qa-split \
-    --out data_samples/bios_sample.jsonl --count-tokens
+# synthetic biographies: 2,500 people, 4 rewordings each, 100k fact prompts
+caffeinate -i .venv/bin/python -m data.bios --config configs/data/v1.yaml
+.venv/bin/python -m data.bios_sample --config configs/data/v1.yaml --n 20
 ```
 
 Long runs: use `caffeinate -i` on macOS to stop the machine sleeping, run in the background,

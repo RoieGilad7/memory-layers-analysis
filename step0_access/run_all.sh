@@ -65,11 +65,16 @@ for f in "${SEL[@]}"; do
 done
 
 echo; echo "=== C5: biography generator ==="
-"$PY" "$ROOT/tools/bio_generator.py" --n 1000 --seed 0 \
-      --out "$ROOT/data_samples/bios_sample.jsonl" --count-tokens | tail -12
+# The generator moved in data prompt 2: tools/bio_generator.py became
+# data/bios.py, config-driven instead of flag-driven, and the --qa-split option
+# is gone. This runs the 1% build, which is the quickest end-to-end check that
+# the generator still works. --skip-name-check so step 0 does not require the
+# Pile archive to exist.
+"$PY" -m data.bios --config "$ROOT/configs/data/v1.yaml" --small \
+      --skip-name-check | tail -12
 
 echo; echo "=== free disk after ==="; df -h "$HOME" | tail -1
-echo; echo "=== data_samples ==="; ls -lh "$ROOT/data_samples"
+echo; echo "=== data_samples ==="; ls -lh "$ROOT/data_samples" 2>/dev/null || true
 
 if [[ ${#FAILED[@]} -gt 0 ]]; then echo; echo "FAILED: ${FAILED[*]}"; exit 1; fi
 echo; echo "all selected checks passed"

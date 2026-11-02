@@ -108,13 +108,18 @@ class DataConfig:
             self.bio_attributes: List[str] = list(b["attributes"])
             self.bio_genders: List[str] = list(b["genders"])
             pe = b["people"]
-            self.bio_n_train = self._scaled(pe["n_train"])
-            self.bio_n_control = self._scaled(pe["n_control"])
+            # People counts are kept divisible by the number of genders, so the
+            # tiers stay *exactly* gender-balanced rather than balanced on
+            # average -- including under --small, where 700 * 0.01 = 7 would
+            # otherwise make a balanced split impossible.
+            ng = len(self.bio_genders)
+            self.bio_n_control = self._scaled_multiple(pe["n_control"], ng)
             self.bio_tiers = [
                 {"name": t["name"],
-                 "n_people": self._scaled(t["n_people"]),
+                 "n_people": self._scaled_multiple(t["n_people"], ng),
                  "exposures": int(t["exposures"])}
                 for t in pe["tiers"]]
+            self.bio_n_train = sum(t["n_people"] for t in self.bio_tiers)
             self.bio_control_tier = pe["control_tier"]
             self.bio_name_candidates_per_gender = self._scaled(
                 pe["name_candidates_per_gender"])
@@ -136,10 +141,10 @@ class DataConfig:
             self.bio_name_check = bool(nc["enabled"])
             self.bio_name_check_dirs = list(nc["corpus_dirs"])
             self.bio_name_check_case_sensitive = bool(nc["case_sensitive"])
-            if sum(t["n_people"] for t in self.bio_tiers) != self.bio_n_train:
+            if not self.small and self.bio_n_train != int(pe["n_train"]):
                 raise ValueError(
                     "bios.people.tiers must sum to bios.people.n_train "
-                    f"({sum(t['n_people'] for t in self.bio_tiers)} != {self.bio_n_train})")
+                    f"({self.bio_n_train} != {pe['n_train']})")
 
         p = c["paths"]
         base = Path(c["small"]["root"]) if self.small else Path(p["root"])
@@ -161,6 +166,11 @@ class DataConfig:
     # -- helpers -----------------------------------------------------------
     def _scaled(self, n: Any) -> int:
         return int(round(int(n) * self.scale))
+
+    def _scaled_multiple(self, n: Any, k: int) -> int:
+        """Scaled, then rounded up to a multiple of `k` (at least `k`)."""
+        v = self._scaled(n)
+        return max(k, -(-v // k) * k)
 
     def slug(self, subject: str) -> str:
         return self.slugs[subject]
