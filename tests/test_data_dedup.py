@@ -128,3 +128,24 @@ def test_cap_is_applied_to_every_stored_document(tmp_path):
             assert rec["truncated"] is True
             n += 1
     assert n > 0
+
+
+def test_a_huge_document_is_cleaned_and_capped_like_a_small_one(tmp_path):
+    """The prefix shortcut in clean_record must not change the result."""
+    cfg = make_cfg(tmp_path / "out", **{"document.max_tokens": 64,
+                                        "document.min_tokens": 20})
+    from data.common import CHARS_PER_TOKEN_BOUND, clean_text
+    from data.dedup import clean_record
+    limit = 64 * CHARS_PER_TOKEN_BOUND
+    for raw in (
+            "head  line\n" + "a   b\t c  " * (limit // 4),     # far past 2*limit
+            "head  line\n" + " " * (5 * limit) + "tail words here " * 50,
+    ):                                                          # mostly blank
+        rec = {"doc_id": "x-y-0", "subject": "Pile-CC", "split": "train",
+               "source": "train/00.jsonl.zst", "line": 0, "text": raw}
+        got, reason = clean_record(get_encoder("gpt2", 50257), rec, cfg)
+        assert reason is None
+        # identical to cleaning the whole document and then capping
+        full = clean_text(raw, cfg.unicode_form, cfg.max_consecutive_newlines)
+        assert full.startswith(got["text"][:200])
+        assert got["n_tokens"] <= 64

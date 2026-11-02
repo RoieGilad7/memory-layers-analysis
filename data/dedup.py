@@ -48,12 +48,20 @@ def _empty_counts() -> Dict[str, int]:
 def clean_record(enc, rec: Dict[str, Any], cfg: DataConfig
                  ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """Clean and cap one raw record. Returns (cleaned record, drop reason)."""
-    cleaned = clean_text(rec.get("text") or "", cfg.unicode_form,
-                         cfg.max_consecutive_newlines)
+    raw = rec.get("text") or ""
+    limit = cfg.max_tokens * CHARS_PER_TOKEN_BOUND
+    # Cleaning is per line, so cleaning a long-enough prefix gives exactly the
+    # same first `limit` characters as cleaning the whole document -- and a
+    # multi-megabyte document costs several copies of itself in transient
+    # memory. Fall back to the full text if the prefix collapsed below `limit`
+    # (a document that is mostly whitespace).
+    cleaned = clean_text(raw if len(raw) <= 2 * limit else raw[:2 * limit],
+                         cfg.unicode_form, cfg.max_consecutive_newlines)
+    if len(raw) > 2 * limit and len(cleaned) < limit:
+        cleaned = clean_text(raw, cfg.unicode_form, cfg.max_consecutive_newlines)
     if not cleaned:
         return None, "empty"
     # cap first: a document is only ever its first max_tokens tokens
-    limit = cfg.max_tokens * CHARS_PER_TOKEN_BOUND
     text, n_tokens, truncated = cap_to_max_tokens(
         enc, cleaned if len(cleaned) <= limit else cleaned[:limit], cfg.max_tokens)
     if len(cleaned) > limit:
@@ -124,31 +132,46 @@ def _train_ngram_index(cfg: DataConfig, enc, subject: str) -> np.ndarray:
     """Sorted unique 13-gram hashes of one subject's training documents."""
     slug = cfg.slug(subject)
     path = cfg.train_dir / f"{slug}.jsonl.gz"
-    chunks: List[np.ndarray] = []
+    # The index is built as one merged base plus a pending list. Merging only
+    # when the *pending* side crosses the threshold keeps the number of sorts
+    # at total/MERGE_AT; merging on total size instead re-sorts the whole base
+    # on every batch, which is quadratic (9 minutes per subject, measured).
+    MERGE_AT = 16_000_000
+    base = np.empty(0, dtype=np.uint64)
+    pending: List[np.ndarray] = []
+    pending_size = 0
     batch: List[str] = []
-    MERGE_AT = 16_000_000      # keep peak memory near 1 GB on big subjects
+
+    def merge() -> None:
+        nonlocal base, pending_size
+        if not pending:
+            return
+        parts = ([base] if base.size else []) + pending
+        base = np.unique(np.concatenate(parts))
+        pending.clear()
+        pending_size = 0
 
     def flush() -> None:
+        nonlocal pending_size
         if not batch:
             return
         for toks in enc.encode_ordinary_batch(batch, num_threads=8):
             h = ngram_hashes(toks, cfg.ngram_n)
             if h.size:
-                chunks.append(np.unique(h))
+                u = np.unique(h)
+                pending.append(u)
+                pending_size += u.size
         batch.clear()
-        if sum(c.size for c in chunks) > MERGE_AT:
-            merged = np.unique(np.concatenate(chunks))
-            chunks.clear()
-            chunks.append(merged)
+        if pending_size > MERGE_AT:
+            merge()
 
     for rec in read_jsonl(path):
         batch.append(rec["text"])
         if len(batch) >= 256:
             flush()
     flush()
-    if not chunks:
-        return np.empty(0, dtype=np.uint64)
-    return np.unique(np.concatenate(chunks))
+    merge()
+    return base
 
 
 def _pass_b(cfg: DataConfig, enc, log: Dict[str, Any]) -> Dict[str, Any]:
