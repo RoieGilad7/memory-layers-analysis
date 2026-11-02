@@ -125,22 +125,62 @@ def test_config_subject_labels_are_the_fixed_five_plus_one():
 
 
 def test_fingerprint_scopes_isolate_the_stages():
-    """Editing bios numbers must not make the pile stage re-extract 1.27 GB."""
+    """Editing one stage's numbers must not invalidate another stage's work.
+
+    Adding a bios or pack section must not tell pile_extract its 1.27 GB
+    archive is stale, and a packing change must not re-run the Pile.
+    """
     import copy
+
+    def edited(path, delta=1):
+        cfg = load_config(CONFIG)
+        cfg.raw = copy.deepcopy(cfg.raw)
+        node = cfg.raw
+        for k in path[:-1]:
+            node = node[k]
+        node[path[-1]] += delta
+        return cfg
+
+    base = load_config(CONFIG)
+    bios_edit = edited(["bios", "people", "n_control"])
+    assert bios_edit.fingerprint("pile") == base.fingerprint("pile")
+    assert bios_edit.fingerprint("bios") != base.fingerprint("bios")
+    assert bios_edit.fingerprint("pack") != base.fingerprint("pack")
+    assert bios_edit.fingerprint() != base.fingerprint()
+
+    pile_edit = edited(["document", "min_tokens"])
+    assert pile_edit.fingerprint("pile") != base.fingerprint("pile")
+    assert pile_edit.fingerprint("bios") == base.fingerprint("bios")
+    assert pile_edit.fingerprint("pack") != base.fingerprint("pack")
+
+    pack_edit = edited(["pack", "window_tokens"])
+    assert pack_edit.fingerprint("pile") == base.fingerprint("pile")
+    assert pack_edit.fingerprint("bios") == base.fingerprint("bios")
+    assert pack_edit.fingerprint("pack") != base.fingerprint("pack")
+
+    # the distribution block names where the bundle is published, not what is
+    # in it, so it must not move any stage's fingerprint
+    tagged = load_config(CONFIG)
+    tagged.raw = copy.deepcopy(tagged.raw)
+    tagged.raw["distribution"]["hf_repo"] = "someone/else"
+    for scope in ("pile", "bios", "pack"):
+        assert tagged.fingerprint(scope) == base.fingerprint(scope), scope
+
+
+def test_the_config_on_disk_matches_the_frozen_bundle():
+    """A tripwire: edit the config and the committed manifest goes stale.
+
+    Read from data/manifests/v1.json rather than a literal, so the check stays
+    true by rebuilding the manifest instead of by editing a test.
+    """
+    import json
     cfg = load_config(CONFIG)
-    other = load_config(CONFIG)
-    other.raw = copy.deepcopy(other.raw)
-    other.raw["bios"]["people"]["n_control"] += 1
-    assert other.fingerprint("pile") == cfg.fingerprint("pile")
-    assert other.fingerprint("bios") != cfg.fingerprint("bios")
-    assert other.fingerprint() != cfg.fingerprint()
-
-    other2 = load_config(CONFIG)
-    other2.raw = copy.deepcopy(other2.raw)
-    other2.raw["document"]["min_tokens"] += 1
-    assert other2.fingerprint("pile") != cfg.fingerprint("pile")
-    assert other2.fingerprint("bios") == cfg.fingerprint("bios")
-
-    # the pile scope is exactly "the config without bios", so the hash recorded
-    # by the prompt-1 build is still the hash this code computes
-    assert cfg.fingerprint("pile").startswith("106869163e9dbb03")
+    path = cfg.manifest_dir / f"{cfg.version}.json"
+    if not path.exists():
+        pytest.skip("no committed manifest yet")
+    recorded = json.loads(path.read_text())["config"]
+    for scope in ("pile", "bios", "pack"):
+        assert cfg.fingerprint(scope) == recorded[f"fingerprint_{scope}"], (
+            f"configs/data/v1.yaml no longer matches the {scope} fingerprint in "
+            f"{path.name}. Rebuild the affected stage and re-run "
+            "`python -m data.manifest --config configs/data/v1.yaml`.")

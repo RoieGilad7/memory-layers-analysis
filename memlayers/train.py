@@ -37,7 +37,10 @@ from .readlog import ReadLogWriter, SlotUsageCounter, bytes_per_token
 __all__ = ["TrainConfig", "Trainer", "load_config", "build_optimizer", "main"]
 
 CSV_FIELDS = ["step", "loss", "lr", "lr_memory", "step_time_s", "tokens_per_s",
-              "tokens_seen", "peak_mem_bytes", "grad_norm"]
+              "tokens_seen", "peak_mem_bytes", "grad_norm",
+              # constant for a run, but a log line has to be self-describing:
+              # a loss curve is meaningless without knowing which data made it
+              "data_version", "data_manifest_sha256"]
 
 
 # ----------------------------------------------------------------------------- config
@@ -67,10 +70,22 @@ class OptimCfg:
 
 @dataclass
 class DataCfg:
-    kind: str = "random"
+    """`source: fake` keeps the step-1 synthetic datasets; `real` reads the
+    packed token files built by `data.pack`.
+
+    Default is `fake` on purpose: every existing config and test keeps working
+    without touching the 1.1 GB bundle.
+    """
+    source: str = "fake"                         # "fake" | "real"
+    kind: str = "random"                         # fake only: "random" | "repeat"
     chunk_len: int = 16
     n_distinct: Optional[int] = None
     seed: int = 1234
+    # real only
+    version: str = "v1"
+    data_config: str = "configs/data/v1.yaml"
+    bin_path: Optional[str] = None               # None -> <root>/tokens/train.bin
+    verify: bool = True                          # check sha256s before step 0
 
 
 @dataclass
@@ -194,11 +209,19 @@ class Trainer:
             self.optimizer,
             lambda s: cosine_warmup(s, cfg.train.warmup_steps, cfg.train.steps,
                                     cfg.train.min_lr_ratio))
-        self.data = build_dataset(
-            cfg.data.kind, vocab_size=self.gpt_config.vocab_size,
-            seq_len=self.gpt_config.block_size, seed=cfg.data.seed,
-            **({} if cfg.data.kind in ("random", "a", "uniform")
-               else dict(chunk_len=cfg.data.chunk_len, n_distinct=cfg.data.n_distinct)))
+        self.data_provenance: Dict[str, Any] = {"source": cfg.data.source}
+        if cfg.data.source == "real":
+            self.data = self._build_real_dataset()
+        elif cfg.data.source == "fake":
+            self.data = build_dataset(
+                cfg.data.kind, vocab_size=self.gpt_config.vocab_size,
+                seq_len=self.gpt_config.block_size, seed=cfg.data.seed,
+                **({} if cfg.data.kind in ("random", "a", "uniform")
+                   else dict(chunk_len=cfg.data.chunk_len,
+                             n_distinct=cfg.data.n_distinct)))
+        else:
+            raise ValueError(
+                f"data.source must be 'fake' or 'real', got {cfg.data.source!r}")
 
         self.step = 0
         self.tokens_seen = 0
@@ -225,6 +248,58 @@ class Trainer:
         self.csv_path = self.out_dir / "log.csv"
         self._csv_started = self.csv_path.exists()
 
+    # ---- real data ----------------------------------------------------------
+    def _build_real_dataset(self):
+        """Verify the frozen bundle, then memmap train.bin.
+
+        Verification happens here -- before step 0, before any weight moves --
+        and any mismatch raises. Training on a half-downloaded or edited bundle
+        would produce numbers nobody could reproduce, so it is a hard stop
+        rather than a warning.
+        """
+        from data.common import load_config as load_data_config
+        from data.fetch import manifest_sha256, require_verified
+        from data.loader import PackedDataset
+
+        dcfg = load_data_config(self.cfg.data.data_config)
+        version = self.cfg.data.version
+        if self.cfg.data.verify:
+            result = require_verified(dcfg, version)
+            print(f"[train] data {version} verified: {result['ok']} files, "
+                  f"{result['skipped']} optional skipped ({result['seconds']}s)")
+            m_sha = result["manifest_sha256"]
+        else:
+            m_sha = manifest_sha256(dcfg, version)
+            print(f"[train] data {version} verification SKIPPED "
+                  "(data.verify=false)")
+
+        path = Path(self.cfg.data.bin_path) if self.cfg.data.bin_path else \
+            dcfg.tokens_dir / "train.bin"
+        if dcfg.block_size != self.gpt_config.block_size:
+            raise ValueError(
+                f"model.block_size {self.gpt_config.block_size} != "
+                f"pack.block_size {dcfg.block_size}; the token file is cut into "
+                f"{dcfg.block_size}-token sequences and cannot be re-cut here")
+        ds = PackedDataset(path, block_size=dcfg.block_size,
+                           seed=self.cfg.data.seed,
+                           vocab_size=self.gpt_config.vocab_size)
+        self.data_provenance = {
+            "source": "real",
+            "version": version,
+            "manifest_sha256": m_sha,
+            "data_config": self.cfg.data.data_config,
+            "config_fingerprint_pack": dcfg.fingerprint("pack"),
+            "pile_revision": dcfg.revision,
+            "bin_path": str(path),
+            "n_tokens": ds.n_tokens,
+            "n_sequences": ds.n_sequences,
+            "verified": bool(self.cfg.data.verify),
+        }
+        print(f"[train] data {version}: {ds.n_tokens:,} tokens, "
+              f"{ds.n_sequences:,} sequences of {dcfg.block_size}, "
+              f"manifest {m_sha[:16]}")
+        return ds
+
     # ---- bookkeeping --------------------------------------------------------
     def save_initial_weights(self) -> Path:
         """Step-0 snapshot, so later analysis can tell learned structure from init."""
@@ -248,6 +323,7 @@ class Trainer:
             "device": str(self.device),
             "param_counts": self.model.param_counts(),
             "tokens_per_step": self.cfg.tokens_per_step,
+            "data": self.data_provenance,
             "optimizer_groups": [
                 {"name": g.get("name"), "lr": g["lr"],
                  "weight_decay": g["weight_decay"],
@@ -287,6 +363,11 @@ class Trainer:
             "scheduler": self.scheduler.state_dict(),
             "rng": get_rng_states(self.device),
             "config": self.config_dict(),
+            "data": self.data_provenance,
+            # the loader's (seed, position), so a resume continues exactly where
+            # it stopped instead of re-reading from the top of the permutation
+            "data_state": (self.data.state_dict()
+                           if hasattr(self.data, "state_dict") else None),
         }, path)
         return path
 
@@ -299,6 +380,16 @@ class Trainer:
         self.step = int(ck["step"])
         self.tokens_seen = int(ck.get("tokens_seen", 0))
         self.peak_mem = int(ck.get("peak_mem", 0))
+        state = ck.get("data_state")
+        if state and hasattr(self.data, "load_state_dict"):
+            self.data.load_state_dict(state)
+        old = (ck.get("data") or {}).get("manifest_sha256")
+        new = self.data_provenance.get("manifest_sha256")
+        if old and new and old != new:
+            raise RuntimeError(
+                f"this checkpoint was trained on data manifest {old[:16]} but "
+                f"the bundle on disk is {new[:16]}. Resuming would mix two "
+                "datasets; re-fetch the matching version or start a new run.")
 
     # ---- the loop -----------------------------------------------------------
     def train_step(self) -> dict:
@@ -343,6 +434,9 @@ class Trainer:
         lrs = {g.get("name"): g["lr"] for g in self.optimizer.param_groups}
         return {
             "step": self.step,
+            "data_version": self.data_provenance.get("version", ""),
+            "data_manifest_sha256": self.data_provenance.get(
+                "manifest_sha256", "")[:16],
             "loss": total_loss / cfg.grad_accum_steps,
             "lr": lrs.get("decay", lrs.get("no_decay", 0.0)),
             "lr_memory": lrs.get("memory_values", ""),
