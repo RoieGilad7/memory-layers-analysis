@@ -29,8 +29,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", required=True)
     ap.add_argument("--small", action="store_true")
+    ap.add_argument("--stage", choices=["pile", "bios"], default="pile")
     args = ap.parse_args(argv)
     cfg = load_config(args.config, small=args.small)
+    if args.stage == "bios":
+        return bios_tables(cfg)
 
     man = json.loads((cfg.root / "manifest.json").read_text())
     ext = json.loads((cfg.reports_dir / "extract_manifest.json").read_text())
@@ -144,6 +147,104 @@ def main(argv: Optional[List[str]] = None) -> int:
     print("```")
     return 0
 
+
+
+# ---------------------------------------------------------------------------
+# biographies (data prompt 2)
+# ---------------------------------------------------------------------------
+def bios_tables(cfg) -> int:
+    import data.bios_data as bd
+    man = json.loads((cfg.bios_dir / "manifest.json").read_text())
+    vals = json.loads((cfg.bios_dir / "attribute_values.json").read_text())
+    p, e, b = man["people"], man["exposures"], man["biographies"]
+
+    print("### 2.1 The run\n")
+    print(table([
+        ["config fingerprint (bios scope)", f"`{man['config_fingerprint'][:16]}`"],
+        ["data seed", str(man["seed"])],
+        ["people", f"{p['n_people']:,}"],
+        ["facts.jsonl rows", f"{man['facts']['rows']:,}"],
+        ["biography rows", f"{b['rows']:,}"],
+        ["runtime", f"{man['seconds']:.0f} s"],
+    ], ["", ""], "ll"))
+
+    print("\n### 2.2 People by split, tier and gender\n")
+    rows = []
+    tiers = [t["name"] for t in cfg.bio_tiers] + [cfg.bio_control_tier]
+    exposures = {t["name"]: t["exposures"] for t in cfg.bio_tiers}
+    exposures[cfg.bio_control_tier] = 0
+    for t in tiers:
+        f = p["by_tier_gender"].get(f"{t}/female", 0)
+        m = p["by_tier_gender"].get(f"{t}/male", 0)
+        split = "control" if t == cfg.bio_control_tier else "train"
+        rows.append([f"`{t}`", split, _f(exposures[t]), _f(f + m), _f(f), _f(m),
+                     _f(exposures[t] * (f + m))])
+    rows.append(["**total**", "", "", f"**{p['n_people']:,}**",
+                 f"**{p['by_gender']['female']:,}**",
+                 f"**{p['by_gender']['male']:,}**",
+                 f"**{e['total_copies']:,}**"])
+    print(table(rows, ["tier", "split", "exposures each", "people", "female",
+                       "male", "biography copies"], "llrrrrr"))
+
+    print("\n### 2.3 Value lists\n")
+    rows = []
+    for attr in cfg.bio_attributes:
+        v = man["values"][attr]
+        t = man["value_tokens"][attr]
+        unique = ("first token" if t["first_token_unique"]
+                  else ("first 2 tokens" if t["first_two_tokens_unique"] else "**NO**"))
+        rows.append([f"`{attr}`", _f(v["candidates"]),
+                     _f(v["dropped_near_duplicate"]), _f(v["dropped_prefix_clash"]),
+                     _f(v["dropped_over_target"]), f"**{v['final']:,}**",
+                     _f(v["target"]), str(t["distinct_first_tokens"]), unique,
+                     str(t["value_tokens_mean"])])
+    print(table(rows, ["attribute", "candidates", "dropped near-dup",
+                       "dropped prefix clash", "trimmed to target", "final",
+                       "target", "distinct first tokens", "unique on",
+                       "mean tokens/value"], "lrrrrrrrlr"))
+
+    print("\n### 2.4 Templates\n")
+    rows = [[f"`{a}`", str(man["templates_per_attribute"][a]["train"]),
+             str(man["templates_per_attribute"][a]["held_out"]),
+             str(len({bd.pre_value_context(t) for t in bd.TRAIN_TEMPLATES[a]})),
+             str(len({bd.pre_value_context(t) for t in bd.HELDOUT_TEMPLATES[a]}))]
+            for a in cfg.bio_attributes]
+    print(table(rows, ["attribute", "training templates", "held-out templates",
+                       "distinct pre-value contexts (train)", "(held-out)"],
+                "lrrrr"))
+
+    print("\n### 2.5 facts.jsonl rows\n")
+    print(table([[f"`{k}`", _f(v)] for k, v in man["facts"]["by_role"].items()]
+                + [["**total**", f"**{man['facts']['rows']:,}**"]],
+                ["role", "rows"], "lr"))
+
+    print("\n### 2.6 Token budget\n")
+    print(table([
+        ["biography tokens, mean", str(b["tokens_mean"])],
+        ["biography tokens, range", f"{b['tokens_min']}-{b['tokens_max']}"],
+        ["trained-people mean", str(b["train_tokens_mean"])],
+        ["biography copies at the tier targets", f"{e['total_copies']:,}"],
+        ["**implied biography tokens**", f"**{e['implied_tokens']:,}**"],
+        ["share of the training budget",
+         f"**{e['share_of_train_budget']:.2%}** of {e['train_budget']:,} "
+         f"(target {e['bio_share_target']:.0%})"],
+    ], ["", ""], "lr"))
+
+    print("\n### 2.7 The Pile name check\n")
+    nc = man["name_check"]
+    print(table([
+        ["files scanned", str(len(nc["files"]))],
+        ["documents scanned", f"{nc['documents_scanned']:,}"],
+        ["characters scanned", f"{nc['characters_scanned'] / 1e6:,.0f} M"],
+        ["candidate names tested", f"{nc['candidates_tested']:,}"],
+        ["case sensitive", str(nc["case_sensitive"])],
+        ["candidate names found in the Pile", f"**{nc['n_names_found']}**"],
+        ["names actually rejected (inside the per-gender cut-off)",
+         f"**{p['names_rejected_by_pile_check']}**"],
+    ], ["", ""], "lr"))
+    print("\nFirst 12 rejected names: "
+          + ", ".join(f"`{n}`" for n in p["rejected_names"][:12]) + ".")
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())

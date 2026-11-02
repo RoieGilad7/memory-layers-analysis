@@ -43,8 +43,9 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from data import bios_data as bd
-from data.common import (DataConfig, clean_text, dumps_record, get_encoder,
-                         load_config, open_write, read_jsonl, write_json)
+from data.common import (ROOT, DataConfig, clean_text, dumps_record,
+                         get_encoder, load_config, open_write, read_jsonl,
+                         write_json)
 
 # A full name is two capitalized words with exactly one space between them, so
 # this is all the corpus scan has to look for.
@@ -272,7 +273,11 @@ def scan_corpus_for_names(paths: Iterable[Path], names: Iterable[str],
     for path in paths:
         if not Path(path).exists():
             continue
-        files.append(str(path))
+        # repo-relative, so a committed manifest carries no home directory
+        try:
+            files.append(str(Path(path).resolve().relative_to(ROOT)))
+        except ValueError:
+            files.append(str(path))
         for rec in read_jsonl(Path(path)):
             text = rec.get("text") or ""
             docs += 1
