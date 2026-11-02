@@ -1,0 +1,127 @@
+{
+  "config_fingerprint": "cf669c71b1a42699878433eff90d4b5711f13c116c6b80d67922ce8e2443935d",
+  "dataset": "monology/pile-uncopyrighted",
+  "max_tokens": 4096,
+  "min_tokens": 50,
+  "revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
+  "seconds": 2.4,
+  "small": true,
+  "splits": {
+    "heldout": {
+      "bytes_downloaded": 3014725,
+      "fallback_files_used": [],
+      "files_used": [
+        "val.jsonl.zst"
+      ],
+      "lines_read": 1514,
+      "short_subjects": [],
+      "subjects": {
+        "FreeLaw": {
+          "docs": 25,
+          "docs_truncated": 11,
+          "docs_under_min": 0,
+          "raw_chars": 432726,
+          "tokens": 70078
+        },
+        "Github": {
+          "docs": 53,
+          "docs_truncated": 9,
+          "docs_under_min": 5,
+          "raw_chars": 304266,
+          "tokens": 71645
+        },
+        "Pile-CC": {
+          "docs": 85,
+          "docs_truncated": 3,
+          "docs_under_min": 2,
+          "raw_chars": 339999,
+          "tokens": 72542
+        },
+        "PubMed Central": {
+          "docs": 20,
+          "docs_truncated": 15,
+          "docs_under_min": 0,
+          "raw_chars": 601563,
+          "tokens": 74059
+        },
+        "USPTO Backgrounds": {
+          "docs": 93,
+          "docs_truncated": 3,
+          "docs_under_min": 1,
+          "raw_chars": 370619,
+          "tokens": 70013
+        },
+        "Wikipedia (en)": {
+          "docs": 134,
+          "docs_truncated": 2,
+          "docs_under_min": 0,
+          "raw_chars": 343355,
+          "tokens": 72659
+        }
+      },
+      "target_tokens_per_subject": {
+        "FreeLaw": 70000,
+        "Github": 70000,
+        "Pile-CC": 70000,
+        "PubMed Central": 70000,
+        "USPTO Backgrounds": 70000,
+        "Wikipedia (en)": 70000
+      }
+    },
+    "train": {
+      "bytes_downloaded": 12189975,
+      "fallback_files_used": [],
+      "files_used": [
+        "train/00.jsonl.zst"
+      ],
+      "lines_read": 6767,
+      "short_subjects": [],
+      "subjects": {
+        "FreeLaw": {
+          "docs": 128,
+          "docs_truncated": 49,
+          "docs_under_min": 1,
+          "raw_chars": 2116168,
+          "tokens": 328070
+        },
+        "Github": {
+          "docs": 264,
+          "docs_truncated": 25,
+          "docs_under_min": 22,
+          "raw_chars": 1282229,
+          "tokens": 324345
+        },
+        "Pile-CC": {
+          "docs": 388,
+          "docs_truncated": 19,
+          "docs_under_min": 5,
+          "raw_chars": 1619678,
+          "tokens": 324408
+        },
+        "PubMed Central": {
+          "docs": 86,
+          "docs_truncated": 74,
+          "docs_under_min": 2,
+          "raw_chars": 3324124,
+          "tokens": 326801
+        },
+        "Wikipedia (en)": {
+          "docs": 503,
+          "docs_truncated": 17,
+          "docs_under_min": 12,
+          "raw_chars": 1724455,
+          "tokens": 324445
+        }
+      },
+      "target_tokens_per_subject": {
+        "FreeLaw": 324000,
+        "Github": 324000,
+        "Pile-CC": 324000,
+        "PubMed Central": 324000,
+        "Wikipedia (en)": 324000
+      }
+    }
+  },
+  "stage": "pile_extract",
+  "tokenizer": "gpt2"
+}

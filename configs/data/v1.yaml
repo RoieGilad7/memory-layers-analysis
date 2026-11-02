@@ -87,8 +87,10 @@ targets:
     heldout_halves: ["label", "test"]
     heldout_tokens_per_half: 2500000
     heldout_min_docs_per_half: 500
-    # Held-out needs no slack: the label/test trim already discards the excess.
-    heldout_collect_slack: 0.20
+    # Collect 40% over the held-out target. The label/test assignment is a hash,
+    # so the two halves are only approximately equal; 40% keeps both of them
+    # above 2.5M tokens after the split and after dedup drops.
+    heldout_collect_slack: 0.40
 
 # --- per-document rules ---------------------------------------------------
 document:

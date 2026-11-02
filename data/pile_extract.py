@@ -111,6 +111,12 @@ def _part_path(cfg: DataConfig, split: str, subject: str, tag: str,
             / f"{tag}-{block:06d}.jsonl.gz")
 
 
+def _part_key(path: Path) -> Tuple[str, int]:
+    """("train00", 12) from "train00-000012.jsonl.gz"."""
+    tag, _, block = path.name.split(".", 1)[0].rpartition("-")
+    return tag, int(block)
+
+
 def _drop_parts_from(cfg: DataConfig, split: str, tag: str, block: int) -> int:
     """Remove part files for this file at or after `block` (incomplete work)."""
     n = 0
@@ -118,7 +124,7 @@ def _drop_parts_from(cfg: DataConfig, split: str, tag: str, block: int) -> int:
     if not base.exists():
         return 0
     for p in sorted(base.glob(f"*/{tag}-*.jsonl.gz")):
-        if int(p.stem.rsplit("-", 1)[1]) >= block:
+        if _part_key(p)[1] >= block:
             p.unlink()
             n += 1
     return n
@@ -285,8 +291,8 @@ def _finalize_split(cfg: DataConfig, split: str, st: Dict[str, Any]) -> None:
     for subject in cfg.subjects_for(split):
         pdir = cfg.raw_dir / "_parts" / split / cfg.slug(subject)
         parts = sorted(pdir.glob("*.jsonl.gz"),
-                       key=lambda p: (order.get(p.stem.rsplit("-", 1)[0], 99),
-                                      int(p.stem.rsplit("-", 1)[1])))
+                       key=lambda p: (order.get(_part_key(p)[0], 99),
+                                      _part_key(p)[1]))
         out = cfg.raw_dir / split / f"{cfg.slug(subject)}.jsonl.gz"
         concat_gz(parts, out)
         for p in parts:
