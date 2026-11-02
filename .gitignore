@@ -14,6 +14,13 @@ __pycache__/
 .mypy_cache/
 .ipynb_checkpoints/
 
+# --------------------------------------------------------- built dataset (v1)
+# `python -m data.build --config configs/data/v1.yaml --stage pile` rebuilds
+# these from the pinned Pile revision. data/v1_sample/ IS committed -- it is the
+# few-MB bundle the metrics owner codes against.
+data/v1/
+data/v1_small/
+
 # ----------------------------------------------------------- generated datasets
 # Tiny, fully regenerable: `python tools/bio_generator.py`, and the step-0 checks
 # re-stream their samples. Kept out of the repo to keep a clone small.
