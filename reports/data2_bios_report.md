@@ -219,7 +219,9 @@ which is what keeps the output stable.
 
 | check | result |
 |---|---|
-| Two builds from the same config, sha256 of `people.jsonl`, `facts.jsonl`, `bios_train.jsonl`, `bios_control.jsonl`, `attribute_values.json`, `templates.json` | **identical** |
+| Two builds from the same config, sha256 of `people.jsonl`, `facts.jsonl`, `bios_train.jsonl`, `bios_control.jsonl`, `attribute_values.json`, `templates.json`, `name_check.json` | **identical** |
+| Full 2,500-person build run three times from scratch, including the 775M-character name scan | **all 7 files identical** |
+| `bios_sample.md` after a rebuild | **identical** (the sample writer is seeded too) |
 | A different seed moves all four data files | **yes** (`templates.json` is seed-independent by construction) |
 | `tests/test_bios.py` | **26 passed** |
 | Whole suite | **110 passed** = 46 (step 1, after the old generator's 13 went) + 38 (data prompt 1) + 26 (new) |
