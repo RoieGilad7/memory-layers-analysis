@@ -114,7 +114,10 @@ def run_pile(cfg: DataConfig) -> Dict[str, Any]:
         "fallback_files_used": {
             s: v["fallback_files_used"] for s, v in extract_m["splits"].items()},
     }
-    write_json(cfg.root / "manifest.json", manifest)
+    # NOT <root>/manifest.json: that path is the BUNDLE manifest (data/manifest.py),
+    # which lists every file in the bundle with its sha256. This is the pile
+    # stage's own record, and the bundle manifest embeds its counts.
+    write_json(cfg.reports_dir / "pile_manifest.json", manifest)
     print_summary(cfg, manifest)
     return manifest
 

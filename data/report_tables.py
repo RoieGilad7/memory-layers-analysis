@@ -35,7 +35,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.stage == "bios":
         return bios_tables(cfg)
 
-    man = json.loads((cfg.root / "manifest.json").read_text())
+    man = json.loads((cfg.reports_dir / "pile_manifest.json").read_text())
     ext = json.loads((cfg.reports_dir / "extract_manifest.json").read_text())
     ded = json.loads((cfg.reports_dir / "dedup_log.json").read_text())
     spl = json.loads((cfg.reports_dir / "split_report.json").read_text())

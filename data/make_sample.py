@@ -59,7 +59,7 @@ Both commands are deterministic: rebuilding gives byte-identical files.
 
 | path | what it is |
 |---|---|
-| `manifest.json` | the whole build in one object — counts, targets, overlap rates, problems. **Read this, not the directory listing.** |
+| `reports/pile_manifest.json` | the whole pile build in one object — counts, targets, overlap rates, problems. **Read this, not the directory listing.** |
 | `raw/<split>/<slug>.jsonl.gz` | the archived source text, untouched: `doc_id, subject, split, source, line, text` |
 | `train/<slug>.jsonl.gz` | cleaned, capped at 4,096 tokens, deduplicated **training** documents |
 | `heldout_pool/<slug>.jsonl.gz` | the same for held-out documents, before the label/test cut, plus `ngram_overlap` |
@@ -93,7 +93,7 @@ print(docs[0]["doc_id"], docs[0]["n_tokens"], docs[0]["subject"], docs[0]["half"
 
 1. **The halves do not all reach their token budget.** At 1% scale a subject's
    held-out pool is only 20–130 documents, and the label/test assignment is a
-   hash, so one half can land short. `manifest.json -> problems` names them. At
+   hash, so one half can land short. `reports/pile_manifest.json -> problems` names them. At
    full scale each pool is thousands of documents and both halves fill.
 2. **The 500-documents-per-half minimum is scaled to 5 here**, for the same
    reason. The full build enforces 500.
@@ -103,10 +103,11 @@ print(docs[0]["doc_id"], docs[0]["n_tokens"], docs[0]["subject"], docs[0]["half"
 
 
 def run(cfg, dst: Path) -> Path:
-    if not (cfg.root / "manifest.json").exists():
+    pile_manifest = cfg.reports_dir / "pile_manifest.json"
+    if not pile_manifest.exists():
         raise SystemExit(f"no small build at {cfg.root} -- run "
                          "`python -m data.build --config ... --stage pile --small` first")
-    manifest = json.loads((cfg.root / "manifest.json").read_text())
+    manifest = json.loads(pile_manifest.read_text())
     if dst.exists():
         shutil.rmtree(dst)
     shutil.copytree(cfg.root, dst,
