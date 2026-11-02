@@ -44,8 +44,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from data import bios_data as bd
 from data.common import (ROOT, DataConfig, clean_text, dumps_record,
-                         get_encoder, load_config, open_write, read_jsonl,
-                         write_json)
+                         get_encoder, keyed_rng, load_config, open_write,
+                         read_jsonl, write_json)
 
 # A full name is two capitalized words with exactly one space between them, so
 # this is all the corpus scan has to look for.
@@ -82,9 +82,7 @@ _GENERIC_BY_ATTR: Dict[str, frozenset] = {
 # ---------------------------------------------------------------------------
 def _rng(seed: int, *parts: Any) -> random.Random:
     """An RNG keyed by the data seed and a label. Order-independent by design."""
-    key = ":".join([str(seed)] + [str(p) for p in parts])
-    digest = hashlib.blake2b(key.encode("utf-8"), digest_size=8).digest()
-    return random.Random(int.from_bytes(digest, "big"))
+    return keyed_rng(seed, *parts)
 
 
 # ---------------------------------------------------------------------------

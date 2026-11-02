@@ -21,6 +21,7 @@ import yaml
 
 __all__ = [
     "DataConfig", "load_config", "clean_text", "get_encoder", "count_tokens",
+    "keyed_rng",
     "cap_to_max_tokens", "text_sha256", "ngram_hashes", "overlap_rate",
     "heldout_half", "open_write", "CHARS_PER_TOKEN_BOUND", "open_read", "write_jsonl", "read_jsonl",
     "dumps_record", "free_disk_gb", "merge_gz", "ROOT",
@@ -147,6 +148,30 @@ class DataConfig:
                     "bios.people.tiers must sum to bios.people.n_train "
                     f"({self.bio_n_train} != {pe['n_train']})")
 
+        pk = c.get("pack")
+        self.pack = pk
+        if pk is not None:
+            self.block_size = int(pk["block_size"])
+            self.eot_token = int(pk["eot_token"])
+            self.pack_tokens_per_subject = self._scaled(pk["train_tokens_per_subject"])
+            self.split_biographies = bool(pk["split_biographies"])
+            # NOT scaled by --small: the window is a property of the check,
+            # not of the corpus. Scaled to 10k it would be smaller than a single
+            # 4,096-token document, so no interleave could ever pass it.
+            self.window_tokens = int(pk["window_tokens"])
+            self.window_tolerance_points = float(pk["window_tolerance_points"])
+            self.index_format = pk["index_format"]
+            self.pack_halves: List[str] = list(pk["heldout_halves"])
+
+        di = c.get("distribution")
+        self.distribution = di
+        if di is not None:
+            self.hf_repo = di["hf_repo"]
+            self.hf_repo_type = di["repo_type"]
+            self.hf_tag = di["tag"]
+            self.manifest_dir = ROOT / di["manifest_dir"]
+            self.optional_prefixes: List[str] = list(di["optional_prefixes"])
+
         p = c["paths"]
         base = Path(c["small"]["root"]) if self.small else Path(p["root"])
         self.root = ROOT / base
@@ -163,6 +188,9 @@ class DataConfig:
         self.reports_dir = under("reports")
         self.bios_dir = self.root / "bios"
         self.samples_dir = self.root / "samples"
+        self.tokens_dir = self.root / "tokens"
+        self.heldout_tokens_dir = self.root / "heldout"
+        self.manifest_path = self.root / "manifest.json"
 
     # -- helpers -----------------------------------------------------------
     def _scaled(self, n: Any) -> int:
@@ -207,8 +235,14 @@ class DataConfig:
     # fingerprint this way is what keeps an edit to one stage's numbers from
     # invalidating another stage's completed work -- adding the `bios` section
     # must not make `pile_extract` think its 1.27 GB archive is stale.
-    _SCOPE_DROP = {"pile": ("bios",)}
-    _SCOPE_KEEP = {"bios": ("version", "seed", "tokenizer", "bios")}
+    _SCOPE_DROP = {"pile": ("bios", "pack", "distribution")}
+    _SCOPE_KEEP = {
+        "bios": ("version", "seed", "tokenizer", "bios"),
+        # packing depends on everything that shapes the text it reads, which is
+        # why the pack scope is the whole config minus the distribution block
+        "pack": ("version", "seed", "tokenizer", "source", "subjects",
+                 "targets", "document", "clean", "dedup", "bios", "pack"),
+    }
 
     def fingerprint(self, scope: str = "all") -> str:
         """sha256 of the resolved config, or of the part one stage depends on.
@@ -341,6 +375,18 @@ def cap_to_max_tokens(enc, text: str, max_tokens: int) -> Tuple[str, int, bool]:
 # --------------------------------------------------------------------------
 # hashing
 # --------------------------------------------------------------------------
+def keyed_rng(seed: int, *parts: Any) -> "random.Random":
+    """An RNG keyed by the data seed and a label, independent of call order.
+
+    Every seeded choice in the build goes through this, so adding a stage or
+    reordering one cannot shift another stage's draws.
+    """
+    import random
+    key = ":".join([str(seed)] + [str(p) for p in parts])
+    digest = hashlib.blake2b(key.encode("utf-8"), digest_size=8).digest()
+    return random.Random(int.from_bytes(digest, "big"))
+
+
 def text_sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 

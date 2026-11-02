@@ -185,6 +185,48 @@ bios:
         corpus_dirs: ["train", "heldout_pool"]
         case_sensitive: true
 
+# --- packing into token files (data prompt 3) ------------------------------
+# Turns the cleaned Pile text and the biographies into the .bin files training
+# reads. `data/pack.py`; see reports/data3_pack_report.md.
+pack:
+    block_size: 512             # sequence length; must match model.block_size
+    eot_token: 50256            # GPT-2 <|endoftext|>, written between documents
+
+    # Each subject contributes EXACTLY this many tokens, cut from prompt 1's
+    # 1.2x slack: whole documents in a seeded order until the next would pass
+    # the target, then a prefix of one more document to land on it exactly.
+    train_tokens_per_subject: 27000000
+
+    # A biography copy is never split across a sequence boundary. When one does
+    # not fit in what is left of the current sequence, the remainder is filled
+    # with Pile text (pulled forward from the stream, so no subject gains
+    # tokens) and the copy starts in the next sequence.
+    split_biographies: false
+
+    # The stream interleaves the six sources so every window of this many
+    # tokens holds each subject and the biographies within `window_tolerance`
+    # percentage points of its overall share. Done by deficit-greedy
+    # scheduling, not by shuffling -- a shuffle is about 1.7 points noisy here.
+    window_tokens: 1000000
+    window_tolerance_points: 2.0
+
+    index_format: parquet       # <split>.idx.parquet next to each .bin
+    heldout_halves: ["label", "test"]
+
+# --- the frozen bundle (data prompt 3; the freeze is prompt 4) -------------
+distribution:
+    # PLACEHOLDER. The owner fills in the account at the freeze; `data.fetch`
+    # refuses to download while it still says <owner> but still verifies.
+    hf_repo: "<owner>/memlayers-data"
+    repo_type: dataset
+    tag: data-v1
+    # Committed copy of the bundle manifest, which `data.fetch` verifies
+    # against. data/v1/ itself stays gitignored.
+    manifest_dir: data/manifests
+    # Skipped by `data.fetch` unless --with-raw: 398 MB of archived source text
+    # that a rebuild needs but training does not.
+    optional_prefixes: ["raw/"]
+
 # --- outputs --------------------------------------------------------------
 paths:
     root: data/v1
