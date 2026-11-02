@@ -115,6 +115,12 @@ dedup:
     ngram_drop_threshold: 0.50  # drop a held-out doc if >50% of its 13-grams
                                 # occur in the train docs of the same subject
     ngram_scope: same_subject
+    # Subjects the 13-gram rule must never touch. Four rewordings of one
+    # person's facts share most of their 13-grams BY DESIGN, so the rule would
+    # delete exactly the held-out biographies it exists to protect. This is an
+    # exemption, not a threshold tweak: no value of ngram_drop_threshold is
+    # right for `bio`.
+    ngram_exempt_subjects: ["bio"]
 
 # --- biographies (data prompt 2) ------------------------------------------
 # Made-up people whose facts are uniformly random, so the model can only answer

@@ -174,12 +174,60 @@ def _train_ngram_index(cfg: DataConfig, enc, subject: str) -> np.ndarray:
     return base
 
 
+def _copy_through_exempt(cfg: DataConfig, subject: str, log: Dict[str, Any],
+                         t0: float) -> Dict[str, Any]:
+    """Copy one subject's held-out documents past the 13-gram rule untouched."""
+    slug = cfg.slug(subject)
+    src = cfg.work_dir / "heldout_clean" / f"{slug}.jsonl.gz"
+    dst = cfg.heldout_pool_dir / f"{slug}.jsonl.gz"
+    kept = kept_tokens = 0
+    with open_write(dst) as fh:
+        for rec in read_jsonl(src):
+            # no ngram_overlap field: the rule did not run, so there is no rate
+            # to report, and a 0.0 would read as "checked and clean"
+            fh.write(dumps_record(dict(rec, ngram_rule="exempt")))
+            kept += 1
+            kept_tokens += rec["n_tokens"]
+    if subject in log["heldout"]:
+        log["heldout"][subject]["dropped_ngram_overlap"] = 0
+        log["heldout"][subject]["docs_kept"] = kept
+        log["heldout"][subject]["tokens_kept"] = kept_tokens
+    print(f"[dedup] B {subject:20s} EXEMPT from the "
+          f"{cfg.ngram_drop_threshold:.0%} 13-gram rule -- "
+          f"{kept:,} docs copied through untouched", flush=True)
+    return {
+        "exempt": True,
+        "exempt_reason": "rewordings of one person overlap by design",
+        "train_ngrams_unique": 0,
+        "heldout_ngrams_total": 0,
+        "heldout_ngrams_in_train": 0,
+        "aggregate_overlap_rate": None,
+        "mean_per_doc_overlap_rate": None,
+        "median_per_doc_overlap_rate": None,
+        "max_per_doc_overlap_rate": None,
+        "docs_dropped": 0,
+        "docs_kept": kept,
+        "tokens_kept": kept_tokens,
+        "seconds": round(time.time() - t0, 1),
+    }
+
+
 def _pass_b(cfg: DataConfig, enc, log: Dict[str, Any]) -> Dict[str, Any]:
-    """Drop held-out documents that overlap their subject's training text."""
+    """Drop held-out documents that overlap their subject's training text.
+
+    Subjects in `dedup.ngram_exempt_subjects` are copied through untouched. That
+    exists for `bio`: four rewordings of one person's facts share most of their
+    13-grams by construction, so the rule would delete the held-out biographies
+    it is meant to protect. The exemption is checked before the index is even
+    built, so no amount of overlap can drop an exempt document.
+    """
     out: Dict[str, Any] = {}
     for subject in cfg.all_subjects:
         slug = cfg.slug(subject)
         t0 = time.time()
+        if not cfg.ngram_rule_applies(subject):
+            out[subject] = _copy_through_exempt(cfg, subject, log, t0)
+            continue
         index = _train_ngram_index(cfg, enc, subject)
         src = cfg.work_dir / "heldout_clean" / f"{slug}.jsonl.gz"
         dst = cfg.heldout_pool_dir / f"{slug}.jsonl.gz"
@@ -222,6 +270,7 @@ def _pass_b(cfg: DataConfig, enc, log: Dict[str, Any]) -> Dict[str, Any]:
         log["heldout"][subject]["tokens_kept"] = kept_tokens
         rates = np.array(per_doc_rates) if per_doc_rates else np.zeros(1)
         out[subject] = {
+            "exempt": False,
             "train_ngrams_unique": int(index.size),
             "heldout_ngrams_total": n_total,
             "heldout_ngrams_in_train": n_found,
@@ -254,6 +303,7 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         "min_tokens": cfg.min_tokens,
         "ngram_n": cfg.ngram_n,
         "ngram_drop_threshold": cfg.ngram_drop_threshold,
+        "ngram_exempt_subjects": cfg.ngram_exempt_subjects,
         "seconds": round(time.time() - t0, 1),
         "per_subject": log,
         "ngram_overlap": ngram,

@@ -101,6 +101,7 @@ class DataConfig:
         self.exact_dedup = bool(dd["exact"])
         self.ngram_n = int(dd["ngram_n"])
         self.ngram_drop_threshold = float(dd["ngram_drop_threshold"])
+        self.ngram_exempt_subjects = list(dd.get("ngram_exempt_subjects", []))
 
         b = c.get("bios")
         self.bios = b
@@ -171,6 +172,15 @@ class DataConfig:
         """Scaled, then rounded up to a multiple of `k` (at least `k`)."""
         v = self._scaled(n)
         return max(k, -(-v // k) * k)
+
+    def ngram_rule_applies(self, subject: str) -> bool:
+        """False for subjects the 13-gram contamination rule must never touch.
+
+        Biographies are exempt: four rewordings of one person's facts share
+        most of their 13-grams by design, so the rule would delete the held-out
+        set it exists to protect.
+        """
+        return subject not in self.ngram_exempt_subjects
 
     def slug(self, subject: str) -> str:
         return self.slugs[subject]
