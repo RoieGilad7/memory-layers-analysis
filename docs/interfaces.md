@@ -28,15 +28,21 @@ code can be written against real records before the full build lands.
 | Token dtype | `uint16` (50,257 < 65,536) |
 | Line format | one JSON object per line, keys **sorted**, `ensure_ascii=False`, no spaces after separators |
 | Compression | `.jsonl.gz`, gzip with **`mtime=0`** so two builds are byte-identical |
-| Index/array files | little-endian; `.npy` carries its own dtype header |
+| Index files | Parquet (§1.4); token arrays are raw little-endian `uint16` |
 | Document cap | every document is its first **4,096 tokens**, and the stored text is guaranteed to re-encode to ≤ 4,096 |
 | Document floor | documents under **50 tokens** (after cleaning) are dropped |
 | Subject | the Pile's `meta.pile_set_name`, verbatim; biographies use the extra subject **`"bio"`** |
 
 **Document id** — `"<subject_slug>-<source_tag>-<line_number>"`, e.g.
 `pile_cc-train00-128745`. `line_number` is the 0-based line index in the source
-shard, so ids survive a rebuild. Biography ids are `"bio-<person_id>-<variant>"`
-(§2). Ids are unique across the whole corpus and are the join key everywhere.
+shard, so ids survive a rebuild.
+
+Biographies use the same three-part shape with `bio` as the slug, the person id
+as the source tag and the rewording index as the last field:
+`"bio-<person_id>-<variant>"`, e.g. `bio-p000317-2` for person `p000317`'s third
+reworded biography. So the same `split("-")` works on every id in the corpus.
+
+Ids are unique across the whole corpus and are the join key everywhere.
 
 **Subject slugs** (fixed in the config, never derived at runtime):
 
@@ -64,22 +70,24 @@ data/v1/
 │   ├── heldout/<slug>.jsonl.gz
 │   └── extract_state.json
 ├── train/<slug>.jsonl.gz             # cleaned, capped, deduped training docs
+│                                     #   (<slug> includes `bio`)
 ├── heldout_pool/<slug>.jsonl.gz      # cleaned, capped, deduped held-out docs
 ├── heldout/
 │   ├── label/<slug>.jsonl.gz         # the labeling half, 2.5M tokens/subject
 │   └── test/<slug>.jsonl.gz          # the test half,     2.5M tokens/subject
-├── bio/                              # §2, built by a later prompt
-│   ├── people.jsonl
-│   ├── facts.jsonl
-│   ├── train.jsonl.gz
-│   └── heldout/{label,test}.jsonl.gz
+├── bio/                              # §2, built by a later prompt.
+│   ├── people.jsonl                  #   Fact METADATA only -- the biography
+│   └── facts.jsonl                   #   *documents* are train/bio.jsonl.gz
+│                                     #   and heldout/<half>/bio.jsonl.gz,
+│                                     #   i.e. `bio` is just another slug.
 ├── tokens/                           # §1.4, built by a later prompt
 │   ├── train.bin  train.idx.parquet
 │   └── heldout_<half>_<slug>.bin  …idx.parquet
-└── reports/
-    ├── extract_manifest.json
-    ├── dedup_log.json
-    └── split_report.json
+├── reports/
+│   ├── extract_manifest.json
+│   ├── dedup_log.json
+│   └── split_report.json
+└── _work/                            # stage scratch; safe to delete
 ```
 
 ### 1.2 Raw archive — `raw/<split>/<slug>.jsonl.gz`
@@ -107,13 +115,14 @@ the halves.
 | `subject` | str | verbatim Pile label, or `"bio"` |
 | `split` | str | `"train"` or `"heldout"` |
 | `source` | str | shard filename (`"bio"` for biographies) |
-| `line` | int | 0-based line index in the shard (person index for biographies) |
+| `line` | int | 0-based line index in the source shard; for biographies, the rewording index (§2.3) |
 | `n_tokens` | int | GPT-2 tokens of `text`, **≤ 4,096** |
 | `truncated` | bool | true if the source document was longer than the cap |
 | `sha256` | str | hex sha256 of `text` — the exact-duplicate key |
 | `text` | str | cleaned, capped document text |
 | `ngram_overlap` | float | *held-out only*: fraction of this document's GPT-2 token 13-grams that occur in the training documents of the same subject. Documents above `0.50` are already gone. |
 | `half` | str | *`heldout/<half>/` only*: `"label"` or `"test"` |
+| `person_id` | str or null | set **only** when `subject == "bio"` → `people.jsonl` / `facts.jsonl`. Present so a biography record joins to its facts without reading the token index. Null on every Pile document. |
 
 Held-out halves are disjoint **by whole document**: the half is
 `blake2b(f"{seed}:{doc_id}")[:8] % 2`, so it depends on nothing but the id and
@@ -136,7 +145,7 @@ the data seed.
 | `subject` | `string` (dictionary-encoded) | `"Pile-CC"` … `"USPTO Backgrounds"`, or `"bio"` |
 | `start` | `int64` | offset of the document's first token in the `.bin` |
 | `length` | `int64` | number of tokens, `1 ≤ length ≤ 4096` |
-| `person_id` | `string`, nullable | set **only** for `subject == "bio"` (§2); null otherwise |
+| `person_id` | `string`, nullable | copied from the document record (§1.3); set only for `subject == "bio"`, null otherwise |
 
 Invariants the loader may assume: rows are in `start` order, `start[0] == 0`,
 `start[i+1] == start[i] + length[i]`, and `sum(length) == len(bin) `.
@@ -214,10 +223,23 @@ and per phrasing.
 
 ### 2.3 Biography documents
 
-Same schema as §1.3, with `subject == "bio"`, `source == "bio"` and `line` =
-the person index. Each `text` is one person's biography paragraph in one
-rewording. Biography documents also go into the held-out halves, so the
-label/test split covers the synthetic facts as well as the Pile subjects.
+`bio` is a subject slug like any other, so biography documents sit in
+`train/bio.jsonl.gz` and `heldout/<half>/bio.jsonl.gz` with **exactly the schema
+of §1.3** — no separate reader, and `glob("train/*.jsonl.gz")` picks them up with
+the Pile. The fields that are bio-specific:
+
+| field | value for a biography document |
+|---|---|
+| `subject` | `"bio"` |
+| `source` | `"bio"` |
+| `line` | the rewording index (the `<variant>` in the doc id), **not** the person index |
+| `person_id` | the person, e.g. `"p000317"` |
+| `truncated` | always false — a biography paragraph is a few hundred tokens |
+| `ngram_overlap` | held-out biographies only; expected to be high, since rewordings of one person's facts share phrasing by design. **The 0.50 drop rule is not applied to `bio`** — it would delete the held-out set it is meant to protect. |
+
+Each `text` is one person's biography paragraph in one rewording. Biography
+documents also go into the held-out halves, so the label/test split covers the
+synthetic facts as well as the Pile subjects.
 
 ---
 
