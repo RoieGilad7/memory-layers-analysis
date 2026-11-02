@@ -14,7 +14,7 @@
     "max_tokens": 4096,
     "min_tokens": 50
   },
-  "free_disk_gb": 1844.8,
+  "free_disk_gb": 1844.0,
   "problems": {
     "fallback_files_used": {
       "heldout": [],
@@ -27,7 +27,7 @@
     "train_subjects_below_target": []
   },
   "revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
-  "seconds": 4.2,
+  "seconds": 6.8,
   "seed": 20261102,
   "small": true,
   "stage": "pile",

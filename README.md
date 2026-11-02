@@ -22,9 +22,12 @@ the whole comparison hangs on:
 |---|---|---|
 | **0 — confirm access** | every dataset, model, package and tool reachable and runnable on an Apple-Silicon Mac | [`reports/step0_access_report.md`](reports/step0_access_report.md) |
 | **1 — training demo on fake data** | reusable training code, proven end to end, speed/memory measured to size the real runs | [`reports/step1_demo_report.md`](reports/step1_demo_report.md) |
-| 2–5 | real data, training runs, read-log analysis | not started |
+| **2a — real data, the Pile part** | 161.7M training tokens over 5 subjects + 12 held-out halves of 2.5M, from a pinned revision, byte-identical on rebuild | [`reports/data1_pile_report.md`](reports/data1_pile_report.md) |
+| 2b | biographies, tokenization/packing, the loader | not started |
+| 3–5 | training runs, read-log analysis | not started |
 
-Both reports are self-contained and carry the numbers; start there.
+All three reports are self-contained and carry the numbers; start there.
+The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
 ---
 
@@ -49,14 +52,28 @@ bench/                  benchmarks and their results
   colab_benchmark.ipynb the same benchmark on a Colab T4
   results/*.json        committed: the evidence behind the step-1 report
 
+data/                   the dataset build (step 2a: the Pile part)
+  common.py             config, cleaning, the 4096-token cap, fixed-constant hashing, gzip/JSONL IO
+  pile_extract.py       streams the pinned Pile revision, archives raw JSONL per (split, subject)
+  dedup.py              clean + cap + exact dedup + the 50% 13-gram contamination rule
+  split.py              held-out label/test halves by seeded hash, trimmed to budget
+  build.py              one entry point: --stage pile [--small]
+  make_sample.py        packages the 1% build as data/v1_sample/
+  report_tables.py      regenerates the data report's tables from the build's JSON
+  v1_sample/            committed: the 1% build (7.4 MB) + a README per file
+  v1/, v1_small/        not committed; rebuild from configs/data/v1.yaml
+
+configs/data/v1.yaml    every data target, the subject list, the seed, the pinned revision
+docs/interfaces.md      dataset + biography file schemas (DRAFT, for the metrics owner)
+
 step0_access/           one re-runnable script per step-0 access check
   check_01..13_*.py     environment, datasets, public models, our layers, faiss, MPS smoke test
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
 tools/bio_generator.py  bioS-style synthetic biographies + QA pairs
-tests/                  59 pytest tests
-reports/                the two step reports
+tests/                  95 pytest tests
+reports/                the three step reports
 ```
 
 Two result directories, both committed, because the reports cite them: `logs/*.json` for
@@ -104,7 +121,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 59 tests, CPU, ~10 s
+.venv/bin/python -m pytest tests/ -q                 # 95 tests, CPU, ~10 s
 
 # train one config
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
@@ -122,6 +139,12 @@ STEPS=50 LEARN_STEPS=100 ./bench/run_demo.sh    # quick smoke run
 
 # parameter vs. FLOP budget for every config
 .venv/bin/python bench/model_budget.py
+
+# build the dataset (the Pile part): ~6 min, 1.27 GB download, 788 MB output
+caffeinate -i .venv/bin/python -m data.build --config configs/data/v1.yaml --stage pile
+.venv/bin/python -m data.build --config configs/data/v1.yaml --stage pile --small  # 1%, 7 s
+.venv/bin/python -m data.make_sample --config configs/data/v1.yaml                 # the bundle
+.venv/bin/python -m data.report_tables --config configs/data/v1.yaml               # report tables
 
 # step-0 access checks
 ./step0_access/run_all.sh           # all; or `run_all.sh 05 06` for specific ones

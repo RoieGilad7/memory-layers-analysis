@@ -38,7 +38,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     spl = json.loads((cfg.reports_dir / "split_report.json").read_text())
     halves = cfg.heldout_halves
 
-    print("### Source\n")
+    print("### 4.1 The run\n")
     print(table([
         ["dataset", f"`{man['dataset']}`"],
         ["pinned revision", f"`{man['revision']}`"],
@@ -53,11 +53,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         ["lines read, train / held-out",
          f"{ext['splits']['train']['lines_read']:,} / {ext['splits']['heldout']['lines_read']:,}"],
         ["compressed bytes downloaded", f"{man['bytes_downloaded'] / 1e9:.2f} GB"],
-        ["runtime", f"{man['seconds'] / 60:.1f} min"],
+        ["runtime, total", f"{man['seconds'] / 60:.1f} min"],
+        ["runtime, extract / dedup / split",
+         f"{ext['seconds']:.0f} s / {ded['seconds']:.0f} s / {spl['seconds']:.0f} s"],
         ["output on disk", f"{man['disk_bytes']['total'] / 1e6:.0f} MB"],
     ], ["", ""], "ll"))
 
-    print("\n### 1. Training subjects: collected -> cleaned -> deduped\n")
+    print("\n### 4.2 Training subjects: collected -> cleaned -> deduped\n")
     rows = []
     for s in cfg.train_subjects:
         e = ext["splits"]["train"]["subjects"][s]
@@ -78,7 +80,7 @@ def main(argv: Optional[List[str]] = None) -> int:
           f"{cfg.collect_train_tokens_per_subject:,} (+{cfg.collect_slack:.0%} slack). "
           f"Total training tokens from the Pile: **{man['train_tokens_total']:,}**.")
 
-    print("\n### 2. Held-out: collected -> cleaned -> deduped -> halves\n")
+    print("\n### 4.3 Held-out: collected -> cleaned -> deduped -> halves\n")
     rows = []
     for s in cfg.all_subjects:
         e = ext["splits"]["heldout"]["subjects"][s]
@@ -98,7 +100,7 @@ def main(argv: Optional[List[str]] = None) -> int:
           f"**{cfg.heldout_tokens_per_half:,}** per half, minimum "
           f"**{cfg.heldout_min_docs_per_half}** documents per half.")
 
-    print("\n### 3. Dedup log — documents dropped per reason per subject\n")
+    print("\n### 4.4 Dedup log — documents dropped per reason per subject\n")
     rows = []
     for split in ("train", "heldout"):
         for s, d in ded["per_subject"][split].items():
@@ -114,7 +116,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                        f"&gt;{cfg.ngram_drop_threshold:.0%} 13-gram", "kept"],
                 "llrrrrrrr"))
 
-    print("\n### 4. 13-gram overlap, held-out vs. training text of the same subject\n")
+    print("\n### 4.5 13-gram overlap, held-out vs. training text of the same subject\n")
     rows = []
     for s in cfg.all_subjects:
         o = ded["ngram_overlap"][s]
@@ -130,13 +132,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                        "median / doc", "max / doc", "docs dropped by the 50% rule"],
                 "lrrrrrrrr"))
 
-    print("\n### 5. Disk\n")
+    print("\n### 4.6 Disk\n")
     rows = [[k, f"{v / 1e6:.1f} MB"] for k, v in sorted(man["disk_bytes"].items())]
     rows.append(["compressed downloaded", f"{man['bytes_downloaded'] / 1e9:.2f} GB"])
     rows.append(["free disk after the build", f"{man['free_disk_gb']:.1f} GB"])
     print(table(rows, ["", ""], "lr"))
 
-    print("\n### 6. Problems reported by the build\n")
+    print("\n### 4.7 Problems reported by the build\n")
     print("```json")
     print(json.dumps(man["problems"], indent=2))
     print("```")

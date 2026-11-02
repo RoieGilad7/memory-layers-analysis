@@ -4,7 +4,7 @@
   "max_tokens": 4096,
   "min_tokens": 50,
   "revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
-  "seconds": 2.4,
+  "seconds": 4.9,
   "small": true,
   "splits": {
     "heldout": {
