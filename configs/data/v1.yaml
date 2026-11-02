@@ -1,0 +1,132 @@
+# ===========================================================================
+# Data config v1 -- the Pile part of the step-2 dataset.
+#
+# One file, every number. Nothing downstream may hardcode a target, a seed or
+# a path: `data/build.py` and the three stage scripts read all of it from here.
+# Running the build twice with this file must give byte-identical outputs.
+#
+#   python -m data.build --config configs/data/v1.yaml --stage pile
+#   python -m data.build --config configs/data/v1.yaml --stage pile --small
+#
+# Biographies, tokenization/packing and the loader come in later prompts; the
+# fields that describe them (`targets.bio_*`, `document.*`) are fixed here so
+# the two halves of the corpus agree.
+# ===========================================================================
+
+version: v1
+
+# --- the one seed every random choice comes from --------------------------
+# Used for: held-out label/test assignment (seeded hash of the doc id) and any
+# future shuffling. There is no other source of randomness in the pile stage.
+seed: 20261102
+
+# --- tokenizer ------------------------------------------------------------
+tokenizer:
+    name: gpt2                  # tiktoken encoding name
+    vocab_size: 50257           # asserted at load time
+
+# --- source ---------------------------------------------------------------
+source:
+    dataset: monology/pile-uncopyrighted
+    repo_type: dataset
+    # Pinned commit sha, resolved with huggingface_hub on 2026-11-02.
+    revision: 3be90335b66f24456a5d6659d9c8d208c0357119
+    subject_field: meta.pile_set_name
+    # Training text: train shard 00 only. More shards are appended from
+    # `train_fallback_files` (never 00) if a subject runs short.
+    train_files: ["train/00.jsonl.zst"]
+    # Held-out text: the val split. Falls back to an unused train shard
+    # (never 00) if a subject has too little there.
+    heldout_files: ["val.jsonl.zst"]
+    train_fallback_files: ["train/01.jsonl.zst", "train/02.jsonl.zst"]
+    heldout_fallback_files: ["train/29.jsonl.zst", "train/28.jsonl.zst"]
+    # Short tags used inside document ids: "<subject_slug>-<source_tag>-<line>"
+    source_tags:
+        "train/00.jsonl.zst": train00
+        "train/01.jsonl.zst": train01
+        "train/02.jsonl.zst": train02
+        "train/28.jsonl.zst": train28
+        "train/29.jsonl.zst": train29
+        "val.jsonl.zst": val
+
+# --- subjects -------------------------------------------------------------
+# Exact `meta.pile_set_name` strings as they appear in the data.
+subjects:
+    # 5 training subjects: each 18% of the 150M-token training target.
+    train:
+        - "Pile-CC"
+        - "Github"
+        - "PubMed Central"
+        - "FreeLaw"
+        - "Wikipedia (en)"
+    # Phase-2 subject: held-out only, never in training.
+    heldout_only:
+        - "USPTO Backgrounds"
+    # Filesystem-safe names. Fixed here so a rebuild cannot rename a file.
+    slugs:
+        "Pile-CC": pile_cc
+        "Github": github
+        "PubMed Central": pubmed_central
+        "FreeLaw": freelaw
+        "Wikipedia (en)": wikipedia_en
+        "USPTO Backgrounds": uspto_backgrounds
+
+# --- targets --------------------------------------------------------------
+targets:
+    # Training mix: 150M tokens = 5 x 18% pile + 10% biographies.
+    total_train_tokens: 150000000
+    train_subject_share: 0.18
+    train_tokens_per_subject: 27000000      # = 0.18 * 150M
+    bio_share: 0.10                         # 15M tokens, built in a later prompt
+    # Collect target + 20% so cleaning and dedup cannot leave a subject short.
+    collect_slack: 0.20                     # -> 32,400,000 collected per subject
+
+    # Held-out: 5M tokens per subject, for all 6 subjects, split into two
+    # halves of 2.5M by whole documents.
+    heldout_tokens_per_subject: 5000000
+    heldout_halves: ["label", "test"]
+    heldout_tokens_per_half: 2500000
+    heldout_min_docs_per_half: 500
+    # Held-out needs no slack: the label/test trim already discards the excess.
+    heldout_collect_slack: 0.20
+
+# --- per-document rules ---------------------------------------------------
+document:
+    max_tokens: 4096            # every document is cut to its first 4096 tokens
+    min_tokens: 50              # documents under this are dropped after cleaning
+
+# --- cleaning -------------------------------------------------------------
+clean:
+    unicode_form: NFC
+    # Runs of horizontal whitespace inside a line collapse to one space;
+    # leading indentation is kept verbatim so code survives.
+    collapse_horizontal_ws: true
+    keep_indentation: true
+    max_consecutive_newlines: 2
+    strip_document: true
+
+# --- dedup ----------------------------------------------------------------
+dedup:
+    exact: true                 # sha256 of the cleaned text, within+across splits
+    exact_hash: sha256
+    ngram_n: 13                 # GPT-2 token 13-grams, hashed
+    ngram_drop_threshold: 0.50  # drop a held-out doc if >50% of its 13-grams
+                                # occur in the train docs of the same subject
+    ngram_scope: same_subject
+
+# --- outputs --------------------------------------------------------------
+paths:
+    root: data/v1
+    raw: data/v1/raw                # archived extracted JSONL (gzip), per subject
+    work: data/v1/_work             # stage scratch, safe to delete
+    train: data/v1/train            # final training documents, per subject
+    heldout_pool: data/v1/heldout_pool  # cleaned+deduped held-out, before halving
+    heldout: data/v1/heldout        # heldout/<half>/<subject>.jsonl.gz
+    reports: data/v1/reports        # manifests and logs this stage writes
+
+# --- --small mode ---------------------------------------------------------
+# Scales every token target and the per-half document minimum. Used for the
+# fast end-to-end test and for the data/v1_sample/ bundle.
+small:
+    scale: 0.01
+    root: data/v1_small
