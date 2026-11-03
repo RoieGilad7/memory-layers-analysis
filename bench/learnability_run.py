@@ -153,7 +153,13 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-train-hours", type=float, default=2.4,
                     help="hard cap on TRAINING time, excluding evaluation")
-    ap.add_argument("--max-heldout-docs", type=int, default=200)
+    ap.add_argument("--max-heldout-docs", type=int, default=200,
+                    help="cap INSIDE the training loop, to keep an evaluation "
+                         "at about a minute")
+    ap.add_argument("--final-heldout-all", action="store_true", default=True,
+                    help="at the final checkpoint only, also evaluate every "
+                         "test-half document (all 13,381), not the capped "
+                         "sample -- this is the number to quote")
     ap.add_argument("--out-dir", default="runs/learnability_t1_pkm")
     ap.add_argument("--tag", default="learnability_t1_pkm")
     ap.add_argument("--report-only", action="store_true",
@@ -259,6 +265,22 @@ def main(argv=None) -> int:
         trainer.save_checkpoint()
         evaluate(trainer.step)
 
+    # settles prompt 4's open question 2: the capped sample keeps an
+    # evaluation inside the loop cheap, but the number worth quoting is the
+    # one over every held-out document
+    heldout_all = {}
+    if args.final_heldout_all:
+        t0 = time.time()
+        print(f"[a18] final held-out loss over ALL test-half documents",
+              flush=True)
+        heldout_all = heldout_loss_by_subject(
+            trainer.model, trainer.device, data_cfg, "test", block,
+            max_docs_per_subject=10 ** 9)
+        print(f"[a18] all-document held-out ({time.time() - t0:.0f}s): "
+              + "  ".join(f"{s.split()[0]}={v['loss']:.4f} "
+                          f"({v['documents']:,} docs)"
+                          for s, v in heldout_all.items()), flush=True)
+
     final = evals[-1]["probe"]
     verdict = check_pass(final)
     curve = logged if not args.report_only else read_curve(csv_path)
@@ -281,6 +303,8 @@ def main(argv=None) -> int:
         "final_by_attribute": final["by_attribute"],
         "final_by_tier_role_attribute": final["by_tier_role_attribute"],
         "heldout_test": evals[-1]["heldout"],
+        "heldout_test_all_documents": heldout_all,
+        "heldout_cap_in_loop": args.max_heldout_docs,
         "evals": evals,
         "csv": _rel(csv_path),
         "png": _rel(png),
@@ -288,6 +312,12 @@ def main(argv=None) -> int:
     out = ROOT / "bench" / "results" / f"{args.tag}.json"
     out.write_text(json.dumps(result, indent=2))
 
+    if heldout_all:
+        print("\n=== held-out loss, test half, ALL documents")
+        for s_, v in heldout_all.items():
+            capped = evals[-1]["heldout"].get(s_, {}).get("loss")
+            print(f"   {s_:22s} {v['loss']:.4f}  ({v['documents']:,} docs, "
+                  f"{v['tokens']:,} tokens; capped sample {capped})")
     print(f"\n=== A18 {'PASS' if verdict['pass'] else 'FAIL'}")
     for name, c in verdict["checks"].items():
         print(f"   {'PASS' if c['pass'] else 'FAIL'}  {name}: "
