@@ -34,11 +34,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", required=True)
     ap.add_argument("--small", action="store_true")
-    ap.add_argument("--stage", choices=["pile", "bios"], default="pile")
+    ap.add_argument("--stage", choices=["pile", "bios", "pack"], default="pile")
     args = ap.parse_args(argv)
     cfg = load_config(args.config, small=args.small)
     if args.stage == "bios":
         return bios_tables(cfg)
+    if args.stage == "pack":
+        return pack_tables(cfg)
 
     man = json.loads((cfg.reports_dir / "pile_manifest.json").read_text())
     ext = json.loads((cfg.reports_dir / "extract_manifest.json").read_text())
@@ -253,6 +255,109 @@ def bios_tables(cfg) -> int:
     print("\nFirst 12 rejected names: "
           + ", ".join(f"`{n}`" for n in p["rejected_names"][:12]) + ".")
     return 0
+
+# ---------------------------------------------------------------------------
+# packing (data prompt 3)
+# ---------------------------------------------------------------------------
+def pack_tables(cfg) -> int:
+    rep = json.loads((cfg.reports_dir / "pack_report.json").read_text())
+    man = json.loads((cfg.manifest_path).read_text())
+    tim = _timings(cfg)
+    tr, bio = rep["train"], rep["biographies"]
+
+    print("### 2.1 The run\n")
+    print(table([
+        ["config fingerprint (pack scope)", f"`{rep['config_fingerprint'][:16]}`"],
+        ["data seed", str(rep["seed"])],
+        ["block size / EOT", f"{rep['block_size']} / {rep['eot_token']}"],
+        ["runtime, pack", f"{tim.get('pack', 0):.0f} s"],
+        ["git commit", f"`{man['git']['commit'][:12]}`"],
+        ["Pile revision", f"`{man['source']['revision'][:12]}`"],
+    ], ["", ""], "ll"))
+
+    print("\n### 2.2 train.bin\n")
+    rows = []
+    for subj in cfg.train_subjects:
+        v = tr["per_subject"][subj]
+        sel = rep["select"][subj]
+        rows.append([f"`{subj}`", _f(sel["documents_used"]),
+                     _f(sel["documents_available"]), _f(v["segments"]),
+                     f"**{v['tokens']:,}**",
+                     f"{v['tokens'] / tr['tokens']:.3%}"])
+    v = tr["per_subject"]["bio"]
+    rows.append(["`bio`", _f(bio["distinct_biographies"]), "-",
+                 _f(v["segments"]), f"**{v['tokens']:,}**",
+                 f"{v['tokens'] / tr['tokens']:.3%}"])
+    rows.append(["**total**", "", "", f"**{tr['index_rows']:,}**",
+                 f"**{tr['tokens']:,}**", "100%"])
+    print(table(rows, ["subject", "documents used", "available", "index segments",
+                       "tokens", "share of train.bin"], "lrrrrr"))
+    print(f"\n**{tr['sequences']:,}** sequences of {rep['block_size']}. "
+          f"{tr['filler_tokens']:,} tokens of Pile text were pulled forward to "
+          f"fill the tail of a sequence so a biography would not be split "
+          f"({tr['biographies_moved_to_next_sequence']:,} copies moved); "
+          f"{tr['eot_pad_tokens']:,} EOT tokens pad the final sequence. "
+          f"Every subject lands on exactly "
+          f"{cfg.pack_tokens_per_subject:,} tokens.")
+
+    print("\n### 2.3 Window shares, worst deviation per subject\n")
+    rows = []
+    for k, w in sorted(tr["window_shares"].items()):
+        rows.append([f"`{k}`", f"{w['target_share']:.3%}", f"{w['worst_share']:.3%}",
+                     f"**{w['worst_deviation_points']:.3f}**",
+                     _f(w["worst_window_start"]), _f(w["n_windows"])])
+    print(table(rows, ["subject", "target share", "worst window share",
+                       "worst deviation (pts)", "at token", "windows checked"],
+                "lrrrrr"))
+    print(f"\nWindows of {tr['window_tokens']:,} tokens at a stride of "
+          f"{tr['window_tokens'] // 4:,}, so they overlap and a deviation cannot "
+          f"hide on a tile boundary. Tolerance "
+          f"{tr['window_tolerance_points']:.0f} points.")
+
+    print("\n### 2.4 Biography copies per tier\n")
+    rows = []
+    for tier, v in sorted(bio["per_tier"].items(),
+                          key=lambda kv: -kv[1]["copies"]):
+        per = v["copies"] // v["people"] if v["people"] and v["copies"] else 0
+        rows.append([f"`{tier}`", _f(v["people"]), _f(per), _f(v["copies"]),
+                     _f(v["tokens"])])
+    rows.append(["**total**", _f(sum(v["people"] for v in bio["per_tier"].values())),
+                 "", f"**{bio['copies']:,}**", f"**{bio['tokens']:,}**"])
+    print(table(rows, ["tier", "people", "copies each", "copies", "tokens"],
+                "lrrrr"))
+
+    print("\n### 2.5 Held-out files\n")
+    rows = []
+    for half in cfg.pack_halves:
+        h = rep["heldout"][half]
+        path = cfg.heldout_tokens_dir / f"{half}.bin"
+        rows.append([f"`heldout/{half}.bin`", _f(h["tokens"]), _f(h["documents"]),
+                     f"{path.stat().st_size / 1e6:.1f} MB"])
+    print(table(rows, ["file", "tokens", "documents", "size"], "lrrr"))
+    print()
+    rows = []
+    for subj in cfg.all_subjects:
+        cells = [f"`{subj}`"]
+        for half in cfg.pack_halves:
+            v = rep["heldout"][half]["per_subject"][subj]
+            cells += [_f(v["documents"]), _f(v["tokens"])]
+        rows.append(cells)
+    head = ["subject"]
+    for half in cfg.pack_halves:
+        head += [f"{half} docs", f"{half} tokens"]
+    print(table(rows, head, "l" + "r" * (len(head) - 1)))
+
+    print("\n### 2.6 The bundle\n")
+    b = man["bytes"]
+    rows = [[f"`{pre}/`", _f(v["files"]), f"{v['bytes'] / 1e6:,.1f} MB"]
+            for pre, v in sorted(b["by_prefix"].items())]
+    rows.append(["**total**", f"**{man['n_files']}**",
+                 f"**{b['total'] / 1e6:,.1f} MB**"])
+    rows.append(["**without `raw/`**", "",
+                 f"**{b['required'] / 1e6:,.1f} MB**"])
+    print(table(rows, ["prefix", "files", "bytes"], "lrr"))
+    return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

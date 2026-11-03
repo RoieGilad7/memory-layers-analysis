@@ -24,10 +24,11 @@ the whole comparison hangs on:
 | **1 — training demo on fake data** | reusable training code, proven end to end, speed/memory measured to size the real runs | [`reports/step1_demo_report.md`](reports/step1_demo_report.md) |
 | **2a — real data, the Pile part** | 161.7M training tokens over 5 subjects + 12 held-out halves of 2.5M, from a pinned revision, byte-identical on rebuild | [`reports/data1_pile_report.md`](reports/data1_pile_report.md) |
 | **2b — made-up biographies** | 2,500 people with uniformly random facts, 4 rewordings each, 100k fact prompts; 14.6M tokens at the tier exposure targets | [`reports/data2_bios_report.md`](reports/data2_bios_report.md) |
-| 2c | tokenization/packing and the loader | not started |
+| **2c — token files** | `train.bin` 149,963,776 tokens / 292,898 sequences, two held-out halves, the hash-verified bundle manifest, fetch and the loader | [`reports/data3_pack_report.md`](reports/data3_pack_report.md) |
+| 2d | validation and the freeze | not started |
 | 3–5 | training runs, read-log analysis | not started |
 
-All four reports are self-contained and carry the numbers; start there.
+All five reports are self-contained and carry the numbers; start there.
 The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
 ---
@@ -62,11 +63,16 @@ data/                   the dataset build (step 2a: the Pile part)
   bios.py               bioS-style made-up people: facts, rewordings, fact prompts
   bios_data.py          name pools, value candidates, 20+4 templates per attribute
   bios_sample.py        a hand-reviewable markdown sample of generated biographies
+  pack.py               selection, biography copies, interleave, packing, held-out bins
+  loader.py             memmapped (B, 512) batches; seeded order; resumable
+  manifest.py           the bundle manifest (every file's sha256) + committed copy
+  fetch.py              download/verify the frozen bundle; offline verifier
   make_sample.py        packages the 1% build as data/v1_sample/
   report_tables.py      regenerates the data report's tables from the build's JSON
   v1_sample/            committed: the 1% build (7.4 MB) + a README per file
   v1/, v1_small/        not committed; rebuild from configs/data/v1.yaml
 
+data/manifests/v1.json  committed: the hash authority for the frozen bundle
 configs/data/v1.yaml    every data target, the subject list, the seed, the pinned revision
 docs/interfaces.md      dataset + biography file schemas (DRAFT, for the metrics owner)
 
@@ -75,8 +81,8 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  96 pytest tests
-reports/                the four step reports
+tests/                  160 pytest tests
+reports/                the five step reports
 ```
 
 Two result directories, both committed, because the reports cite them: `logs/*.json` for
@@ -124,7 +130,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 96 tests, CPU, ~12 s
+.venv/bin/python -m pytest tests/ -q                 # 160 tests, CPU, ~13 s
 
 # train one config
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
@@ -155,6 +161,16 @@ caffeinate -i .venv/bin/python -m data.build --config configs/data/v1.yaml --sta
 # synthetic biographies: 2,500 people, 4 rewordings each, 100k fact prompts
 caffeinate -i .venv/bin/python -m data.bios --config configs/data/v1.yaml
 .venv/bin/python -m data.bios_sample --config configs/data/v1.yaml --n 20
+
+# pack into token files, hash the bundle, verify it
+.venv/bin/python -m data.pack --config configs/data/v1.yaml        # 16 s
+.venv/bin/python -m data.manifest --config configs/data/v1.yaml
+.venv/bin/python -m data.fetch --version v1 --verify-only          # offline check
+.venv/bin/python bench/check_pack_invariants.py                    # on the real build
+
+# train on the real data (data.source=real verifies the bundle before step 0)
+.venv/bin/python bench/smoke_real_data.py --config memlayers/configs/t1_pkm.yaml \
+    --steps 300 --micro-batch-size 32
 ```
 
 Long runs: use `caffeinate -i` on macOS to stop the machine sleeping, run in the background,

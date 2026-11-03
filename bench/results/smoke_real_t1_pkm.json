@@ -1,0 +1,64 @@
+{
+  "config": "memlayers/configs/t1_pkm.yaml",
+  "name": "t1_pkm",
+  "device": "mps",
+  "steps": 300,
+  "micro_batch_size": 32,
+  "tokens_per_step": 16384,
+  "data": {
+    "source": "real",
+    "version": "v1",
+    "manifest_sha256": "616f685c7d84c688a3989eb539141705cbcdce3b2ab67895e3099585bba3ed0f",
+    "data_config": "configs/data/v1.yaml",
+    "config_fingerprint_pack": "f7adf5f6fefc545dd98b1ead661db86751aa06828d7603f6a4ac8521d5f5a9f5",
+    "pile_revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
+    "bin_path": "/Users/roieg/studies/ms/year1/courses/algos_in_llms/final_project/data/v1/tokens/train.bin",
+    "n_tokens": 149963776,
+    "n_sequences": 292897,
+    "verified": true
+  },
+  "loss_at_step": {
+    "0": 10.8269,
+    "100": 6.6262,
+    "200": 6.196,
+    "300": 6.337
+  },
+  "final_loss_mean_last_20": 6.2603,
+  "heldout_half": "test",
+  "heldout_loss_by_subject": {
+    "FreeLaw": {
+      "loss": 5.8735,
+      "documents": 200,
+      "tokens": 538632
+    },
+    "Github": {
+      "loss": 5.7371,
+      "documents": 200,
+      "tokens": 280630
+    },
+    "Pile-CC": {
+      "loss": 6.7886,
+      "documents": 200,
+      "tokens": 166385
+    },
+    "PubMed Central": {
+      "loss": 6.5792,
+      "documents": 200,
+      "tokens": 696058
+    },
+    "USPTO Backgrounds": {
+      "loss": 7.0021,
+      "documents": 200,
+      "tokens": 163834
+    },
+    "Wikipedia (en)": {
+      "loss": 7.0163,
+      "documents": 200,
+      "tokens": 125951
+    }
+  },
+  "tokens_seen": 4915200,
+  "peak_mem_bytes": 26895745024,
+  "checkpoint": "runs/smoke_real/ckpt.pt",
+  "seconds": 432.7
+}
