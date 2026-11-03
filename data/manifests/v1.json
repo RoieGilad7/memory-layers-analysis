@@ -32,19 +32,11 @@
       "train": {
         "bytes": 227176177,
         "files": 5
-      },
-      "validation_report.json": {
-        "bytes": 18348,
-        "files": 1
-      },
-      "validation_report.md": {
-        "bytes": 5372,
-        "files": 1
       }
     },
     "optional": 398010725,
-    "required": 750373805,
-    "total": 1148384530
+    "required": 750350085,
+    "total": 1148360810
   },
   "config": {
     "fingerprint_all": "88d2ad8169f5b48b0b4bc1c74384ceed0cf7b231df08dea2f72c937bdee99a0e",
@@ -572,26 +564,14 @@
       "optional": false,
       "path": "train/wikipedia_en.jsonl.gz",
       "sha256": "19004a31bf662817c8e83b890aa97975402055ad60add85166a6f57e57823a6b"
-    },
-    {
-      "bytes": 18348,
-      "optional": false,
-      "path": "validation_report.json",
-      "sha256": "c9ba64a958d5a29ac6a18e1c8d190a6213d2f589b3cd4edc888248a4f1cdd61c"
-    },
-    {
-      "bytes": 5372,
-      "optional": false,
-      "path": "validation_report.md",
-      "sha256": "d19f3b19ebd851e1742c710153e1350f6863fb2b8fee7e1efd9e829c4621a63e"
     }
   ],
   "git": {
     "branch": "data/step1-bios",
-    "commit": "110927fe0b586446f1c62d1368505361e50baa0a",
+    "commit": "39c986e487b61410c9cc8ef9b65e35fd98ce1e6a",
     "dirty": true
   },
-  "n_files": 59,
+  "n_files": 57,
   "small": false,
   "source": {
     "dataset": "monology/pile-uncopyrighted",

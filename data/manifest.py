@@ -30,10 +30,16 @@ CHUNK = 1 << 20
 MANIFEST_NAME = "manifest.json"
 # Working files that are not part of the bundle.
 EXCLUDE_DIRS = {"_work", "_parts"}
-# timings.json carries wall clocks on purpose, so it is the one bundle file the
-# manifest does not hash -- see data.common.record_timing
+# Files that describe a RUN rather than the data, so the manifest does not hash
+# them -- a rebuild of identical data has to produce an identical manifest:
+#   timings.json, runtime_env.json  wall clocks, free disk, directory sizes
+#   validation_report.*             written by data.validate INTO the bundle it
+#                                   has just hashed, and carrying its own
+#                                   per-check timings; the durable copy of its
+#                                   content is reports/data4_validation_report.md
 EXCLUDE_NAMES = {".DS_Store", MANIFEST_NAME, "timings.json",
-                 "runtime_env.json"}
+                 "runtime_env.json", "validation_report.md",
+                 "validation_report.json"}
 
 
 def sha256_file(path: Path) -> str:

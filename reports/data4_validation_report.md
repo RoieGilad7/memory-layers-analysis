@@ -36,11 +36,12 @@ python -m pytest                                            # 167 tests
 - Everything else holds on the real article: exact token budgets, a 0.407-point
   worst window deviation, zero leaks, a bag-of-words classifier at **94.87%**,
   and every subject's loss below its unigram baseline by 0.65–0.98 nats.
-- **A1 caught a second environment leak into the frozen bundle.** It failed the
-  first time on one file, `reports/pile_manifest.json`, which carried
-  `free_disk_gb` and a directory byte count — machine state, not data. Same
-  class as the wall clocks found in prompt 3; moved to
-  `reports/runtime_env.json`, which the manifest skips by name. A1 passes now.
+- **Validation found three bugs in the build code** (§6), all the same shape —
+  something describing a *run* leaking into a file meant to describe the
+  *data*. `pile_manifest.json` carried free disk and directory sizes;
+  `validation_report.md` hashed itself; and the checkpoint's data guard refused
+  valid resumes because a *report* change moved the manifest hash. All three
+  are fixed, with tests where a test could have caught them.
 - **One number the metrics owner needs that is not a pass criterion:** a value's
   first GPT-2 token — the token the probe ranks on — also appears in the
   person's own name in **56 of 100,000 rows (7 people)**. See §5.
@@ -55,8 +56,8 @@ Read out of `data/v1/validation_report.json` by `python -m data.report_tables --
 
 |check|what|result|measured|
 |---|---|---|:---:|
-|**A1**|Rebuild is byte-identical|**PASS**|59 files hashed; 0 changed, 0 added, 0 removed|
-|**A2**|`data.fetch --verify-only` passes|**PASS**|59/59 files verified against data/manifests/v1.json (0 mismatched, 0 missing)|
+|**A1**|Rebuild is byte-identical|**PASS**|57 files hashed; 0 changed, 0 added, 0 removed|
+|**A2**|`data.fetch --verify-only` passes|**PASS**|57/57 files verified against data/manifests/v1.json (0 mismatched, 0 missing)|
 |**A3**|Token counts per subject and half|**PASS**|every Pile subject exactly 27,000,000 in train.bin; every held-out half within 1% of 2,500,000 per subject|
 |**A4**|Shares in every 1,000,000-token window|**PASS**|worst deviation 0.407 points across 596 overlapping windows (stride 250,000), tolerance 2.0|
 |**A5**|Format: dtype, vocab bound, EOT, index tiling|**PASS**|train.bin: 149,963,776 tokens, 332,048 segments, 332,319 EOT separator/pad tokens, max id 50256 \| label.bin: 15,021,806 tokens, 13,306 segments, 13,305 EOT separator/pad tokens, max id 50256 \| test.bin: 15,023,952 tokens, 13,381 segments, 13,380 EOT separator/pad tokens, max id 50256|
@@ -303,10 +304,11 @@ exclusion, option A is defensible — it is 8 rows.
 
 ---
 
-## 6. Two bugs validation found in the code it was validating
+## 6. Three bugs validation found in the code it was validating
 
-Worth recording, because both were invisible to the 167 fixture tests and only
-the full build exposed them.
+Worth recording, because none of them was visible to the 168 fixture tests —
+only the full build exposed them, and all three are the same shape: something
+describing a *run* leaking into a file meant to describe the *data*.
 
 **`reports/pile_manifest.json` carried machine state.** `free_disk_gb` and a
 `disk_bytes` directory measurement both change between two rebuilds of identical
