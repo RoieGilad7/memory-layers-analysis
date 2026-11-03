@@ -40,7 +40,7 @@ enforced.
   name or a neighbouring fact.
 - `train.bin` sha256 `17099102f2927930fcddaf7c07555f2a846491cfb7291a60d7cb4247cd812b9c`;
   bundle manifest sha256
-  `57d96bcb62eacd3e062f59181c0e8a4ab755b8e0b5d6039bbd6a22b7269ee6ab`.
+  `38a54cb6de686ecb4ce648823f0f8580e5cadcaaf3e255a10d122d3cfc2a4b15`.
 
 ---
 
@@ -148,29 +148,52 @@ and they are different degrees.
 Read out of `data/v1/validation_report.json` by
 `python -m data.report_tables --config configs/data/v1.yaml --stage validate`.
 
-### 2.1 A1–A18
+### 3.1 A1–A18
 
 |check|what|result|measured|
 |---|---|---|:---:|
-|**A1**|Rebuild is byte-identical|**SKIP**|skipped by request|
-|**A2**|Bundle verifies against the manifest|**SKIP**|skipped by request|
-|**A3**|Token counts per subject and half|**SKIP**|skipped by request|
-|**A4**|Shares in every 1M-token window|**SKIP**|skipped by request|
-|**A5**|Format: dtype, vocab, EOT, tiling|**SKIP**|skipped by request|
-|**A6**|Segments decode to the source|**SKIP**|skipped by request|
-|**A7**|Leaks: ids, hashes, 13-grams|**SKIP**|skipped by request|
-|**A8**|Held-out halves|**SKIP**|skipped by request|
-|**A9**|No held-out-only subject in train|**SKIP**|skipped by request|
-|**A10**|Subject labels agree|**SKIP**|skipped by request|
-|**A11**|Bag-of-words classifier|**SKIP**|skipped by request|
-|**A12**|Biography facts|**SKIP**|skipped by request|
-|**A13**|Fact prompts|**SKIP**|skipped by request|
-|**A14**|Exposure and control isolation|**SKIP**|skipped by request|
-|**A15**|Probe floor|**SKIP**|skipped by request|
-|**A16**|Loader|**SKIP**|skipped by request|
-|**A17**|Unigram baseline|**SKIP**|skipped by request|
+|**A1**|Rebuild is byte-identical|**PASS**|58 files hashed; 0 changed, 0 added, 0 removed|
+|**A2**|`data.fetch --verify-only` passes|**PASS**|58/58 files verified against v1.json (0 mismatched, 0 missing)|
+|**A3**|Token counts per subject and half|**PASS**|every Pile subject exactly 27,000,000 in train.bin; every held-out half within 1% of 2,500,000 per subject|
+|**A4**|Shares in every 1,000,000-token window|**PASS**|worst deviation 0.386 points across 596 overlapping windows (stride 250,000), tolerance 2.0|
+|**A5**|Format: dtype, vocab bound, EOT, index tiling|**PASS**|train.bin: 149,857,280 tokens, 331,964 segments, 332,277 EOT separator/pad tokens, max id 50256 \| label.bin: 15,021,806 tokens, 13,306 segments, 13,305 EOT separator/pad tokens, max id 50256 \| test.bin: 15,023,952 tokens, 13,381 segments, 13,380 EOT separator/pad tokens, max id 50256|
+|**A6**|Decoding index segments reproduces the source|**PASS**|1,000 random segments checked token for token (840 of them whole documents, also compared as text); 0 mismatches|
+|**A7**|Leaks: ids, exact hashes, 13-gram overlap|**PASS**|ids disjoint across train/label/test; 0 exact-hash matches; 0 documents over 50%; worst single document 50.0%; aggregates Pile-CC=0.64%, Github=14.35%, PubMed=2.93%, FreeLaw=9.21%, Wikipedia=2.14%, USPTO=0.00%|
+|**A8**|Halves: disjoint, >=500 docs, <=4096 tokens|**PASS**|halves share 0 documents; smallest half/subject is 708 documents (minimum 500); longest document 4096 tokens (cap 4096)|
+|**A9**|No held-out-only subject in train.bin|**PASS**|['USPTO Backgrounds'] appear in 0 train.bin segments by document id and 0 by subject label; train.bin carries ['FreeLaw', 'Github', 'Pile-CC', 'PubMed Central', 'Wikipedia (en)', 'bio']|
+|**A10**|Subject labels agree with the source|**PASS**|141,964 Pile segments: index subject == raw-archive meta.pile_set_name == the document id's slug; 190,000 biography segments all labelled `bio` with a known person id|
+|**A11**|Bag-of-words subject classifier (sanity)|**PASS**|accuracy 94.87% on 13,381 test-half documents (threshold 90%); per subject Pile-CC=89.7%, Github=97.8%, PubMed=97.6%, FreeLaw=99.1%, Wikipedia=95.0%, USPTO=96.2%|
+|**A12**|Biography facts|**PASS**|2,500 people, names unique and absent from the Pile, genders {'female': 1250, 'male': 1250}, 5 facts each; first-token uniqueness holds per list (first two for birth_date, which has only 12 distinct first tokens); chi-square p birth_date=0.124, birth_city=0.877, university=0.183, major=0.940, employer=0.347|
+|**A13**|Fact prompts: no answer leaks|**PASS**|100,000 rows: **0** leak the value verbatim (0), **0** via the person's name (0), **0** via another of the person's values (0); 50,000 training prompts are exact prefixes of their biography; 50,000 paraphrase prompts, 200 of them searched in full against train.bin and absent; held-out markers inside biography text: 'Question:'=0, 'As for'=0, 'is a person whose'=0, 'reads as follows'=0 (the same markers occur 1312 times in ordinary Pile text, which is not a leak); REPORTED: 26 rows whose ranking key is a TEMPLATE word (employer=Asahi Breweries, employer=Heineken)|
+|**A14**|Exposure counts and control isolation|**PASS**|190,000 copies over 2,000 trained people, every count equal to its tier target and spread over the 4 rewordings; 0 cross a 512-token boundary; 0 of 500 control names appear in train text|
+|**A15**|Probe floor: random and untrained sit mid-list|**PASS**|random scorer: mean rank fraction 0.502, top-1 0.558% over 36,000 prompts; untrained model: 0.500, top-1 0.650% over 4,000; mean candidate list 210|
+|**A16**|Loader: order, resume, shapes|**PASS**|292,689 sequences of 512; same seed reproduces the order, a different seed does not, the order is a permutation, and a resume from (seed, position) matches an unbroken run|
+|**A17**|Model beats the per-subject unigram baseline|**PASS**|Pile-CC: model 6.7886 vs unigram 7.559; Github: model 5.7371 vs unigram 6.3888; PubMed: model 6.5792 vs unigram 7.4554; FreeLaw: model 5.8735 vs unigram 6.8493; Wikipedia: model 7.0163 vs unigram 7.72; USPTO: model 7.0021 vs unigram 7.9605|
 |**A18**|Biography facts are learnable|**PASS**|5,830 steps / 96M tokens in 1.97 h of training. test top-1: frequent 29.6%, normal 2.4%, rare 1.0%, control 0.5% (frequent/control = 55.503x, needs 2x; monotone yes). paraphrase top-1: frequent 1.2%, control 0.4%|
 
+### 3.2 A11 confusion matrix — 94.87% on 13,381 test-half documents
+
+Rows are the true subject, columns the bag-of-words classifier's guess.
+
+|true \\ predicted|Pile-CC|Github|PubMed Central|FreeLaw|Wikipedia (en)|USPTO Backgrounds|recall|
+|---|---:|---:|---:|---:|---:|---:|---:|
+|**Pile-CC**|**2,769**|14|29|18|210|47|89.7%|
+|**Github**|13|**1,775**|22|2|2|1|97.8%|
+|**PubMed Central**|12|2|**696**|·|3|·|97.6%|
+|**FreeLaw**|4|3|·|**986**|·|2|99.1%|
+|**Wikipedia (en)**|86|3|40|9|**3,503**|46|95.0%|
+|**USPTO Backgrounds**|25|·|91|·|2|**2,966**|96.2%|
+
+### 3.3 A17 per-subject unigram baseline
+
+|subject|prompt-3 smoke loss|unigram cross-entropy|margin|test tokens|unigram counts from|
+|---|---:|---:|---:|---:|---|
+|`FreeLaw`|5.8735|6.8493|**0.976**|2,502,989|own training text|
+|`Github`|5.7371|6.3888|**0.652**|2,502,662|own training text|
+|`Pile-CC`|6.7886|7.559|**0.770**|2,501,855|own training text|
+|`PubMed Central`|6.5792|7.4554|**0.876**|2,502,199|own training text|
+|`USPTO Backgrounds`|7.0021|7.9605|**0.958**|2,500,283|pooled 5 subjects|
+|`Wikipedia (en)`|7.0163|7.72|**0.704**|2,500,584|own training text|
 ---
 
 ## 4. A18 re-run, on the fixed data
@@ -290,24 +313,70 @@ Nothing was impossible. Three notes:
    exposure budget is the lever, and that is a training-plan decision.
 3. **Two employer values carry a template-word ranking key** (§2.2, note 1).
    Drop them or keep them — a metrics decision, not a data one.
-4. **The `--small` build is now stale.** `data/v1_sample/` still carries the
-   prompt-1 1% bundle, which predates both the biographies and this fix. It is
-   only a shape reference for the metrics owner, but say if you want it
-   regenerated before the freeze.
+4. **`data/v1_sample/` has been regenerated** from the current build, so it now
+   carries the biographies and the fix (§7).
 
 ---
 
-## 6. Ready to freeze
+## 6. `data/v1_sample/` regenerated, and two bugs it exposed
+
+The committed 1% sample predated both the biographies and this fix, so it was
+rebuilt from the current code: all four `--small` stages, then
+`python -m data.make_sample`. **48 files, 8.1 MB**, and it now carries
+`tokens/`, `bios/`, the held-out `.bin`s and the hand-check pack — the whole
+shape of the real bundle.
+
+It deliberately mirrors **what `data.fetch` gives you by default**, so `raw/`
+is left out (`--with-raw` includes it): a rebuild needs the archived source
+text, and you cannot rebuild from a 1% sample anyway. The sample carries its own
+recounted `manifest.json` and **verifies against it, 46/46 files**, so the
+metrics owner can check their copy the same way they would check the real one.
+
+Building it turned up two defects in code that was already committed:
+
+**`bios/manifest.json` was not hash-protected.** The manifest's exclusion list
+matched on the bare filename, so the root `manifest.json` *and* the bios stage's
+own record were both skipped. The bios record is a genuine bundle file. The rule
+now matches on the relative path, which brings the bundle from 57 to 58 hashed
+files and moves the manifest sha256 — `train.bin` is untouched, as §7 records.
+Caught by the sample listing its files next to its manifest's, not by any test;
+there is a test now.
+
+**`--small` verified against the full manifest.** `data.manifest --small` writes
+`v1_small.json`, but `data.fetch` always looked for `v1.json`, so A2 on a small
+build compared a 1% bundle against the full one and reported 56 of 57 files
+mismatched. Both now go through one `manifest_path()` helper. This is why A2
+failed on the sample build before the fix.
+
+`bios.people.name_candidates_per_gender` also needed a floor for `--small`: 1%
+of 2,600 is 26 candidates, and the two name filters reject ~45% between them, so
+a 1% build could not fill its own 28 people. The floor is 200 and never binds at
+full scale, so the real build is unaffected — same fingerprints, same tokens.
+
+### Where 1% scale genuinely changes the answer
+
+Three checks fail on the sample and should: held-out halves land ±12% off their
+token budget instead of ±1% (A3) because a 1% pool is 20–130 documents;
+chi-square cannot judge uniformity with 28 people against 200 values (A12's own
+guard refuses, expected count 0.1); and exposure counts are deliberately not
+scaled, so biographies are 11.8% of the sample's tokens against 9.7% in the full
+build. The sample's README says all of this. Everything else — exact per-subject
+budgets, the 512-boundary rule, index tiling, **no answer leaks in any prompt**,
+per-person exposure counts — holds at 1% exactly as it does at full scale.
+
+---
+
+## 7. Ready to freeze
 
 | | |
 |---|---|
 | `train.bin` | 149,857,280 tokens, sha256 `17099102f2927930fcddaf7c07555f2a846491cfb7291a60d7cb4247cd812b9c` |
-| bundle manifest | `data/manifests/v1.json`, sha256 `57d96bcb62eacd3e062f59181c0e8a4ab755b8e0b5d6039bbd6a22b7269ee6ab` |
-| bundle | 57 files, 1,148.2 MB (750.1 MB without `raw/`) |
+| bundle manifest | `data/manifests/v1.json`, sha256 `38a54cb6de686ecb4ce648823f0f8580e5cadcaaf3e255a10d122d3cfc2a4b15` |
+| bundle | 58 files, 1,148.2 MB (750.2 MB without `raw/`) |
 | config fingerprints | pile `3f4303d9b926b730`, bios `7a8c48a96792d725`, pack `15643c90477c31a7` |
 | Pile revision | `3be90335b66f24456a5d6659d9c8d208c0357119` |
 | checks | **A1–A18 all PASS** |
-| tests | **174 passed** |
+| tests | **176 passed** |
 | `distribution.hf_repo` | still the `<owner>` placeholder — Part B fills it in |
 
 Part B (freeze, tag, publish) is on hold for the go-ahead.

@@ -1,0 +1,842 @@
+{
+  "biographies": {
+    "rows": 112,
+    "tokens_max": 87,
+    "tokens_mean": 76.85,
+    "tokens_min": 67,
+    "train_tokens_mean": 76.67
+  },
+  "config_fingerprint": "ecb17a71f9a3196a64071086e9763f0a1223c76727a80222fbec3d93578c39b5",
+  "exposures": {
+    "bio_share_target": 0.1,
+    "implied_tokens": 176342,
+    "share_of_train_budget": 0.1176,
+    "total_copies": 2300,
+    "train_budget": 1500000
+  },
+  "facts": {
+    "by_attribute": {
+      "birth_city": 224,
+      "birth_date": 224,
+      "employer": 224,
+      "major": 224,
+      "university": 224
+    },
+    "by_role": {
+      "discovery": 280,
+      "paraphrase": 560,
+      "test": 280
+    },
+    "rows": 1120
+  },
+  "name_check": {
+    "candidates_tested": 400,
+    "case_sensitive": true,
+    "characters_scanned": 7859238,
+    "documents_scanned": 1778,
+    "files": [
+      "data/v1_small/train/freelaw.jsonl.gz",
+      "data/v1_small/train/github.jsonl.gz",
+      "data/v1_small/train/pile_cc.jsonl.gz",
+      "data/v1_small/train/pubmed_central.jsonl.gz",
+      "data/v1_small/train/wikipedia_en.jsonl.gz",
+      "data/v1_small/heldout_pool/freelaw.jsonl.gz",
+      "data/v1_small/heldout_pool/github.jsonl.gz",
+      "data/v1_small/heldout_pool/pile_cc.jsonl.gz",
+      "data/v1_small/heldout_pool/pubmed_central.jsonl.gz",
+      "data/v1_small/heldout_pool/uspto_backgrounds.jsonl.gz",
+      "data/v1_small/heldout_pool/wikipedia_en.jsonl.gz"
+    ],
+    "n_names_found": 0,
+    "names_found": [],
+    "skipped": false
+  },
+  "people": {
+    "by_gender": {
+      "female": 14,
+      "male": 14
+    },
+    "by_split": {
+      "control": 6,
+      "train": 22
+    },
+    "by_tier": {
+      "control": 6,
+      "frequent": 4,
+      "normal": 8,
+      "rare": 10
+    },
+    "by_tier_gender": {
+      "control/female": 3,
+      "control/male": 3,
+      "frequent/female": 2,
+      "frequent/male": 2,
+      "normal/female": 4,
+      "normal/male": 4,
+      "rare/female": 5,
+      "rare/male": 5
+    },
+    "candidates_per_gender": 200,
+    "fact_redraw_examples": [],
+    "fact_redraws": 0,
+    "n_people": 28,
+    "names_rejected_by_pile_check": 0,
+    "names_rejected_by_value_collision": 20,
+    "people_with_a_redrawn_fact": 0,
+    "rejected_names": [],
+    "value_collision": {
+      "by_attribute": {
+        "birth_city": 54,
+        "employer": 31,
+        "university": 75
+      },
+      "by_gender": {
+        "female": 86,
+        "male": 74
+      },
+      "by_reason": {
+        "token": 115,
+        "word": 45
+      },
+      "candidates": 400,
+      "distinct_words_tested": 589,
+      "examples": [
+        {
+          "attribute": "birth_city",
+          "name": "Charlotte Vadnais",
+          "reason": "word",
+          "value": "Charlotte, North Carolina",
+          "word": "Charlotte"
+        },
+        {
+          "attribute": "university",
+          "name": "Keiko Schreiber",
+          "reason": "token",
+          "value": "Keio University",
+          "word": "Keiko"
+        },
+        {
+          "attribute": "university",
+          "name": "Mina Giordano",
+          "reason": "token",
+          "value": "Misericordia University",
+          "word": "Mina"
+        },
+        {
+          "attribute": "university",
+          "name": "Sonia Morin",
+          "reason": "token",
+          "value": "Moravian University",
+          "word": "Morin"
+        },
+        {
+          "attribute": "birth_city",
+          "name": "Florence Reyes",
+          "reason": "word",
+          "value": "Florence, Italy",
+          "word": "Florence"
+        },
+        {
+          "attribute": "university",
+          "name": "Wilhelmina Vickers",
+          "reason": "token",
+          "value": "Wilfrid Laurier University",
+          "word": "Wilhelmina"
+        },
+        {
+          "attribute": "university",
+          "name": "Mariana Ireland",
+          "reason": "token",
+          "value": "Marietta College",
+          "word": "Mariana"
+        },
+        {
+          "attribute": "birth_city",
+          "name": "Zora Garrett",
+          "reason": "token",
+          "value": "Zagreb, Croatia",
+          "word": "Zora"
+        },
+        {
+          "attribute": "university",
+          "name": "Wilhelmina Hoyt",
+          "reason": "token",
+          "value": "Wilfrid Laurier University",
+          "word": "Wilhelmina"
+        },
+        {
+          "attribute": "university",
+          "name": "Sophia Rahman",
+          "reason": "word",
+          "value": "Sophia University",
+          "word": "Sophia"
+        },
+        {
+          "attribute": "university",
+          "name": "Juliana Stone",
+          "reason": "token",
+          "value": "Stonehill College",
+          "word": "Stone"
+        },
+        {
+          "attribute": "employer",
+          "name": "Manuela Morgan",
+          "reason": "word",
+          "value": "Morgan Stanley",
+          "word": "Morgan"
+        },
+        {
+          "attribute": "university",
+          "name": "Anna Pierce",
+          "reason": "word",
+          "value": "Franklin Pierce University",
+          "word": "Pierce"
+        },
+        {
+          "attribute": "birth_city",
+          "name": "Frances Ellington",
+          "reason": "token",
+          "value": "Eindhoven, Netherlands",
+          "word": "Ellington"
+        },
+        {
+          "attribute": "birth_city",
+          "name": "Joy Desai",
+          "reason": "token",
+          "value": "Des Moines, Iowa",
+          "word": "Desai"
+        },
+        {
+          "attribute": "employer",
+          "name": "Tina Edwards",
+          "reason": "word",
+          "value": "Edwards Lifesciences",
+          "word": "Edwards"
+        },
+        {
+          "attribute": "university",
+          "name": "Imani Bruno",
+          "reason": "token",
+          "value": "Iona University",
+          "word": "Imani"
+        },
+        {
+          "attribute": "employer",
+          "name": "Marilyn Yoon",
+          "reason": "token",
+          "value": "Yara International",
+          "word": "Yoon"
+        },
+        {
+          "attribute": "employer",
+          "name": "Fiona Johnson",
+          "reason": "word",
+          "value": "Johnson Controls",
+          "word": "Johnson"
+        },
+        {
+          "attribute": "university",
+          "name": "Willa Burnett",
+          "reason": "token",
+          "value": "Willamette University",
+          "word": "Willa"
+        },
+        {
+          "attribute": "birth_city",
+          "name": "Annabel James",
+          "reason": "token",
+          "value": "Ann Arbor, Michigan",
+          "word": "Annabel"
+        },
+        {
+          "attribute": "university",
+          "name": "Marissa Hart",
+          "reason": "token",
+          "value": "Marietta College",
+          "word": "Marissa"
+        },
+        {
+          "attribute": "university",
+          "name": "Edna Callahan",
+          "reason": "token",
+          "value": "Edgewood College",
+          "word": "Edna"
+        },
+        {
+          "attribute": "employer",
+          "name": "Alina Hogan",
+          "reason": "token",
+          "value": "Alcoa",
+          "word": "Alina"
+        },
+        {
+          "attribute": "employer",
+          "name": "Alina Valentine",
+          "reason": "token",
+          "value": "Alcoa",
+          "word": "Alina"
+        }
+      ],
+      "rejected": 160
+    }
+  },
+  "seed": 20261102,
+  "small": true,
+  "stage": "bios",
+  "templates_per_attribute": {
+    "birth_city": {
+      "held_out": 4,
+      "train": 20
+    },
+    "birth_date": {
+      "held_out": 4,
+      "train": 20
+    },
+    "employer": {
+      "held_out": 4,
+      "train": 20
+    },
+    "major": {
+      "held_out": 4,
+      "train": 20
+    },
+    "university": {
+      "held_out": 4,
+      "train": 20
+    }
+  },
+  "value_tokens": {
+    "birth_city": {
+      "distinct_first_tokens": 200,
+      "distinct_first_two_tokens": 200,
+      "first_token_unique": true,
+      "first_two_tokens_unique": true,
+      "n_values": 200,
+      "value_tokens_mean": 3.69
+    },
+    "birth_date": {
+      "distinct_first_tokens": 12,
+      "distinct_first_two_tokens": 200,
+      "first_token_unique": false,
+      "first_two_tokens_unique": true,
+      "n_values": 200,
+      "value_tokens_mean": 4.0
+    },
+    "employer": {
+      "distinct_first_tokens": 250,
+      "distinct_first_two_tokens": 250,
+      "first_token_unique": true,
+      "first_two_tokens_unique": true,
+      "n_values": 250,
+      "value_tokens_mean": 2.41
+    },
+    "major": {
+      "distinct_first_tokens": 100,
+      "distinct_first_two_tokens": 100,
+      "first_token_unique": true,
+      "first_two_tokens_unique": true,
+      "n_values": 100,
+      "value_tokens_mean": 1.91
+    },
+    "university": {
+      "distinct_first_tokens": 300,
+      "distinct_first_two_tokens": 300,
+      "first_token_unique": true,
+      "first_two_tokens_unique": true,
+      "n_values": 300,
+      "value_tokens_mean": 3.14
+    }
+  },
+  "values": {
+    "birth_city": {
+      "after_near_duplicate_drop": 246,
+      "after_prefix_drop": 227,
+      "candidates": 246,
+      "dropped_near_duplicate": 0,
+      "dropped_over_target": 27,
+      "dropped_prefix_clash": 19,
+      "final": 200,
+      "near_duplicate_examples": [],
+      "prefix_clash_examples": [
+        {
+          "clashes_with": "Bologna, Italy",
+          "dropped": "Bruges, Belgium",
+          "on": " B"
+        },
+        {
+          "clashes_with": "Fort Collins, Colorado",
+          "dropped": "Fort Worth, Texas",
+          "on": " Fort"
+        },
+        {
+          "clashes_with": "Gdansk, Poland",
+          "dropped": "Ghent, Belgium",
+          "on": " G"
+        },
+        {
+          "clashes_with": "Gdansk, Poland",
+          "dropped": "Graz, Austria",
+          "on": " G"
+        },
+        {
+          "clashes_with": "Kaunas, Lithuania",
+          "dropped": "Kolkata, India",
+          "on": " K"
+        },
+        {
+          "clashes_with": "Kaunas, Lithuania",
+          "dropped": "Krakow, Poland",
+          "on": " K"
+        },
+        {
+          "clashes_with": "Leipzig, Germany",
+          "dropped": "Leuven, Belgium",
+          "on": " Le"
+        },
+        {
+          "clashes_with": "Lille, France",
+          "dropped": "Ljubljana, Slovenia",
+          "on": " L"
+        },
+        {
+          "clashes_with": "Nairobi, Kenya",
+          "dropped": "Nantes, France",
+          "on": " N"
+        },
+        {
+          "clashes_with": "New Haven, Connecticut",
+          "dropped": "New Orleans, Louisiana",
+          "on": " New"
+        },
+        {
+          "clashes_with": "New Haven, Connecticut",
+          "dropped": "New York City, New York",
+          "on": " New"
+        },
+        {
+          "clashes_with": "Nairobi, Kenya",
+          "dropped": "Nuremberg, Germany",
+          "on": " N"
+        },
+        {
+          "clashes_with": "Portland, Maine",
+          "dropped": "Portland, Oregon",
+          "on": " Portland"
+        },
+        {
+          "clashes_with": "Pisa, Italy",
+          "dropped": "Pune, India",
+          "on": " P"
+        },
+        {
+          "clashes_with": "San Antonio, Texas",
+          "dropped": "San Diego, California",
+          "on": " San"
+        },
+        {
+          "clashes_with": "San Antonio, Texas",
+          "dropped": "San Francisco, California",
+          "on": " San"
+        },
+        {
+          "clashes_with": "San Antonio, Texas",
+          "dropped": "San Jose, California",
+          "on": " San"
+        },
+        {
+          "clashes_with": "San Antonio, Texas",
+          "dropped": "San Juan, Puerto Rico",
+          "on": " San"
+        },
+        {
+          "clashes_with": "St. Louis, Missouri",
+          "dropped": "Stuttgart, Germany",
+          "on": " St"
+        }
+      ],
+      "target": 200,
+      "uniqueness": "first_token"
+    },
+    "birth_date": {
+      "after_near_duplicate_drop": 200,
+      "after_prefix_drop": 200,
+      "candidates": 200,
+      "dropped_near_duplicate": 0,
+      "dropped_over_target": 0,
+      "dropped_prefix_clash": 0,
+      "final": 200,
+      "near_duplicate_examples": [],
+      "prefix_clash_examples": [],
+      "target": 200,
+      "uniqueness": "first_two_tokens"
+    },
+    "employer": {
+      "after_near_duplicate_drop": 430,
+      "after_prefix_drop": 385,
+      "candidates": 430,
+      "dropped_near_duplicate": 0,
+      "dropped_over_target": 135,
+      "dropped_prefix_clash": 45,
+      "final": 250,
+      "near_duplicate_examples": [],
+      "prefix_clash_examples": [
+        {
+          "clashes_with": "Allianz",
+          "dropped": "Allstate",
+          "on": " All"
+        },
+        {
+          "clashes_with": "AECOM",
+          "dropped": "Aon",
+          "on": " A"
+        },
+        {
+          "clashes_with": "AECOM",
+          "dropped": "Arup",
+          "on": " A"
+        },
+        {
+          "clashes_with": "Asahi Breweries",
+          "dropped": "Asics",
+          "on": " As"
+        },
+        {
+          "clashes_with": "BNP Paribas",
+          "dropped": "Becton Dickinson",
+          "on": " B"
+        },
+        {
+          "clashes_with": "Bechtel",
+          "dropped": "Beiersdorf",
+          "on": " Be"
+        },
+        {
+          "clashes_with": "Carlsberg",
+          "dropped": "Carrefour",
+          "on": " Car"
+        },
+        {
+          "clashes_with": "Cargill",
+          "dropped": "Cemex",
+          "on": " C"
+        },
+        {
+          "clashes_with": "Cargill",
+          "dropped": "Cognex",
+          "on": " C"
+        },
+        {
+          "clashes_with": "Danske Bank",
+          "dropped": "Dassault Systemes",
+          "on": " D"
+        },
+        {
+          "clashes_with": "Equifax",
+          "dropped": "Equinor",
+          "on": " Equ"
+        },
+        {
+          "clashes_with": "Expedia",
+          "dropped": "Expeditors",
+          "on": " Exp"
+        },
+        {
+          "clashes_with": "Ferrero",
+          "dropped": "Ferrovial",
+          "on": " Fer"
+        },
+        {
+          "clashes_with": "Fidelity Investments",
+          "dropped": "Fiserv",
+          "on": " F"
+        },
+        {
+          "clashes_with": "Gilead Sciences",
+          "dropped": "Givaudan",
+          "on": " G"
+        },
+        {
+          "clashes_with": "HCL Technologies",
+          "dropped": "Hach",
+          "on": " H"
+        },
+        {
+          "clashes_with": "HCL Technologies",
+          "dropped": "Hapag-Lloyd",
+          "on": " H"
+        },
+        {
+          "clashes_with": "HCL Technologies",
+          "dropped": "Hormel Foods",
+          "on": " H"
+        },
+        {
+          "clashes_with": "Infineon",
+          "dropped": "Infosys",
+          "on": " Inf"
+        },
+        {
+          "clashes_with": "Intesa Sanpaolo",
+          "dropped": "Intuit",
+          "on": " Int"
+        }
+      ],
+      "target": 250,
+      "uniqueness": "first_token"
+    },
+    "major": {
+      "after_near_duplicate_drop": 116,
+      "after_prefix_drop": 104,
+      "candidates": 127,
+      "dropped_near_duplicate": 11,
+      "dropped_over_target": 4,
+      "dropped_prefix_clash": 12,
+      "final": 100,
+      "near_duplicate_examples": [
+        {
+          "dropped": "Computational Biology",
+          "near_duplicate_of": "Biology"
+        },
+        {
+          "dropped": "History",
+          "near_duplicate_of": "Art History"
+        },
+        {
+          "dropped": "Human Geography",
+          "near_duplicate_of": "Geography"
+        },
+        {
+          "dropped": "Labor Economics",
+          "near_duplicate_of": "Economics"
+        },
+        {
+          "dropped": "Landscape Architecture",
+          "near_duplicate_of": "Architecture"
+        },
+        {
+          "dropped": "Marine Biology",
+          "near_duplicate_of": "Biology"
+        },
+        {
+          "dropped": "Mathematics",
+          "near_duplicate_of": "Applied Mathematics"
+        },
+        {
+          "dropped": "Molecular Biology",
+          "near_duplicate_of": "Biology"
+        },
+        {
+          "dropped": "Physics",
+          "near_duplicate_of": "Applied Physics"
+        },
+        {
+          "dropped": "Quantitative Finance",
+          "near_duplicate_of": "Finance"
+        },
+        {
+          "dropped": "Veterinary Medicine",
+          "near_duplicate_of": "Medicine"
+        }
+      ],
+      "prefix_clash_examples": [
+        {
+          "clashes_with": "Applied Mathematics",
+          "dropped": "Applied Physics",
+          "on": " Applied"
+        },
+        {
+          "clashes_with": "Bioengineering",
+          "dropped": "Bioinformatics",
+          "on": " Bio"
+        },
+        {
+          "clashes_with": "Biochemistry",
+          "dropped": "Biomedical Engineering",
+          "on": " Bi"
+        },
+        {
+          "clashes_with": "Biochemistry",
+          "dropped": "Biostatistics",
+          "on": " Bi"
+        },
+        {
+          "clashes_with": "Computer Engineering",
+          "dropped": "Computer Science",
+          "on": " Computer"
+        },
+        {
+          "clashes_with": "Environmental Engineering",
+          "dropped": "Environmental Science",
+          "on": " Environmental"
+        },
+        {
+          "clashes_with": "Geography",
+          "dropped": "Geology",
+          "on": " Ge"
+        },
+        {
+          "clashes_with": "Geography",
+          "dropped": "Geophysics",
+          "on": " Ge"
+        },
+        {
+          "clashes_with": "Industrial Design",
+          "dropped": "Industrial Engineering",
+          "on": " Industrial"
+        },
+        {
+          "clashes_with": "Music Composition",
+          "dropped": "Music Theory",
+          "on": " Music"
+        },
+        {
+          "clashes_with": "Public Administration",
+          "dropped": "Public Health",
+          "on": " Public"
+        },
+        {
+          "clashes_with": "Public Administration",
+          "dropped": "Public Policy",
+          "on": " Public"
+        }
+      ],
+      "target": 100,
+      "uniqueness": "first_token"
+    },
+    "university": {
+      "after_near_duplicate_drop": 368,
+      "after_prefix_drop": 330,
+      "candidates": 373,
+      "dropped_near_duplicate": 5,
+      "dropped_over_target": 30,
+      "dropped_prefix_clash": 38,
+      "final": 300,
+      "near_duplicate_examples": [
+        {
+          "dropped": "Lewis and Clark College",
+          "near_duplicate_of": "Clark University"
+        },
+        {
+          "dropped": "Michigan State University",
+          "near_duplicate_of": "Eastern Michigan University"
+        },
+        {
+          "dropped": "Northern Arizona University",
+          "near_duplicate_of": "Arizona State University"
+        },
+        {
+          "dropped": "Sarah Lawrence College",
+          "near_duplicate_of": "Lawrence Technological University"
+        },
+        {
+          "dropped": "Wesleyan University",
+          "near_duplicate_of": "Nebraska Wesleyan University"
+        }
+      ],
+      "prefix_clash_examples": [
+        {
+          "clashes_with": "Aalborg University",
+          "dropped": "Aalto University",
+          "on": " A"
+        },
+        {
+          "clashes_with": "Aalborg University",
+          "dropped": "Aarhus University",
+          "on": " A"
+        },
+        {
+          "clashes_with": "Aalborg University",
+          "dropped": "Ateneo de Manila University",
+          "on": " A"
+        },
+        {
+          "clashes_with": "Chatham University",
+          "dropped": "Chiba University",
+          "on": " Ch"
+        },
+        {
+          "clashes_with": "Chatham University",
+          "dropped": "Chulalongkorn University",
+          "on": " Ch"
+        },
+        {
+          "clashes_with": "Colby College",
+          "dropped": "Colgate University",
+          "on": " Col"
+        },
+        {
+          "clashes_with": "Coe College",
+          "dropped": "Coppin State University",
+          "on": " Co"
+        },
+        {
+          "clashes_with": "Deakin University",
+          "dropped": "DePaul University",
+          "on": " De"
+        },
+        {
+          "clashes_with": "Doshisha University",
+          "dropped": "Drexel University",
+          "on": " D"
+        },
+        {
+          "clashes_with": "Eckerd College",
+          "dropped": "Eindhoven University of Technology",
+          "on": " E"
+        },
+        {
+          "clashes_with": "Fisk University",
+          "dropped": "Fudan University",
+          "on": " F"
+        },
+        {
+          "clashes_with": "Gannon University",
+          "dropped": "Ghent University",
+          "on": " G"
+        },
+        {
+          "clashes_with": "Hanyang University",
+          "dropped": "Haverford College",
+          "on": " H"
+        },
+        {
+          "clashes_with": "Hanyang University",
+          "dropped": "Houghton University",
+          "on": " H"
+        },
+        {
+          "clashes_with": "Hanyang University",
+          "dropped": "Humboldt University of Berlin",
+          "on": " H"
+        },
+        {
+          "clashes_with": "Iona University",
+          "dropped": "Ithaca College",
+          "on": " I"
+        },
+        {
+          "clashes_with": "Lake Forest College",
+          "dropped": "Lakehead University",
+          "on": " Lake"
+        },
+        {
+          "clashes_with": "Lehigh University",
+          "dropped": "Leiden University",
+          "on": " Le"
+        },
+        {
+          "clashes_with": "Lipscomb University",
+          "dropped": "Loughborough University",
+          "on": " L"
+        },
+        {
+          "clashes_with": "Lipscomb University",
+          "dropped": "Loyola Marymount University",
+          "on": " L"
+        }
+      ],
+      "target": 300,
+      "uniqueness": "first_token"
+    }
+  }
+}

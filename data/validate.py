@@ -158,14 +158,14 @@ def a1_rebuild(ctx: Ctx) -> Check:
 
 
 def a2_verify(ctx: Ctx) -> Check:
-    from data.fetch import load_manifest, verify
+    from data.fetch import load_manifest, manifest_path, verify
     cfg = ctx.cfg
     man = load_manifest(cfg, cfg.version)
     r = verify(man, cfg.root, with_raw=True,
                optional_prefixes=tuple(cfg.optional_prefixes), progress=False)
     return Check("A2", "`data.fetch --verify-only` passes", r["passed"],
                  f"{r['ok']}/{r['checked']} files verified against "
-                 f"data/manifests/{cfg.version}.json "
+                 f"{manifest_path(cfg, cfg.version).name} "
                  f"({len(r['bad'])} mismatched, {len(r['missing'])} missing)",
                  {"ok": r["ok"], "bad": r["bad"][:5], "missing": r["missing"][:5]})
 

@@ -39,8 +39,19 @@ def _rel(path: Path) -> str:
 # ---------------------------------------------------------------------------
 # verification
 # ---------------------------------------------------------------------------
+def manifest_path(cfg: DataConfig, version: str) -> Path:
+    """Where the committed manifest for this build lives.
+
+    `data.manifest` writes `<version>_small.json` for a `--small` build, so the
+    verifier has to look in the same place or it checks a 1% bundle against the
+    full one.
+    """
+    name = f"{version}_small.json" if cfg.small else f"{version}.json"
+    return cfg.manifest_dir / name
+
+
 def load_manifest(cfg: DataConfig, version: str) -> Dict[str, Any]:
-    path = cfg.manifest_dir / f"{version}.json"
+    path = manifest_path(cfg, version)
     if not path.exists():
         raise SystemExit(
             f"no committed manifest at {_rel(path)}. Build one with "
@@ -97,7 +108,7 @@ def require_verified(cfg: DataConfig, version: str, with_raw: bool = False,
                     progress=progress)
     if not result["passed"]:
         lines = [f"data bundle {version} failed verification against "
-                 f"{_rel(cfg.manifest_dir / f'{version}.json')}:"]
+                 f"{_rel(manifest_path(cfg, version))}:"]
         for b in result["bad"][:10]:
             lines.append(f"  {b['path']}: {b['reason']} mismatch "
                          f"(expected {str(b['expected'])[:16]}, "
@@ -116,7 +127,7 @@ def require_verified(cfg: DataConfig, version: str, with_raw: bool = False,
 
 def manifest_sha256(cfg: DataConfig, version: str) -> str:
     """Hash of the committed manifest file itself -- recorded in checkpoints."""
-    return sha256_file(cfg.manifest_dir / f"{version}.json")
+    return sha256_file(manifest_path(cfg, version))
 
 
 # ---------------------------------------------------------------------------

@@ -1,10 +1,9 @@
 {
-  "config_fingerprint": "cf669c71b1a42699878433eff90d4b5711f13c116c6b80d67922ce8e2443935d",
+  "config_fingerprint": "ed4f593bce4c044472dc74ca53225966a5e11b68120bb583ca725e8cb8ed3b51",
   "dataset": "monology/pile-uncopyrighted",
   "max_tokens": 4096,
   "min_tokens": 50,
   "revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
-  "seconds": 3.2,
   "small": true,
   "splits": {
     "heldout": {

@@ -37,9 +37,14 @@ EXCLUDE_DIRS = {"_work", "_parts"}
 #                                   has just hashed, and carrying its own
 #                                   per-check timings; the durable copy of its
 #                                   content is reports/data4_validation_report.md
-EXCLUDE_NAMES = {".DS_Store", MANIFEST_NAME, "timings.json",
-                 "runtime_env.json", "validation_report.md",
+#
+# Matched on the RELATIVE PATH, not the bare filename: `bios/manifest.json` is
+# the bios stage's own record and belongs in the bundle, and a name-only rule
+# silently excluded it from the hashes.
+EXCLUDE_PATHS = {MANIFEST_NAME, "reports/timings.json",
+                 "reports/runtime_env.json", "validation_report.md",
                  "validation_report.json"}
+EXCLUDE_NAMES = {".DS_Store"}
 
 
 def sha256_file(path: Path) -> str:
@@ -67,7 +72,10 @@ def iter_bundle_files(root: Path) -> List[Path]:
     for p in sorted(root.rglob("*")):
         if not p.is_file() or p.name in EXCLUDE_NAMES:
             continue
-        if set(p.relative_to(root).parts) & EXCLUDE_DIRS:
+        rel = p.relative_to(root)
+        if rel.as_posix() in EXCLUDE_PATHS:
+            continue
+        if set(rel.parts) & EXCLUDE_DIRS:
             continue
         out.append(p)
     return out
@@ -119,10 +127,18 @@ def build(cfg: DataConfig) -> Dict[str, Any]:
             "per_tier": packr["biographies"]["per_tier"],
         }
     if bios:
-        counts["biographies"]["people"] = bios["people"]["by_split"]
-        counts["biographies"]["by_tier"] = bios["people"]["by_tier"]
-        counts["biographies"]["facts_rows"] = bios["facts"]["rows"]
-    if pile:
+        # .get throughout: the manifest must still build over a partially built
+        # bundle rather than crash on a missing stage record
+        people = bios.get("people", {})
+        counts["biographies"]["people"] = people.get("by_split", {})
+        counts["biographies"]["by_tier"] = people.get("by_tier", {})
+        counts["biographies"]["facts_rows"] = bios.get("facts", {}).get("rows", 0)
+        counts["biographies"].setdefault(
+            "names_rejected_by_value_collision",
+            people.get("names_rejected_by_value_collision", 0))
+        counts["biographies"].setdefault("fact_redraws",
+                                         people.get("fact_redraws", 0))
+    if pile and pile.get("subjects"):
         counts["pile_documents"] = {
             s: {"train_documents": v["train"]["docs"],
                 "train_tokens_available": v["train"]["tokens"],

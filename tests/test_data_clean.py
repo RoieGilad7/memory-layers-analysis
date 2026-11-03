@@ -174,8 +174,9 @@ def test_the_config_on_disk_matches_the_frozen_bundle():
     true by rebuilding the manifest instead of by editing a test.
     """
     import json
+    from data.fetch import manifest_path
     cfg = load_config(CONFIG)
-    path = cfg.manifest_dir / f"{cfg.version}.json"
+    path = manifest_path(cfg, cfg.version)
     if not path.exists():
         pytest.skip("no committed manifest yet")
     recorded = json.loads(path.read_text())["config"]

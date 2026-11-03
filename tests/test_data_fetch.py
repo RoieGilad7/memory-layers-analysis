@@ -168,3 +168,51 @@ def test_verify_only_cli_passes_and_then_fails_without_the_network(bundle, monke
     data[3] ^= 0xFF
     (cfg.root / "tokens" / "train.bin").write_bytes(bytes(data))
     assert fetch.main(["--version", cfg.version, "--verify-only"]) == 1
+
+
+def test_the_manifest_hashes_a_nested_manifest_json(tmp_path):
+    """`bios/manifest.json` is a bundle file; only the ROOT one is excluded.
+
+    The exclusion used to match on the bare filename, which silently left the
+    bios stage's own record out of the hashes.
+    """
+    root = tmp_path / "v1"
+    (root / "bios").mkdir(parents=True)
+    (root / "reports").mkdir()
+    (root / "tokens").mkdir()
+    (root / "tokens" / "train.bin").write_bytes(b"\x01\x02" * 10)
+    (root / "bios" / "manifest.json").write_text('{"stage": "bios"}')
+    (root / "bios" / "people.jsonl").write_text("{}\n")
+    (root / "reports" / "timings.json").write_text('{"pack": 1.0}')
+    (root / "reports" / "runtime_env.json").write_text('{"pile": {}}')
+    (root / "validation_report.md").write_text("# run")
+    cfg = make_cfg(root, tmp_path / "manifests")
+    man = manifest_mod.run(cfg)
+    paths = {f["path"] for f in man["files"]}
+    assert "bios/manifest.json" in paths
+    assert "bios/people.jsonl" in paths
+    assert "tokens/train.bin" in paths
+    # the run-describing files stay out, and the root manifest cannot list itself
+    for excluded in ("manifest.json", "reports/timings.json",
+                     "reports/runtime_env.json", "validation_report.md"):
+        assert excluded not in paths, excluded
+
+
+def test_the_small_build_verifies_against_its_own_manifest(tmp_path):
+    """`--small` writes `<version>_small.json`; the verifier must read that one."""
+    from data.fetch import manifest_path
+    root = tmp_path / "v1"
+    (root / "tokens").mkdir(parents=True)
+    (root / "tokens" / "train.bin").write_bytes(b"\x07" * 32)
+    raw = yaml.safe_load(CONFIG.read_text())
+    r = str(root)
+    raw["paths"] = {"root": r, "raw": f"{r}/raw", "work": f"{r}/_work",
+                    "train": f"{r}/train", "heldout_pool": f"{r}/heldout_pool",
+                    "heldout": f"{r}/heldout", "reports": f"{r}/reports"}
+    raw["small"]["root"] = r
+    raw["distribution"]["manifest_dir"] = str(tmp_path / "manifests")
+    small = DataConfig(raw=raw, small=True)
+    manifest_mod.run(small)
+    assert manifest_path(small, small.version).name == "v1_small.json"
+    assert manifest_path(small, small.version).exists()
+    assert fetch.require_verified(small, small.version)["passed"]

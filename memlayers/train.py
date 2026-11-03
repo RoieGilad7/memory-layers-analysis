@@ -287,8 +287,8 @@ class Trainer:
         # just verified. This -- not the manifest's own hash -- is what decides
         # whether two runs saw the same data: a report file changing inside the
         # bundle moves the manifest hash without moving a single token.
-        man = json.loads(
-            (dcfg.manifest_dir / f"{version}.json").read_text())
+        from data.fetch import manifest_path
+        man = json.loads(manifest_path(dcfg, version).read_text())
         rel = str(Path(path).resolve().relative_to(dcfg.root.resolve())) \
             if str(dcfg.root) in str(Path(path).resolve()) else None
         train_sha = next((f["sha256"] for f in man["files"]

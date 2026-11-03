@@ -2,8 +2,8 @@
   "bytes": {
     "by_prefix": {
       "bios": {
-        "bytes": 56553364,
-        "files": 7
+        "bytes": 56586136,
+        "files": 8
       },
       "heldout": {
         "bytes": 103695026,
@@ -35,8 +35,8 @@
       }
     },
     "optional": 398010725,
-    "required": 750141115,
-    "total": 1148151840
+    "required": 750173887,
+    "total": 1148184612
   },
   "config": {
     "fingerprint_all": "72d24c6c4780c67474d11608437fcb423a0cae8830958976460ee8c299b8f4a8",
@@ -56,7 +56,9 @@
       },
       "copies": 190000,
       "distinct_biographies": 8000,
+      "fact_redraws": 6,
       "facts_rows": 100000,
+      "names_rejected_by_value_collision": 1485,
       "people": {
         "control": 500,
         "train": 2000
@@ -246,6 +248,12 @@
       "optional": false,
       "path": "bios/facts.jsonl",
       "sha256": "c9dc4dc0a5e7aa4e80ece1d5c5017229e61913abdd3a6feb60dee1093de21d19"
+    },
+    {
+      "bytes": 32772,
+      "optional": false,
+      "path": "bios/manifest.json",
+      "sha256": "6cef936ef01f46f89d8ec17c38a321bb509f36841cc0e7f6943bab1b4dba1273"
     },
     {
       "bytes": 10977,
@@ -568,10 +576,10 @@
   ],
   "git": {
     "branch": "data/step1-bios",
-    "commit": "8ce55505dc6c8daab1366be73a6494407268a221",
+    "commit": "56ba456850791e5cfd49969133b8a7d4f57036b6",
     "dirty": true
   },
-  "n_files": 57,
+  "n_files": 58,
   "small": false,
   "source": {
     "dataset": "monology/pile-uncopyrighted",

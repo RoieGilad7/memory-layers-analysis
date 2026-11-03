@@ -123,8 +123,14 @@ class DataConfig:
                 for t in pe["tiers"]]
             self.bio_n_train = sum(t["n_people"] for t in self.bio_tiers)
             self.bio_control_tier = pe["control_tier"]
-            self.bio_name_candidates_per_gender = self._scaled(
-                pe["name_candidates_per_gender"])
+            # Scaled like everything else, but with a floor: the two name
+            # filters reject about 45% between them, so 1% of 2,600 would leave
+            # fewer survivors than the --small build needs people. The floor
+            # never binds at full scale (2,600 > 200), so it cannot change the
+            # real build.
+            self.bio_name_candidates_per_gender = max(
+                self._scaled(pe["name_candidates_per_gender"]),
+                min(200, int(pe["name_candidates_per_gender"])))
             rw = b["rewordings"]
             self.bio_n_rewordings = int(rw["n_train"])
             self.bio_discovery_rewordings = list(rw["discovery_rewordings"])

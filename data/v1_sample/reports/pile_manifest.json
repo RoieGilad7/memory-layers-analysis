@@ -1,0 +1,278 @@
+{
+  "bytes_downloaded": 14418250,
+  "config_fingerprint": "ed4f593bce4c044472dc74ca53225966a5e11b68120bb583ca725e8cb8ed3b51",
+  "dataset": "monology/pile-uncopyrighted",
+  "document": {
+    "max_tokens": 4096,
+    "min_tokens": 50
+  },
+  "problems": {
+    "fallback_files_used": {
+      "heldout": [],
+      "train": []
+    },
+    "heldout_below_min_docs": [],
+    "heldout_below_target_tokens": [
+      "FreeLaw/label"
+    ],
+    "train_subjects_below_target": []
+  },
+  "revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
+  "seed": 20261102,
+  "small": true,
+  "stage": "pile",
+  "subjects": {
+    "FreeLaw": {
+      "heldout": {
+        "docs_collected": 25,
+        "halves": {
+          "label": {
+            "below_min_docs": false,
+            "below_target_tokens": true,
+            "docs": 6,
+            "docs_available": 6,
+            "min_docs": 5,
+            "path": "heldout/label/freelaw.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 23379,
+            "tokens_available": 23379
+          },
+          "test": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 10,
+            "docs_available": 19,
+            "min_docs": 5,
+            "path": "heldout/test/freelaw.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 27898,
+            "tokens_available": 46699
+          }
+        },
+        "pool_docs": 25,
+        "pool_tokens": 70078
+      },
+      "heldout_docs_dropped_by_ngram_rule": 0,
+      "in_training": true,
+      "ngram_overlap_rate": 0.091418,
+      "slug": "freelaw",
+      "train": {
+        "docs": 128,
+        "docs_collected": 128,
+        "target_tokens": 270000,
+        "tokens": 328070
+      }
+    },
+    "Github": {
+      "heldout": {
+        "docs_collected": 53,
+        "halves": {
+          "label": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 21,
+            "docs_available": 23,
+            "min_docs": 5,
+            "path": "heldout/label/github.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 25030,
+            "tokens_available": 25751
+          },
+          "test": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 18,
+            "docs_available": 29,
+            "min_docs": 5,
+            "path": "heldout/test/github.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 27359,
+            "tokens_available": 45667
+          }
+        },
+        "pool_docs": 52,
+        "pool_tokens": 71418
+      },
+      "heldout_docs_dropped_by_ngram_rule": 1,
+      "in_training": true,
+      "ngram_overlap_rate": 0.060133,
+      "slug": "github",
+      "train": {
+        "docs": 264,
+        "docs_collected": 264,
+        "target_tokens": 270000,
+        "tokens": 324344
+      }
+    },
+    "Pile-CC": {
+      "heldout": {
+        "docs_collected": 85,
+        "halves": {
+          "label": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 25,
+            "docs_available": 40,
+            "min_docs": 5,
+            "path": "heldout/label/pile_cc.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 25884,
+            "tokens_available": 43045
+          },
+          "test": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 41,
+            "docs_available": 45,
+            "min_docs": 5,
+            "path": "heldout/test/pile_cc.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 25424,
+            "tokens_available": 29497
+          }
+        },
+        "pool_docs": 85,
+        "pool_tokens": 72542
+      },
+      "heldout_docs_dropped_by_ngram_rule": 0,
+      "in_training": true,
+      "ngram_overlap_rate": 0.0,
+      "slug": "pile_cc",
+      "train": {
+        "docs": 388,
+        "docs_collected": 388,
+        "target_tokens": 270000,
+        "tokens": 324408
+      }
+    },
+    "PubMed Central": {
+      "heldout": {
+        "docs_collected": 20,
+        "halves": {
+          "label": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 8,
+            "docs_available": 9,
+            "min_docs": 5,
+            "path": "heldout/label/pubmed_central.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 27944,
+            "tokens_available": 32040
+          },
+          "test": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 7,
+            "docs_available": 11,
+            "min_docs": 5,
+            "path": "heldout/test/pubmed_central.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 25635,
+            "tokens_available": 42019
+          }
+        },
+        "pool_docs": 20,
+        "pool_tokens": 74059
+      },
+      "heldout_docs_dropped_by_ngram_rule": 0,
+      "in_training": true,
+      "ngram_overlap_rate": 0.00913,
+      "slug": "pubmed_central",
+      "train": {
+        "docs": 86,
+        "docs_collected": 86,
+        "target_tokens": 270000,
+        "tokens": 326800
+      }
+    },
+    "USPTO Backgrounds": {
+      "heldout": {
+        "docs_collected": 93,
+        "halves": {
+          "label": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 36,
+            "docs_available": 43,
+            "min_docs": 5,
+            "path": "heldout/label/uspto_backgrounds.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 25261,
+            "tokens_available": 33891
+          },
+          "test": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 33,
+            "docs_available": 50,
+            "min_docs": 5,
+            "path": "heldout/test/uspto_backgrounds.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 25567,
+            "tokens_available": 36122
+          }
+        },
+        "pool_docs": 93,
+        "pool_tokens": 70013
+      },
+      "heldout_docs_dropped_by_ngram_rule": 0,
+      "in_training": false,
+      "ngram_overlap_rate": 0.0,
+      "slug": "uspto_backgrounds",
+      "train": {
+        "docs": 0,
+        "docs_collected": 0,
+        "target_tokens": 0,
+        "tokens": 0
+      }
+    },
+    "Wikipedia (en)": {
+      "heldout": {
+        "docs_collected": 134,
+        "halves": {
+          "label": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 51,
+            "docs_available": 68,
+            "min_docs": 5,
+            "path": "heldout/label/wikipedia_en.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 25383,
+            "tokens_available": 40896
+          },
+          "test": {
+            "below_min_docs": false,
+            "below_target_tokens": false,
+            "docs": 59,
+            "docs_available": 66,
+            "min_docs": 5,
+            "path": "heldout/test/wikipedia_en.jsonl.gz",
+            "target_tokens": 25000,
+            "tokens": 25070,
+            "tokens_available": 31763
+          }
+        },
+        "pool_docs": 134,
+        "pool_tokens": 72659
+      },
+      "heldout_docs_dropped_by_ngram_rule": 0,
+      "in_training": true,
+      "ngram_overlap_rate": 0.001379,
+      "slug": "wikipedia_en",
+      "train": {
+        "docs": 503,
+        "docs_collected": 503,
+        "target_tokens": 270000,
+        "tokens": 324445
+      }
+    }
+  },
+  "tokenizer": {
+    "name": "gpt2",
+    "vocab_size": 50257
+  },
+  "train_tokens_total": 1628067,
+  "version": "v1"
+}

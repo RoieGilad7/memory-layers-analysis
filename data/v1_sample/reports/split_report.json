@@ -1,5 +1,5 @@
 {
-  "config_fingerprint": "cf669c71b1a42699878433eff90d4b5711f13c116c6b80d67922ce8e2443935d",
+  "config_fingerprint": "ed4f593bce4c044472dc74ca53225966a5e11b68120bb583ca725e8cb8ed3b51",
   "halves": [
     "label",
     "test"
@@ -181,7 +181,6 @@
       "pool_tokens": 72659
     }
   },
-  "seconds": 0.0,
   "seed": 20261102,
   "small": true,
   "stage": "split",
