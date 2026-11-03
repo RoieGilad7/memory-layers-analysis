@@ -1,21 +1,24 @@
 # Dataset interfaces — **DRAFT, for review by the metrics owner**
 
-**Status:** DRAFT. Sections 1 and 2 only. Nothing here is frozen until the metrics
-owner signs off; say so on the thread and these names change. Section 1 is built
-(data prompt 1) and so is section 2 (data prompt 2); section 1.4, the token
-files, is still a spec.
-**Covers:** the files the data step produces and the fields in them.
-**Does not cover:** the token files' construction (prompt 3), the read-log
-format, the slot-attribution metrics, or the training config — those are `memlayers/readlog.py` and `memlayers/configs/*.yaml`.
+**Status:** DRAFT until the metrics owner signs off; say so on the thread and
+these names change. Everything described here is **built** -- section 1 by data
+prompt 1 (text) and prompt 3 (token files), section 2 by prompt 2, section 3 by
+prompt 3. The freeze and the published bundle are prompt 4.
+**Covers:** the files the data step produces, the fields in them, and how to
+read them.
+**Does not cover:** the read-log format, the slot-attribution metrics, or the
+model side of the training config — those are `memlayers/readlog.py` and `memlayers/configs/*.yaml`.
 
 Written against data config `configs/data/v1.yaml` (data seed `20261102`, Pile
 revision `3be90335b66f24456a5d6659d9c8d208c0357119`). Build everything with:
 
 ```bash
-python -m data.build --config configs/data/v1.yaml --stage pile          # §1, 8 min
-python -m data.bios  --config configs/data/v1.yaml                       # §2, 1 min
-python -m data.bios_sample --config configs/data/v1.yaml --n 20          # hand review
-python -m data.build --config configs/data/v1.yaml --stage pile --small  # 1%, ~10 s
+python -m data.build --config configs/data/v1.yaml --stage pile   # §1 text,   4 min
+python -m data.bios  --config configs/data/v1.yaml                # §2 people,  9 s
+python -m data.pack  --config configs/data/v1.yaml                # §1.4 tokens, 16 s
+python -m data.manifest --config configs/data/v1.yaml             # §1.6
+python -m data.fetch --version v1 --verify-only                   # §3.2 check
+python -m data.bios_sample --config configs/data/v1.yaml --n 20    # hand review
 ```
 
 A frozen `data/v1_sample/` (the `--small` output, a few MB) ships in the repo so
@@ -68,7 +71,8 @@ Ids are unique across the whole corpus and are the join key everywhere.
 
 ```
 data/v1/
-├── manifest.json                     # one build, every number (§1.6)
+├── manifest.json                     # the BUNDLE manifest: every file's
+│                                     #   sha256 + all the counts (§1.6)
 ├── raw/                              # the frozen archive: a rebuild never
 │   ├── train/<slug>.jsonl.gz         #   needs the Pile again
 │   ├── heldout/<slug>.jsonl.gz
@@ -78,7 +82,9 @@ data/v1/
 ├── heldout_pool/<slug>.jsonl.gz      # cleaned, capped, deduped held-out docs
 ├── heldout/
 │   ├── label/<slug>.jsonl.gz         # the labeling half, 2.5M tokens/subject
-│   └── test/<slug>.jsonl.gz          # the test half,     2.5M tokens/subject
+│   ├── test/<slug>.jsonl.gz          # the test half,     2.5M tokens/subject
+│   ├── label.bin  label.idx.parquet  # §1.4, all 6 subjects in one file
+│   └── test.bin   test.idx.parquet
 ├── bios/                             # §2, written by `python -m data.bios`
 │   ├── people.jsonl                  #   2,500 people: facts, gender, tier
 │   ├── facts.jsonl                   #   100,000 fact prompts
@@ -90,13 +96,16 @@ data/v1/
 │   └── manifest.json                 #   counts, token lengths, exposures
 ├── samples/
 │   └── bios_sample.md                # 20 people, for hand review (committed)
-├── tokens/                           # §1.4, built by a later prompt
-│   ├── train.bin  train.idx.parquet
-│   └── heldout_<half>_<slug>.bin  …idx.parquet
+├── tokens/                           # §1.4, written by `python -m data.pack`
+│   ├── train.bin                     #   292,898 sequences of 512, uint16
+│   └── train.idx.parquet             #   one row per document segment
 ├── reports/
+│   ├── pile_manifest.json            # prompt 1's own record (§1.6)
 │   ├── extract_manifest.json
 │   ├── dedup_log.json
-│   └── split_report.json
+│   ├── split_report.json
+│   ├── pack_report.json
+│   └── timings.json                  # the only file the manifest does NOT hash
 └── _work/                            # stage scratch; safe to delete
 ```
 
@@ -138,54 +147,111 @@ Held-out halves are disjoint **by whole document**: the half is
 `blake2b(f"{seed}:{doc_id}")[:8] % 2`, so it depends on nothing but the id and
 the data seed.
 
-### 1.4 Token files — `tokens/` *(next prompt; spec fixed here)*
+### 1.4 Token files — **built**, by `python -m data.pack`
 
-| file | dtype | shape | meaning |
-|---|---|---|---|
-| `train.bin` | `uint16` | `[N]` | every training document's tokens, concatenated in index order, no separator token |
-| `train.idx.parquet` | — | `[D, 5]` | one row per document (below) |
-| `heldout_<half>_<slug>.bin` | `uint16` | `[N]` | one file per (half, subject), same layout |
-| `heldout_<half>_<slug>.idx.parquet` | — | `[D, 5]` | its index |
+| file | dtype | meaning |
+|---|---|---|
+| `tokens/train.bin` | `uint16` | the whole training stream: 149,963,776 tokens = 292,898 sequences of 512 |
+| `tokens/train.idx.parquet` | — | one row per document **segment** (332,048 rows) |
+| `heldout/label.bin` | `uint16` | the labeling half, all 6 subjects, no biographies |
+| `heldout/label.idx.parquet` | — | its index, plus `ngram_overlap` |
+| `heldout/test.bin`, `heldout/test.idx.parquet` | | the test half |
 
-**Index columns** (this is the contract the metrics code reads):
+**Changed from the prompt-1 draft** (which was a spec, written before the
+packer): the held-out side is **one file per half**, not one per (half,
+subject) — the index carries `subject`, so a per-subject loss is a filter
+rather than a file, and two files beat twelve. The index has one more column
+than the draft promised (`doc_offset`, below) and the `.bin` *does* carry a
+separator token.
+
+**Index columns** — the contract the metrics code reads:
 
 | column | dtype | meaning |
 |---|---|---|
 | `doc_id` | `string` | join key back to the JSONL |
 | `subject` | `string` (dictionary-encoded) | `"Pile-CC"` … `"USPTO Backgrounds"`, or `"bio"` |
-| `start` | `int64` | offset of the document's first token in the `.bin` |
-| `length` | `int64` | number of tokens, `1 ≤ length ≤ 4096` |
-| `person_id` | `string`, nullable | copied from the document record (§1.3); set only for `subject == "bio"`, null otherwise |
+| `start` | `int64` | offset of this segment's first token in the `.bin` |
+| `length` | `int64` | tokens in this segment |
+| `doc_offset` | `int64` | where this segment starts **inside its document** |
+| `person_id` | `string`, nullable | set only for `subject == "bio"`, null otherwise |
+| `rewording_id` | `int32` | 0–3 for a biography, **-1** otherwise |
+| `ngram_overlap` | `float64`, nullable | *held-out indexes only*, carried through from §1.3 |
 
-Invariants the loader may assume: rows are in `start` order, `start[0] == 0`,
-`start[i+1] == start[i] + length[i]`, and `sum(length) == len(bin) `.
+**Why `doc_offset`.** A biography copy is never split across a 512-token
+boundary; when one would not fit in what is left of the current sequence, the
+rest of that sequence is filled with Pile text *pulled forward out of the
+stream*. So a Pile document can reach the file in two pieces — a prefix as
+filler, the rest at its own turn — and without `doc_offset` a consumer cannot
+tell which part of the document a segment is. `person_id` is null rather than
+`-1` for Pile rows because the column is a string.
 
-**Packing into training sequences is the loader's job, not the file's.** The
-`.bin` holds documents back to back; the loader cuts `block_size` windows and
-decides whether to mask across document boundaries (`mask_slots` in the training
-config). Keeping the boundary information in the index rather than baking an
-`<|endoftext|>` into the stream is what lets a later experiment change that
-decision without rebuilding the tokens.
+**Invariants, all asserted by `bench/check_pack_invariants.py` on the real
+build and by `tests/test_data_pack.py` on a fixture:**
+
+- rows are in strictly increasing `start` order and never overlap;
+- document tokens are never `50256` (`encode_ordinary` emits no specials), and
+  **every token not covered by a segment is `50256`** — that one statement pins
+  the tiling, the separators and the tail padding together;
+- `start // 512 == (start + length - 1) // 512` for every `subject == "bio"` row;
+- each of the 5 training subjects sums to exactly 27,000,000 tokens;
+- every held-out `length` is ≤ 4,096.
+
+Reading a segment back:
+
+```python
+import numpy as np
+from data import pack
+tokens = np.memmap("data/v1/tokens/train.bin", dtype=np.uint16, mode="r")
+idx = pack.read_index("data/v1/tokens/train.idx.parquet")
+seg = tokens[idx["start"][0] : idx["start"][0] + idx["length"][0]]
+```
+
+**Sequences, not packing, are the loader's job.** `train.bin` is already cut on
+512-token boundaries, so sequence `s` is `tokens[s*512 : s*512+512]` and its
+targets are the same window shifted by one — see §3.
 
 ### 1.5 Targets
 
-| | tokens | note |
-|---|---:|---|
-| Training, total | 150,000,000 | |
-| … each of 5 Pile subjects | 27,000,000 | 18% each = 90% |
-| … biographies | 15,000,000 | 10%, §2 |
-| Held-out, per subject | 5,000,000 | 6 subjects (5 training + USPTO Backgrounds) |
-| … labeling half | 2,500,000 | ≥ 500 documents |
-| … test half | 2,500,000 | ≥ 500 documents |
+| | target | built | note |
+|---|---:|---:|---|
+| Training, total | 150,000,000 | **149,963,776** | the 0.02% gap is EOT separators and tail padding |
+| … each of 5 Pile subjects | 27,000,000 | **27,000,000** each | exact, by construction |
+| … biographies | 15,000,000 (10%) | **14,631,457** (9.78%) | 190,000 copies at 77.0 tokens |
+| Held-out, per subject | 5,000,000 | 5,000,000 | 6 subjects |
+| … labeling half | 2,500,000 | 15,021,806 total, 13,306 docs | all 6 subjects in one file |
+| … test half | 2,500,000 | 15,023,952 total, 13,381 docs | |
 
-### 1.6 `manifest.json`
+### 1.6 `manifest.json` — the bundle manifest
 
-One object per build: config fingerprint, data seed, dataset + pinned revision,
-tokenizer, document rules, per-subject document/token counts for train and both
-held-out halves, the aggregate 13-gram overlap rate per subject, bytes
-downloaded, disk used, runtime, and a `problems` block naming any subject below
-target. **Read the manifest, not the directory listing**, to find out what a
-build actually contains.
+`data/v1/manifest.json`, with a copy at **`data/manifests/v1.json` that IS
+committed to git** while `data/v1/` is not. One object:
+
+| key | what |
+|---|---|
+| `files` | every bundle file: `path`, `bytes`, `sha256`, `optional` |
+| `bytes` | `total` / `required` / `optional`, and a breakdown per top-level directory |
+| `counts` | tokens, sequences and documents per subject and split; biography copies per tier; people per split |
+| `config` | the three scoped fingerprints (`pile`, `bios`, `pack`) and the data seed |
+| `source` | the pinned Pile revision, the tokenizer and its vocab size |
+| `git` | commit, branch, whether the tree was dirty |
+| `distribution` | the HF repo, the tag, which prefixes are optional |
+
+`optional: true` marks `raw/` — 398 MB of archived source text a rebuild needs
+and training does not. `data.fetch` skips it unless `--with-raw`.
+
+**Nothing in the bundle carries a wall clock.** Stage runtimes live in
+`reports/timings.json`, the one bundle path the manifest does not hash, because
+a `seconds` field would make a rebuild of identical data produce a different
+manifest. Rebuilding gives a byte-identical `train.bin`, held-out files *and*
+manifest.
+
+The per-stage records are still there, next to it:
+`reports/pile_manifest.json` (prompt 1 — it moved out of `manifest.json` so the
+bundle manifest could own that path), `reports/dedup_log.json`,
+`reports/split_report.json`, `reports/pack_report.json`, `bios/manifest.json`.
+
+**Read the manifest, not the directory listing**, to find out what a build
+contains.
 
 ---
 
@@ -309,7 +375,73 @@ records the files scanned, the characters scanned, and every name found.
 
 ---
 
-## 3. Open questions for the metrics owner
+## 3. Reading the data
+
+### 3.1 The loader — `data/loader.py`
+
+```python
+from data.loader import PackedDataset
+ds = PackedDataset("data/v1/tokens/train.bin", block_size=512, seed=1337)
+x, y = ds.get_batch(step, batch_size=32)       # (32, 512) int64 each
+```
+
+Sequence `s` covers tokens `[s*512, s*512 + 513)`: `x` is the first 512, `y` is
+the window shifted by one, so **the last target is the first token of the next
+sequence** and no token goes unpredicted. The final sequence is dropped when the
+file has no 513th token for it.
+
+Order is a permutation of the sequence indices, one per epoch, keyed by
+`(seed, epoch)`. Position is explicit state:
+
+```python
+state = ds.state_dict()      # {"seed", "position", "n_sequences", "block_size", ...}
+ds.load_state_dict(state)    # a resumed run reads exactly the batches it would have
+```
+
+`load_state_dict` refuses a state whose `n_sequences` or `block_size` does not
+match the file on disk, rather than silently reading a different dataset.
+
+Signature-compatible with `memlayers.data_fake`, so `memlayers/train.py` swaps
+one for the other on a config flag.
+
+### 3.2 Fetch and verify — `data/fetch.py`
+
+```bash
+python -m data.fetch --version v1                 # download + verify
+python -m data.fetch --version v1 --with-raw      # include raw/ (398 MB more)
+python -m data.fetch --version v1 --verify-only   # offline, verify only
+```
+
+The authority is the committed `data/manifests/v1.json`. Every file is checked
+by size and sha256, so a truncated download, a wrong tag or an edited file is
+caught before training reads a token. `--verify-only` never touches the network.
+
+Until the bundle is published, `distribution.hf_repo` is the placeholder
+`<owner>/memlayers-data` and a download **refuses**, naming the three local
+build commands instead. Verification works either way.
+
+### 3.3 Training on it — `memlayers/train.py`
+
+```yaml
+data:
+    source: real          # "fake" (default) keeps the step-1 synthetic datasets
+    version: v1
+    data_config: configs/data/v1.yaml
+    seed: 1337            # the loader's permutation seed
+    verify: true          # check every sha256 before step 0
+```
+
+With `source: real` the Trainer verifies the bundle **before step 0** and raises
+on any mismatch — a half-downloaded bundle would produce numbers nobody could
+reproduce. It records the data version, the manifest sha256, the pack
+fingerprint and the Pile revision in `meta.json`, in the checkpoint and in two
+`log.csv` columns, and it saves the loader's `(seed, position)` so a resume
+continues exactly where it stopped. Resuming a checkpoint whose manifest hash
+differs from the bundle on disk is refused.
+
+---
+
+## 4. Open questions for the metrics owner
 
 1. **`tokens/` sharding.** One `train.bin` for all 150M tokens (300 MB) or one
    per subject? One file keeps the loader trivial; per-subject files make
