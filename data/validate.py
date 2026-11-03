@@ -1268,6 +1268,19 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     out = Path(args.out) if args.out else cfg.root / "validation_report.md"
     write_report(cfg, results, out)
+    # machine-readable twin, so the step report's tables are generated and not
+    # retyped (data/report_tables.py --stage validate)
+    with open(out.with_suffix(".json"), "w", encoding="utf-8") as fh:
+        json.dump({
+            "version": cfg.version,
+            "fingerprints": {k: cfg.fingerprint(k)
+                             for k in ("pile", "bios", "pack")},
+            "revision": cfg.revision,
+            "checks": [{"id": c.id, "title": c.title, "status": c.status,
+                        "detail": c.detail, "numbers": c.numbers,
+                        "seconds": round(c.seconds, 1)} for c in results],
+        }, fh, indent=2, sort_keys=True, default=str)
+        fh.write("\n")
     failed = [c.id for c in results if not c.passed and not c.skipped]
     print(f"\n[validate] {len(results) - len(failed)}/{len(results)} passed "
           f"-> {out}")

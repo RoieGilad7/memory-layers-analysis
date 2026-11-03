@@ -34,13 +34,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", required=True)
     ap.add_argument("--small", action="store_true")
-    ap.add_argument("--stage", choices=["pile", "bios", "pack"], default="pile")
+    ap.add_argument("--stage", choices=["pile", "bios", "pack", "validate"],
+                    default="pile")
     args = ap.parse_args(argv)
     cfg = load_config(args.config, small=args.small)
     if args.stage == "bios":
         return bios_tables(cfg)
     if args.stage == "pack":
         return pack_tables(cfg)
+    if args.stage == "validate":
+        return validate_tables(cfg)
 
     man = json.loads((cfg.reports_dir / "pile_manifest.json").read_text())
     ext = json.loads((cfg.reports_dir / "extract_manifest.json").read_text())
@@ -358,6 +361,51 @@ def pack_tables(cfg) -> int:
     print(table(rows, ["prefix", "files", "bytes"], "lrr"))
     return 0
 
+
+
+# ---------------------------------------------------------------------------
+# validation (data prompt 4)
+# ---------------------------------------------------------------------------
+def validate_tables(cfg) -> int:
+    rep = json.loads((cfg.root / "validation_report.json").read_text())
+    checks = {c["id"]: c for c in rep["checks"]}
+
+    print("### 2.1 A1–A18\n")
+    rows = [[f"**{c['id']}**", c["title"], f"**{c['status']}**",
+             c["detail"].replace("|", "\\|")] for c in rep["checks"]]
+    print(table(rows, ["check", "what", "result", "measured"], "lllc"))
+
+    a11 = checks.get("A11", {}).get("numbers") or {}
+    if a11.get("confusion"):
+        subs = a11["subjects"]
+        print(f"\n### 2.2 A11 confusion matrix — "
+              f"{a11['accuracy']:.2%} on {a11['documents']:,} test-half documents\n")
+        print("Rows are the true subject, columns the bag-of-words "
+              "classifier's guess.\n")
+        head = ["true \\\\ predicted"] + [s for s in subs] + ["recall"]
+        rows = []
+        for i, s in enumerate(subs):
+            r = a11["confusion"][i]
+            rows.append([f"**{s}**"] + [
+                (f"**{v:,}**" if j == i else (f"{v:,}" if v else "·"))
+                for j, v in enumerate(r)]
+                + [f"{a11['per_subject_recall'][s]:.1%}"])
+        print(table(rows, head, "l" + "r" * (len(subs) + 1)))
+
+    a17 = checks.get("A17", {}).get("numbers") or {}
+    if a17:
+        print("\n### 2.3 A17 per-subject unigram baseline\n")
+        rows = []
+        for s, v in a17.items():
+            model = v.get("smoke_run_loss")
+            uni = v["unigram_cross_entropy"]
+            rows.append([f"`{s}`", f"{model}", f"{uni}",
+                         f"**{uni - model:.3f}**" if model else "—",
+                         _f(v["tokens"]), v["counts_from"]])
+        print(table(rows, ["subject", "prompt-3 smoke loss",
+                           "unigram cross-entropy", "margin", "test tokens",
+                           "unigram counts from"], "lrrrrl"))
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())

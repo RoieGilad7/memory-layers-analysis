@@ -25,10 +25,11 @@ the whole comparison hangs on:
 | **2a — real data, the Pile part** | 161.7M training tokens over 5 subjects + 12 held-out halves of 2.5M, from a pinned revision, byte-identical on rebuild | [`reports/data1_pile_report.md`](reports/data1_pile_report.md) |
 | **2b — made-up biographies** | 2,500 people with uniformly random facts, 4 rewordings each, 100k fact prompts; 14.6M tokens at the tier exposure targets | [`reports/data2_bios_report.md`](reports/data2_bios_report.md) |
 | **2c — token files** | `train.bin` 149,963,776 tokens / 292,898 sequences, two held-out halves, the hash-verified bundle manifest, fetch and the loader | [`reports/data3_pack_report.md`](reports/data3_pack_report.md) |
-| 2d | validation and the freeze | not started |
+| **2d — validation** | every check on the full build (A1–A18), the hand-check pack, and a 2-hour run proving the biography facts are learnable | [`reports/data4_validation_report.md`](reports/data4_validation_report.md) |
+| 2e | the freeze and the upload | not started |
 | 3–5 | training runs, read-log analysis | not started |
 
-All five reports are self-contained and carry the numbers; start there.
+All six reports are self-contained and carry the numbers; start there.
 The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
 ---
@@ -67,6 +68,9 @@ data/                   the dataset build (step 2a: the Pile part)
   loader.py             memmapped (B, 512) batches; seeded order; resumable
   manifest.py           the bundle manifest (every file's sha256) + committed copy
   fetch.py              download/verify the frozen bundle; offline verifier
+  validate.py           A1-A18: every data check, on the real files
+  q2_probe.py           fact-recall scorer -- a DATA CHECK, not the metric
+  hand_samples.py       the committed hand-check pack under data/v1/samples/
   make_sample.py        packages the 1% build as data/v1_sample/
   report_tables.py      regenerates the data report's tables from the build's JSON
   v1_sample/            committed: the 1% build (7.4 MB) + a README per file
@@ -81,8 +85,8 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  160 pytest tests
-reports/                the five step reports
+tests/                  167 pytest tests
+reports/                the six step reports
 ```
 
 Two result directories, both committed, because the reports cite them: `logs/*.json` for
@@ -130,7 +134,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 160 tests, CPU, ~13 s
+.venv/bin/python -m pytest tests/ -q                 # 167 tests, CPU, ~15 s
 
 # train one config
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
@@ -171,6 +175,13 @@ caffeinate -i .venv/bin/python -m data.bios --config configs/data/v1.yaml
 # train on the real data (data.source=real verifies the bundle before step 0)
 .venv/bin/python bench/smoke_real_data.py --config memlayers/configs/t1_pkm.yaml \
     --steps 300 --micro-batch-size 32
+
+# validate the whole build, and make the hand-check pack
+caffeinate -i .venv/bin/python -m data.validate --config configs/data/v1.yaml
+.venv/bin/python -m data.hand_samples --config configs/data/v1.yaml
+
+# are the biography facts learnable? ~2h20 (trains for 2h, evaluates 7 times)
+caffeinate -i .venv/bin/python bench/learnability_run.py --steps 5830 --eval-every 972
 ```
 
 Long runs: use `caffeinate -i` on macOS to stop the machine sleeping, run in the background,
