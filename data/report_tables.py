@@ -13,6 +13,11 @@ from typing import Any, Dict, List, Optional
 from data.common import load_config
 
 
+def _env(cfg) -> Dict[str, Any]:
+    path = cfg.reports_dir / "runtime_env.json"
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
 def _timings(cfg) -> Dict[str, float]:
     path = cfg.reports_dir / "timings.json"
     return json.loads(path.read_text()) if path.exists() else {}
@@ -72,7 +77,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         ["runtime, extract / dedup / split",
          f"{tim.get('extract', 0):.0f} s / {tim.get('dedup', 0):.0f} s / "
          f"{tim.get('split', 0):.0f} s"],
-        ["output on disk", f"{man['disk_bytes']['total'] / 1e6:.0f} MB"],
+        ["output on disk", f"{_env(cfg).get('pile', {}).get('disk_bytes', {}).get('total', 0) / 1e6:.0f} MB"],
     ], ["", ""], "ll"))
 
     print("\n### 4.2 Training subjects: collected -> cleaned -> deduped\n")
@@ -149,9 +154,11 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "lrrrrrrrr"))
 
     print("\n### 4.6 Disk\n")
-    rows = [[k, f"{v / 1e6:.1f} MB"] for k, v in sorted(man["disk_bytes"].items())]
+    disk = _env(cfg).get("pile", {}).get("disk_bytes", {})
+    rows = [[k, f"{v / 1e6:.1f} MB"] for k, v in sorted(disk.items())]
     rows.append(["compressed downloaded", f"{man['bytes_downloaded'] / 1e9:.2f} GB"])
-    rows.append(["free disk after the build", f"{man['free_disk_gb']:.1f} GB"])
+    rows.append(["free disk after the build",
+                 f"{_env(cfg).get('pile', {}).get('free_disk_gb', 0):.1f} GB"])
     print(table(rows, ["", ""], "lr"))
 
     print("\n### 4.7 Problems reported by the build\n")

@@ -24,7 +24,7 @@ __all__ = [
     "keyed_rng",
     "cap_to_max_tokens", "text_sha256", "ngram_hashes", "overlap_rate",
     "heldout_half", "open_write", "CHARS_PER_TOKEN_BOUND", "open_read", "write_jsonl", "read_jsonl",
-    "dumps_record", "free_disk_gb", "merge_gz", "record_timing", "ROOT",
+    "dumps_record", "free_disk_gb", "merge_gz", "record_timing", "record_env", "ROOT",
 ]
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -477,16 +477,22 @@ def read_jsonl(path: Path) -> Iterator[Dict[str, Any]]:
 
 
 def record_timing(cfg: "DataConfig", stage: str, seconds: float) -> None:
-    """Append a stage runtime to `reports/timings.json`.
+    """Append a stage runtime to `reports/timings.json`. See `record_env`."""
+    record_env(cfg, "timings.json", stage, round(float(seconds), 1))
 
-    Wall clocks are deliberately kept OUT of every file the bundle manifest
-    hashes: a rebuild that produces identical data must produce an identical
-    manifest, and a `seconds` field makes that impossible. Timings live here,
-    in the one bundle path the manifest skips by name.
+
+def record_env(cfg: "DataConfig", filename: str, key: str, value: Any) -> None:
+    """Record an observation about the MACHINE, not about the data.
+
+    Wall clocks, free disk and directory sizes are deliberately kept out of
+    every file the bundle manifest hashes: a rebuild that produces identical
+    data must produce an identical manifest, and any of those fields makes that
+    impossible. They live in `reports/timings.json` and
+    `reports/runtime_env.json`, the two bundle paths the manifest skips by name.
     """
-    path = cfg.reports_dir / "timings.json"
+    path = cfg.reports_dir / filename
     data = json.loads(path.read_text()) if path.exists() else {}
-    data[stage] = round(float(seconds), 1)
+    data[key] = value
     write_json(path, data)
 
 

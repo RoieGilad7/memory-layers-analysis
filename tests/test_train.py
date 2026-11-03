@@ -331,18 +331,40 @@ def test_real_data_resume_continues_the_same_order(tmp_path, real_bundle):
     assert got == pytest.approx(want[2:], rel=1e-6, abs=1e-6)
 
 
-def test_resuming_onto_different_data_is_refused(tmp_path, real_bundle):
+def test_resuming_onto_different_tokens_is_refused(tmp_path, real_bundle):
     from memlayers.train import Trainer
     import torch
     bin_path, data_config = real_bundle
     t = Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
     ck = t.save_checkpoint()
     blob = torch.load(ck, map_location="cpu", weights_only=False)
-    blob["data"]["manifest_sha256"] = "0" * 64
+    blob["data"]["train_bin_sha256"] = "0" * 64
     torch.save(blob, ck)
     t2 = Trainer(_real_data_cfg(tmp_path / "other", bin_path, data_config))
     with pytest.raises(RuntimeError, match="mix two datasets"):
         t2.load_checkpoint(ck)
+
+
+def test_a_manifest_change_that_leaves_the_tokens_alone_does_not_block(
+        tmp_path, real_bundle, capsys):
+    """A report file changing moves the manifest hash but not a single token.
+
+    Refusing there would block a resume for no reason -- which is exactly what
+    happened when a stage report stopped carrying free-disk numbers.
+    """
+    from memlayers.train import Trainer
+    import torch
+    bin_path, data_config = real_bundle
+    t = Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
+    t.train(steps=1, progress=False)
+    ck = t.save_checkpoint()
+    blob = torch.load(ck, map_location="cpu", weights_only=False)
+    blob["data"]["manifest_sha256"] = "f" * 64        # tokens untouched
+    torch.save(blob, ck)
+    t2 = Trainer(_real_data_cfg(tmp_path / "other", bin_path, data_config))
+    t2.load_checkpoint(ck)                             # must not raise
+    assert t2.step == 1
+    assert "train.bin is unchanged" in capsys.readouterr().out
 
 
 def test_fake_is_still_the_default_and_needs_no_bundle():

@@ -283,10 +283,21 @@ class Trainer:
         ds = PackedDataset(path, block_size=dcfg.block_size,
                            seed=self.cfg.data.seed,
                            vocab_size=self.gpt_config.vocab_size)
+        # The hash of the token file itself, taken from the manifest that was
+        # just verified. This -- not the manifest's own hash -- is what decides
+        # whether two runs saw the same data: a report file changing inside the
+        # bundle moves the manifest hash without moving a single token.
+        man = json.loads(
+            (dcfg.manifest_dir / f"{version}.json").read_text())
+        rel = str(Path(path).resolve().relative_to(dcfg.root.resolve())) \
+            if str(dcfg.root) in str(Path(path).resolve()) else None
+        train_sha = next((f["sha256"] for f in man["files"]
+                          if f["path"] == (rel or "tokens/train.bin")), None)
         self.data_provenance = {
             "source": "real",
             "version": version,
             "manifest_sha256": m_sha,
+            "train_bin_sha256": train_sha,
             "data_config": self.cfg.data.data_config,
             "config_fingerprint_pack": dcfg.fingerprint("pack"),
             "pile_revision": dcfg.revision,
@@ -383,13 +394,22 @@ class Trainer:
         state = ck.get("data_state")
         if state and hasattr(self.data, "load_state_dict"):
             self.data.load_state_dict(state)
-        old = (ck.get("data") or {}).get("manifest_sha256")
-        new = self.data_provenance.get("manifest_sha256")
-        if old and new and old != new:
+        old_data = ck.get("data") or {}
+        old_bin = old_data.get("train_bin_sha256")
+        new_bin = self.data_provenance.get("train_bin_sha256")
+        if old_bin and new_bin and old_bin != new_bin:
             raise RuntimeError(
-                f"this checkpoint was trained on data manifest {old[:16]} but "
-                f"the bundle on disk is {new[:16]}. Resuming would mix two "
+                f"this checkpoint was trained on train.bin {old_bin[:16]} but "
+                f"the file on disk is {new_bin[:16]}. Resuming would mix two "
                 "datasets; re-fetch the matching version or start a new run.")
+        old_man = old_data.get("manifest_sha256")
+        new_man = self.data_provenance.get("manifest_sha256")
+        if old_man and new_man and old_man != new_man:
+            # the tokens match, so this is a report or manifest change, not a
+            # data change -- worth saying, not worth refusing
+            print(f"[train] note: the bundle manifest moved "
+                  f"({old_man[:16]} -> {new_man[:16]}) but train.bin is "
+                  f"unchanged, so the run continues on the same tokens")
 
     # ---- the loop -----------------------------------------------------------
     def train_step(self) -> dict:

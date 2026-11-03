@@ -32,7 +32,8 @@ MANIFEST_NAME = "manifest.json"
 EXCLUDE_DIRS = {"_work", "_parts"}
 # timings.json carries wall clocks on purpose, so it is the one bundle file the
 # manifest does not hash -- see data.common.record_timing
-EXCLUDE_NAMES = {".DS_Store", MANIFEST_NAME, "timings.json"}
+EXCLUDE_NAMES = {".DS_Store", MANIFEST_NAME, "timings.json",
+                 "runtime_env.json"}
 
 
 def sha256_file(path: Path) -> str:

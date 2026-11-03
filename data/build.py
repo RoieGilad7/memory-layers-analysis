@@ -18,8 +18,8 @@ import time
 from typing import Any, Dict, List, Optional
 
 from data import dedup, pile_extract, split
-from data.common import (DataConfig, free_disk_gb, load_config, record_timing,
-                         write_json)
+from data.common import (DataConfig, free_disk_gb, load_config, record_env,
+                         record_timing, write_json)
 
 STAGES = ("pile", "extract", "dedup", "split", "bio", "tokenize", "all")
 MIN_FREE_DISK_GB = 20.0
@@ -67,17 +67,8 @@ def run_pile(cfg: DataConfig) -> Dict[str, Any]:
         "revision": cfg.revision,
         "tokenizer": {"name": cfg.tokenizer_name, "vocab_size": cfg.vocab_size},
         "document": {"max_tokens": cfg.max_tokens, "min_tokens": cfg.min_tokens},
-        "disk_bytes": {
-            "raw": _dir_bytes(cfg.raw_dir),
-            "train": _dir_bytes(cfg.train_dir),
-            "heldout_pool": _dir_bytes(cfg.heldout_pool_dir),
-            "heldout": _dir_bytes(cfg.heldout_dir),
-            "work": _dir_bytes(cfg.work_dir),
-            "total": _dir_bytes(cfg.root),
-        },
         "bytes_downloaded": sum(v["bytes_downloaded"]
                                 for v in extract_m["splits"].values()),
-        "free_disk_gb": round(free_disk_gb(), 1),
         "subjects": {},
     }
     for subject in cfg.all_subjects:
@@ -118,6 +109,21 @@ def run_pile(cfg: DataConfig) -> Dict[str, Any]:
     # which lists every file in the bundle with its sha256. This is the pile
     # stage's own record, and the bundle manifest embeds its counts.
     record_timing(cfg, "pile", time.time() - t0)
+    # Directory sizes and free disk describe the MACHINE, not the data: they
+    # change between two rebuilds of identical content, which would make a
+    # byte-identical manifest impossible (A1). They go to the sidecar the
+    # bundle manifest skips by name.
+    record_env(cfg, "runtime_env.json", "pile", {
+        "free_disk_gb": round(free_disk_gb(), 1),
+        "disk_bytes": {
+            "raw": _dir_bytes(cfg.raw_dir),
+            "train": _dir_bytes(cfg.train_dir),
+            "heldout_pool": _dir_bytes(cfg.heldout_pool_dir),
+            "heldout": _dir_bytes(cfg.heldout_dir),
+            "work": _dir_bytes(cfg.work_dir),
+            "total": _dir_bytes(cfg.root),
+        },
+    })
     write_json(cfg.reports_dir / "pile_manifest.json", manifest)
     print_summary(cfg, manifest)
     return manifest
@@ -145,10 +151,9 @@ def print_summary(cfg: DataConfig, m: Dict[str, Any]) -> None:
           f"= 5 x {cfg.train_tokens_per_subject:,}; "
           f"+{cfg.bio_share:.0%} biographies later = "
           f"{cfg.total_train_tokens:,})")
-    print(f"downloaded {m['bytes_downloaded'] / 1e9:.2f} GB, "
-          f"output {m['disk_bytes']['total'] / 1e6:.1f} MB, "
-          f"free disk {m['free_disk_gb']:.1f} GB "
-          "(runtimes in reports/timings.json)")
+    print(f"downloaded {m['bytes_downloaded'] / 1e9:.2f} GB, free disk "
+          f"{free_disk_gb():.1f} GB (runtimes in reports/timings.json, sizes in "
+          "reports/runtime_env.json)")
     for k, v in m["problems"].items():
         if v and v != {"train": [], "heldout": []}:
             print(f"PROBLEM {k}: {v}")

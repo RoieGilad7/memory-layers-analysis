@@ -18,12 +18,12 @@
         "files": 12
       },
       "reports": {
-        "bytes": 29224,
+        "bytes": 29027,
         "files": 5
       },
       "samples": {
-        "bytes": 158260,
-        "files": 1
+        "bytes": 545214,
+        "files": 4
       },
       "tokens": {
         "bytes": 303038968,
@@ -32,11 +32,19 @@
       "train": {
         "bytes": 227176177,
         "files": 5
+      },
+      "validation_report.json": {
+        "bytes": 18348,
+        "files": 1
+      },
+      "validation_report.md": {
+        "bytes": 5372,
+        "files": 1
       }
     },
     "optional": 398010725,
-    "required": 749963328,
-    "total": 1147974053
+    "required": 750373805,
+    "total": 1148384530
   },
   "config": {
     "fingerprint_all": "88d2ad8169f5b48b0b4bc1c74384ceed0cf7b231df08dea2f72c937bdee99a0e",
@@ -488,10 +496,10 @@
       "sha256": "20d2cb34d5ca17f486abdca53ae16d02bd33e1fd672324c0aab5f4b6c84e58fd"
     },
     {
-      "bytes": 8064,
+      "bytes": 7867,
       "optional": false,
       "path": "reports/pile_manifest.json",
-      "sha256": "40f341bc338a00559e632917ba42c5e3bafd67d158b7a1b986b09f2c34d5b6eb"
+      "sha256": "e380ec7d8eaed876ad49c07ca345e18f5bfc8726de2a2511634cd589ab835e26"
     },
     {
       "bytes": 5346,
@@ -500,10 +508,28 @@
       "sha256": "fa77366552c0402a777372a0b715ec65d008a98076d795ee44671543676ac248"
     },
     {
+      "bytes": 262424,
+      "optional": false,
+      "path": "samples/bios_review.md",
+      "sha256": "960b0181c5487f5cac7bb4ee08c1e436c68ea0e6ebe8f2adbb2b78ea3923cd1b"
+    },
+    {
       "bytes": 158260,
       "optional": false,
       "path": "samples/bios_sample.md",
       "sha256": "77d89aabd9deffaa806f005c90a6b187f6ba9bd9a2159797088730e4b27d6f95"
+    },
+    {
+      "bytes": 88257,
+      "optional": false,
+      "path": "samples/pile_samples.md",
+      "sha256": "b6ab0b47be02421cf4a8d8c8522a102b97352ae8cc8d4590a399e045ba7f5537"
+    },
+    {
+      "bytes": 36273,
+      "optional": false,
+      "path": "samples/value_lists.md",
+      "sha256": "b98c31f34c52b9bea25e275409cf458153b265dfdc8f9f7cc0d591753d934192"
     },
     {
       "bytes": 299927552,
@@ -546,14 +572,26 @@
       "optional": false,
       "path": "train/wikipedia_en.jsonl.gz",
       "sha256": "19004a31bf662817c8e83b890aa97975402055ad60add85166a6f57e57823a6b"
+    },
+    {
+      "bytes": 18348,
+      "optional": false,
+      "path": "validation_report.json",
+      "sha256": "c9ba64a958d5a29ac6a18e1c8d190a6213d2f589b3cd4edc888248a4f1cdd61c"
+    },
+    {
+      "bytes": 5372,
+      "optional": false,
+      "path": "validation_report.md",
+      "sha256": "d19f3b19ebd851e1742c710153e1350f6863fb2b8fee7e1efd9e829c4621a63e"
     }
   ],
   "git": {
     "branch": "data/step1-bios",
-    "commit": "48e7a33119b0ab8a6a2a4ddf90a05352f82cfb39",
-    "dirty": false
+    "commit": "110927fe0b586446f1c62d1368505361e50baa0a",
+    "dirty": true
   },
-  "n_files": 54,
+  "n_files": 59,
   "small": false,
   "source": {
     "dataset": "monology/pile-uncopyrighted",
