@@ -141,10 +141,16 @@ bios:
             - {name: normal,   n_people: 700,  exposures: 100}
             - {name: frequent, n_people: 300,  exposures: 300}
         control_tier: control   # tier label for control people (0 exposures)
-        # Candidates are generated before the Pile name check; the first
+        # Candidates are generated before the two name filters; the first
         # survivors in draw order become the people, so this slack absorbs
-        # whatever the check rejects.
-        name_candidates_per_gender: 1500
+        # whatever they reject. Two filters now: the Pile name check (~8%) and
+        # the value-collision filter (~37%, data prompt 5), which rejects a name
+        # whose first or last word would hand a fact-recall probe one of its
+        # answers. 2,600 leaves ~1,490 survivors per gender against the 1,250
+        # needed. Raising this number only ever APPENDS candidates -- the draw
+        # is one RNG stream per gender -- so the people already chosen keep
+        # their names.
+        name_candidates_per_gender: 2600
 
     rewordings:
         n_train: 4              # training rewordings per person

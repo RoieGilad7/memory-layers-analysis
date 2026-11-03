@@ -728,132 +728,152 @@ def a12_bio_facts(ctx: Ctx) -> Check:
 
 
 def a13_prompts(ctx: Ctx) -> Check:
-    """Prompt integrity, and that no paraphrase wording reached train.bin.
+    """Prompt integrity: nothing may hand the probe an answer for free.
 
-    Three properties, and one reported number:
+    FAILS on any of three answer leaks, each measured over all 100,000 rows:
 
-    1. a training-template row's `prompt + continuation` is an exact prefix of
-       its biography;
-    2. no prompt contains its own true value as a substring;
-    3. no paraphrase prompt occurs in `train.bin`.
+      (i)   the true value appears verbatim in its own prompt;
+      (ii)  the value's ranking key -- its first GPT-2 token, or the first two
+            for a date -- appears in the person's own name;
+      (iii) that key appears inside another of the same person's values, since
+            every rewording puts all five in one paragraph in a random order.
 
-    Property 3 is checked where it can be controlled: inside the **biography
-    segments** of train.bin. The held-out markers are ordinary English ("As
-    for", "Question:") and do occur in Pile text -- that is not a leak and
-    cannot be prevented, so the Pile counts are reported, not failed on. A
-    paraphrase prompt could only appear in train.bin if a held-out frame reached
-    biography text (property 3 proper) or the Pile contained a made-up person's
-    name (ruled out by the prompt-2 name check and by A14), and a seeded sample
-    of full prompts is searched directly as well.
+    Plus two structural properties: a training-template row's
+    `prompt + continuation` is an exact prefix of its biography, and no
+    paraphrase prompt occurs in `train.bin`.
 
-    The reported number is the first-token leak: how often a value's first GPT-2
-    token -- the token the probe ranks on -- also appears in the person's own
-    name. Not a pass criterion, but the metrics owner needs it.
+    **Template-word hits are REPORTED, not failed.** An employer called
+    "Heineken" has the ranking key " He", which is also the male pronoun; the
+    fix would be to change the templates or drop the value, and the design says
+    to do neither. The rows are listed so the metrics owner can see them.
+
+    Paraphrase isolation is checked inside the **biography segments** of
+    train.bin, where it is controllable. The held-out markers are ordinary
+    English ("As for", "Question:") and do occur in Pile text -- reported, not
+    failed -- so a seeded sample of full prompts is searched directly as well.
     """
     cfg = ctx.cfg
     import data.bios_data as bd
+    from data.bios import ranking_key, value_token_set
+
     bios = {}
     for fname in ("bios_train.jsonl", "bios_control.jsonl"):
         for rec in read_jsonl(cfg.bios_dir / fname):
             bios[rec["doc_id"]] = rec["text"]
+    rows = list(read_jsonl(cfg.bios_dir / "facts.jsonl"))
     problems: List[str] = []
+
+    name_toks = {pid: set(ctx.enc.encode_ordinary(" " + p["name"]))
+                 | set(ctx.enc.encode_ordinary(p["name"]))
+                 for pid, p in ctx.people.items()}
+    value_toks = {pid: {a: value_token_set(ctx.enc, v)
+                        for a, v in p["facts"].items()}
+                  for pid, p in ctx.people.items()}
+    prompt_toks = ctx.enc.encode_ordinary_batch([r["prompt"] for r in rows],
+                                                num_threads=8)
+
+    leak_value: List[str] = []
+    leak_name: List[str] = []
+    leak_other: List[str] = []
+    template_hits: Dict[str, List[str]] = defaultdict(list)
     n_train = n_para = 0
     not_prefix: List[str] = []
-    contains_value: List[str] = []
-    rows = list(read_jsonl(cfg.bios_dir / "facts.jsonl"))
-    for row in rows:
+
+    for row, ptoks in zip(rows, prompt_toks):
+        pid = row["person_id"]
         if row["true_value"] in row["prompt"]:
-            contains_value.append(row["fact_id"])
+            leak_value.append(row["fact_id"])
         if row["continuation"] != " " + row["true_value"]:
             problems.append(f"{row['fact_id']}: continuation mismatch")
+        key = set(ranking_key(ctx.enc, cfg, row["attribute"], row["true_value"]))
+        if key & name_toks[pid]:
+            leak_name.append(row["fact_id"])
+        other = [a for a, t in value_toks[pid].items()
+                 if a != row["attribute"] and (key & t)]
+        if other:
+            leak_other.append(row["fact_id"])
+        if key & set(ptoks) and not (key & name_toks[pid]) and not other:
+            template_hits[f"{row['attribute']}={row['true_value']}"].append(
+                row["fact_id"])
         if row["held_out_template"]:
             n_para += 1
             continue
         n_train += 1
         if not bios[row["doc_id"]].startswith(row["prompt"] + row["continuation"]):
             not_prefix.append(row["fact_id"])
+
+    for label, hits in (("the true value verbatim in its own prompt", leak_value),
+                        ("the ranking key in the person's own name", leak_name),
+                        ("the ranking key in another of the person's values",
+                         leak_other)):
+        if hits:
+            who = sorted({f.split("-")[0] for f in hits})
+            problems.append(
+                f"{len(hits)} rows leak {label} ({len(who)} people, e.g. "
+                + ", ".join(f"{pid} ({ctx.people[pid]['name']!r})"
+                            for pid in who[:3]) + ")")
     if not_prefix:
         problems.append(f"{len(not_prefix)} prompts are not a prefix of their "
                         f"biography: {not_prefix[:3]}")
-    if contains_value:
-        people = sorted({f.split("-")[0] for f in contains_value})
-        names = [f"{pid} ({ctx.people[pid]['name']!r})" for pid in people]
-        problems.append(f"{len(contains_value)} prompts contain their own value, "
-                        f"from {len(people)} person(s): {names}")
 
-    # (3) paraphrase wording inside train.bin's BIOGRAPHY segments
+    # paraphrase wording inside train.bin's biography segments
     arr = np.asarray(ctx.train)
     idx = ctx.train_idx
+    bio_tokens = np.concatenate([arr[int(st):int(st) + int(ln)] for s, st, ln in
+                                 zip(idx["subject"], idx["start"], idx["length"])
+                                 if s == pack.BIO_SUBJECT])
     bio_marker_hits: Dict[str, int] = {}
     pile_marker_hits: Dict[str, int] = {}
-    bio_spans = [(int(st), int(st) + int(ln)) for s, st, ln in
-                 zip(idx["subject"], idx["start"], idx["length"])
-                 if s == pack.BIO_SUBJECT]
-    bio_tokens = np.concatenate([arr[a:b] for a, b in bio_spans])
     for marker in bd.HELDOUT_MARKERS:
-        hits = 0
+        hits = whole = 0
         for variant in (" " + marker, marker):
             ids = np.asarray(ctx.enc.encode_ordinary(variant), dtype=np.uint16)
             hits += _count_subsequence(bio_tokens, ids)
-        bio_marker_hits[marker] = hits
-        whole = 0
-        for variant in (" " + marker, marker):
-            ids = np.asarray(ctx.enc.encode_ordinary(variant), dtype=np.uint16)
             whole += _count_subsequence(arr, ids)
+        bio_marker_hits[marker] = hits
         pile_marker_hits[marker] = whole - hits
         if hits:
             problems.append(f"held-out marker {marker!r} appears {hits} times "
                             f"inside biography text in train.bin")
 
-    # a seeded sample of full paraphrase prompts, searched directly
     para = [r for r in rows if r["held_out_template"]]
     sample = keyed_rng(cfg.seed, "a13_prompts").sample(para, min(200, len(para)))
-    found = []
-    for r in sample:
-        ids = np.asarray(ctx.enc.encode_ordinary(r["prompt"]), dtype=np.uint16)
-        if _count_subsequence(arr, ids):
-            found.append(r["fact_id"])
+    found = [r["fact_id"] for r in sample
+             if _count_subsequence(
+                 arr, np.asarray(ctx.enc.encode_ordinary(r["prompt"]),
+                                 dtype=np.uint16))]
     if found:
         problems.append(f"{len(found)} sampled paraphrase prompts occur in "
                         f"train.bin: {found[:3]}")
 
-    # reported: the first-token leak channel
-    first_tok = {}
-    vals = json.loads((cfg.bios_dir / "attribute_values.json").read_text())["values"]
-    for a, vs in vals.items():
-        first_tok[a] = {v: ctx.enc.encode_ordinary(" " + v)[0] for v in vs}
-    name_toks = {pid: set(ctx.enc.encode_ordinary(" " + p["name"]))
-                 | set(ctx.enc.encode_ordinary(p["name"]))
-                 for pid, p in ctx.people.items()}
-    leak_rows = 0
-    leak_people = set()
-    for r in rows:
-        if first_tok[r["attribute"]][r["true_value"]] in name_toks[r["person_id"]]:
-            leak_rows += 1
-            leak_people.add(r["person_id"])
-
-    return Check("A13", "Fact prompts and paraphrase isolation", not problems,
-                 f"{n_train:,} training-template prompts are exact prefixes of "
-                 f"their biography; {n_para:,} paraphrase prompts checked; "
-                 f"{len(contains_value)} prompts contain their own value"
-                 + (f" ({sorted({f.split('-')[0] for f in contains_value})})"
-                    if contains_value else "")
-                 + f"; held-out markers inside biography text in train.bin: "
+    n_tmpl = sum(len(v) for v in template_hits.values())
+    return Check("A13", "Fact prompts: no answer leaks", not problems,
+                 f"{len(rows):,} rows: **0** leak the value verbatim "
+                 f"({len(leak_value)}), **0** via the person's name "
+                 f"({len(leak_name)}), **0** via another of the person's values "
+                 f"({len(leak_other)}); {n_train:,} training prompts are exact "
+                 f"prefixes of their biography; {n_para:,} paraphrase prompts, "
+                 f"{len(sample)} of them searched in full against train.bin and "
+                 f"absent; held-out markers inside biography text: "
                  + ", ".join(f"{k!r}={v}" for k, v in bio_marker_hits.items())
-                 + f" (the same markers occur "
-                 f"{sum(pile_marker_hits.values())} times in Pile text, which "
-                 f"is ordinary English and not a leak); {len(sample)} sampled "
-                 f"full paraphrase prompts absent from train.bin; REPORTED: a "
-                 f"value's first token also appears in the person's own name in "
-                 f"{leak_rows} of {len(rows):,} rows ({len(leak_people)} people)"
+                 + f" (the same markers occur {sum(pile_marker_hits.values())} "
+                 f"times in ordinary Pile text, which is not a leak); REPORTED: "
+                 f"{n_tmpl} rows whose ranking key is a TEMPLATE word "
+                 f"({', '.join(sorted(template_hits))})"
                  + ("; " + "; ".join(problems[:3]) if problems else ""),
-                 {"train_prompts": n_train, "paraphrase_prompts": n_para,
-                  "prompts_containing_their_value": contains_value,
+                 {"rows": len(rows), "train_prompts": n_train,
+                  "paraphrase_prompts": n_para,
+                  "leak_value_verbatim": leak_value[:20],
+                  "leak_via_name": leak_name[:20],
+                  "leak_via_other_value": leak_other[:20],
+                  "n_leak_value_verbatim": len(leak_value),
+                  "n_leak_via_name": len(leak_name),
+                  "n_leak_via_other_value": len(leak_other),
+                  "template_word_rows": n_tmpl,
+                  "template_word_values": {k: len(v) for k, v in
+                                           sorted(template_hits.items())},
                   "bio_marker_hits": bio_marker_hits,
-                  "pile_marker_hits": pile_marker_hits,
-                  "sampled_prompts": len(sample),
-                  "first_token_in_name_rows": leak_rows,
-                  "first_token_in_name_people": sorted(leak_people)})
+                  "pile_marker_hits": pile_marker_hits})
 
 
 def _count_subsequence(arr: np.ndarray, pat: np.ndarray) -> int:

@@ -228,6 +228,142 @@ def first_token_report(enc, values: Dict[str, List[str]]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # names
 # ---------------------------------------------------------------------------
+def ranking_key(enc, cfg: DataConfig, attribute: str, value: str) -> Tuple[int, ...]:
+    """The tokens a fact-recall probe ranks this value on.
+
+    One token for most attributes; two for `birth_date`, where 200 dates share
+    twelve month tokens so a date is only identified by (month, day). Anything
+    that puts these tokens in front of the model for free is an answer leak.
+    """
+    ids = enc.encode_ordinary(" " + value)
+    n = 2 if attribute in cfg.bio_first_two_tokens_unique else 1
+    return tuple(ids[:n])
+
+
+def value_token_set(enc, value: str) -> frozenset:
+    return frozenset(enc.encode_ordinary(" " + value))
+
+
+def _value_words(value: str) -> frozenset:
+    return frozenset(w.lower() for w in re.findall(r"[A-Za-z0-9]+", value))
+
+
+def name_word_collides(enc, cfg: DataConfig, word: str,
+                       values: Dict[str, List[str]]) -> Optional[Tuple[str, str, str]]:
+    """Does this name word hand a probe one of its answers for free?
+
+    Two ways, both global across every list -- a surname that primes *another*
+    person's city is as bad as one that primes its owner's employer, because
+    the model sees every biography:
+
+      (a) the word, lowercased, is a whole word of the value;
+      (b) the GPT-2 token of " word" or of "word" is the value's ranking key
+          (for a date, either of its first two tokens).
+
+    Returns (attribute, value, reason) for the first hit, or None.
+    """
+    low = word.lower()
+    toks = {enc.encode_ordinary(" " + word)[0], enc.encode_ordinary(word)[0]}
+    for attribute, vals in values.items():
+        for value in vals:
+            if low in _value_words(value):
+                return attribute, value, "word"
+            if toks & set(ranking_key(enc, cfg, attribute, value)):
+                return attribute, value, "token"
+    return None
+
+
+def names_colliding_with_values(cfg: DataConfig, enc,
+                                candidates: Sequence[Dict[str, str]],
+                                values: Dict[str, List[str]]
+                                ) -> Tuple[List[str], Dict[str, Any]]:
+    """Candidate names rejected because a name word collides with a value.
+
+    Rejected in the same place the Pile name check rejects -- before people are
+    assigned -- so this only shifts which name a person gets. Person ids, tiers,
+    facts and templates are all keyed by person id and do not move.
+    """
+    cache: Dict[str, Optional[Tuple[str, str, str]]] = {}
+
+    def hit(word: str):
+        if word not in cache:
+            cache[word] = name_word_collides(enc, cfg, word, values)
+        return cache[word]
+
+    rejected: List[str] = []
+    by_gender: Dict[str, int] = {g: 0 for g in cfg.bio_genders}
+    by_reason: Dict[str, int] = {"word": 0, "token": 0}
+    by_attribute: Dict[str, int] = {}
+    examples: List[Dict[str, str]] = []
+    for cand in candidates:
+        for part in ("first", "last"):
+            h = hit(cand[part])
+            if h is None:
+                continue
+            attribute, value, reason = h
+            rejected.append(cand["name"])
+            by_gender[cand["gender"]] += 1
+            by_reason[reason] += 1
+            by_attribute[attribute] = by_attribute.get(attribute, 0) + 1
+            if len(examples) < 25:
+                examples.append({"name": cand["name"], "word": cand[part],
+                                 "attribute": attribute, "value": value,
+                                 "reason": reason})
+            break
+    stats = {"candidates": len(candidates), "rejected": len(rejected),
+             "by_gender": by_gender, "by_reason": by_reason,
+             "by_attribute": dict(sorted(by_attribute.items())),
+             "distinct_words_tested": len(cache),
+             "examples": examples}
+    return rejected, stats
+
+
+def resolve_fact_collisions(cfg: DataConfig, enc, pid: str,
+                            facts: Dict[str, str], values: Dict[str, List[str]],
+                            max_attempts: int = 200
+                            ) -> Tuple[Dict[str, str], List[Dict[str, Any]]]:
+    """Redraw a person's later facts until no value leaks another's answer.
+
+    Every rewording puts all five values in one paragraph in a random order, so
+    if one value's ranking key sits inside another value's tokens -- "Columbus,
+    Ohio" and "Ohio State University" -- the prompt for whichever comes second
+    hands the probe its answer. Checked in both directions for that reason.
+
+    Only the colliding attribute is redrawn, from an RNG keyed by
+    (seed, "facts", person id, attribute, attempt), so one person's collision
+    cannot disturb anybody else's facts.
+    """
+    attributes = list(cfg.bio_attributes)
+    keys = {a: ranking_key(enc, cfg, a, facts[a]) for a in attributes}
+    toks = {a: value_token_set(enc, facts[a]) for a in attributes}
+    changes: List[Dict[str, Any]] = []
+
+    for i, attr in enumerate(attributes):
+        earlier = attributes[:i]
+        attempt = 0
+        while True:
+            clash = next(
+                ((e, facts[e]) for e in earlier
+                 if (set(keys[attr]) & toks[e]) or (set(keys[e]) & toks[attr])),
+                None)
+            if clash is None:
+                break
+            attempt += 1
+            if attempt > max_attempts:
+                raise RuntimeError(
+                    f"{pid}/{attr}: could not redraw clear of {clash} in "
+                    f"{max_attempts} attempts")
+            old = facts[attr]
+            facts[attr] = keyed_rng(cfg.seed, "facts", pid, attr,
+                                    attempt).choice(values[attr])
+            keys[attr] = ranking_key(enc, cfg, attr, facts[attr])
+            toks[attr] = value_token_set(enc, facts[attr])
+            changes.append({"person_id": pid, "attribute": attr, "attempt": attempt,
+                            "was": old, "now": facts[attr],
+                            "clashed_with": {clash[0]: clash[1]}})
+    return facts, changes
+
+
 def build_name_candidates(cfg: DataConfig) -> List[Dict[str, str]]:
     """Candidate people in draw order: gender, first, last, full name.
 
@@ -315,7 +451,9 @@ def corpus_paths(cfg: DataConfig) -> List[Path]:
 # ---------------------------------------------------------------------------
 def build_people(cfg: DataConfig, values: Dict[str, List[str]],
                  candidates: Sequence[Dict[str, str]],
-                 banned: Sequence[str]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+                 banned: Sequence[str],
+                 value_colliding: Sequence[str] = (),
+                 enc=None) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """2,000 trained + 500 control people, gender-balanced inside every tier.
 
     Tiers are assigned by filling a deterministic plan -- (tier, gender) slots in
@@ -324,6 +462,8 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
     average.
     """
     banned_set = set(banned)
+    collide_set = set(value_colliding)
+    enc = enc or get_encoder(cfg.tokenizer_name, cfg.vocab_size)
     n_total = cfg.bio_n_train + cfg.bio_n_control
     per_gender = n_total // len(cfg.bio_genders)
     if n_total % len(cfg.bio_genders):
@@ -332,12 +472,16 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
     # pick names: first survivors in draw order, per gender
     chosen: Dict[str, List[Dict[str, str]]] = {g: [] for g in cfg.bio_genders}
     rejected: List[str] = []
+    rejected_collision: List[str] = []
     for cand in candidates:
         g = cand["gender"]
         if len(chosen[g]) >= per_gender:
             continue
         if cand["name"] in banned_set:
             rejected.append(cand["name"])
+            continue
+        if cand["name"] in collide_set:
+            rejected_collision.append(cand["name"])
             continue
         chosen[g].append(cand)
     short = {g: per_gender - len(v) for g, v in chosen.items() if len(v) < per_gender}
@@ -364,6 +508,7 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
 
     # interleave the genders so person ids are not blocked by gender
     people: List[Dict[str, Any]] = []
+    fact_redraws: List[Dict[str, Any]] = []
     order: List[Tuple[str, int]] = [
         (g, i) for i in range(per_gender) for g in cfg.bio_genders]
     for idx, (g, i) in enumerate(order):
@@ -372,6 +517,8 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
         pid = f"p{idx:06d}"
         prng = _rng(cfg.seed, "facts", pid)
         facts = {attr: prng.choice(values[attr]) for attr in cfg.bio_attributes}
+        facts, changes = resolve_fact_collisions(cfg, enc, pid, facts, values)
+        fact_redraws.extend(changes)
         people.append({
             "person_id": pid,
             "name": cand["name"],
@@ -388,6 +535,10 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
     stats = {
         "n_people": len(people),
         "names_rejected_by_pile_check": len(rejected),
+        "names_rejected_by_value_collision": len(rejected_collision),
+        "fact_redraws": len(fact_redraws),
+        "people_with_a_redrawn_fact": len({c["person_id"] for c in fact_redraws}),
+        "fact_redraw_examples": fact_redraws[:20],
         "rejected_names": sorted(rejected),
         "candidates_per_gender": cfg.bio_name_candidates_per_gender,
         "by_split": _count(people, "split"),
@@ -632,8 +783,20 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
           f"{check['candidates_tested']:,} candidate names occur in the Pile",
           flush=True)
 
+    colliding, collide_stats = names_colliding_with_values(
+        cfg, enc, candidates, values)
+    print(f"[bios] value collision: {collide_stats['rejected']:,} of "
+          f"{collide_stats['candidates']:,} candidate names rejected "
+          f"({collide_stats['by_gender']}); by reason "
+          f"{collide_stats['by_reason']}", flush=True)
+
     people, people_stats = build_people(cfg, values, candidates,
-                                        check["names_found"])
+                                        check["names_found"], colliding, enc)
+    people_stats["value_collision"] = collide_stats
+    if people_stats["fact_redraws"]:
+        print(f"[bios] fact redraws: {people_stats['fact_redraws']} draws over "
+              f"{people_stats['people_with_a_redrawn_fact']} people whose values "
+              f"would have leaked each other's answer", flush=True)
 
     all_values = sorted({v for vals in values.values() for v in vals})
     value_tokens = {v: enc.encode_ordinary(" " + v) for v in all_values}
@@ -754,8 +917,10 @@ def print_summary(cfg: DataConfig, m: Dict[str, Any]) -> None:
           f"{e['implied_tokens']:,} tokens = "
           f"{e['share_of_train_budget']:.2%} of {e['train_budget']:,} "
           f"(target {e['bio_share_target']:.0%})")
-    print(f"[bios] names rejected by the Pile check: "
-          f"{p['names_rejected_by_pile_check']}")
+    print(f"[bios] names rejected: {p['names_rejected_by_pile_check']} by the "
+          f"Pile check, {p.get('names_rejected_by_value_collision', 0)} by the "
+          f"value-collision filter; {p.get('fact_redraws', 0)} fact redraws "
+          f"over {p.get('people_with_a_redrawn_fact', 0)} people")
 
 
 def main(argv: Optional[List[str]] = None) -> int:

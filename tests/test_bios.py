@@ -513,3 +513,145 @@ def test_a_persons_four_rewordings_use_four_different_templates(built):
         for attr in ATTRS:
             ids = [pl["template_ids"][attr] for pl in plans]
             assert len(set(ids)) == len(ids), (p["person_id"], attr)
+
+
+# --------------------------------------------------------------------------
+# answer leaks (data prompt 5)
+# --------------------------------------------------------------------------
+def test_a_name_that_collides_with_a_value_is_rejected(tmp_path):
+    """"Peter Ferrari" cannot exist while "Ferrari" is an employer.
+
+    This is the defect A13 caught in prompt 4: the person's own surname was
+    their employer, so every employer prompt for them contained the answer.
+    """
+    cfg = make_cfg(tmp_path / "out")
+    enc = get_encoder("gpt2", 50257)
+    values = {"employer": ["Ferrari", "Nokia"],
+              "birth_city": ["Charlotte, North Carolina", "Lyon, France"],
+              "birth_date": ["March 4, 1987"], "major": ["Physics"],
+              "university": ["Keio University"]}
+
+    # (a) the name word is a whole word of the value
+    assert bios.name_word_collides(enc, cfg, "Ferrari", values)[:2] == \
+        ("employer", "Ferrari")
+    assert bios.name_word_collides(enc, cfg, "Charlotte", values)[2] == "word"
+    # (b) the name word's token is the value's ranking key
+    hit = bios.name_word_collides(enc, cfg, "Keiko", values)
+    assert hit is not None and hit[1] == "Keio University" and hit[2] == "token"
+    # a name that collides with nothing survives
+    assert bios.name_word_collides(enc, cfg, "Vadnais", values) is None
+
+    # and the filter rejects the candidate, not just the word
+    cands = [{"gender": "female", "first": "Peter", "last": "Ferrari",
+              "name": "Peter Ferrari"},
+             {"gender": "male", "first": "Dmitri", "last": "Vadnais",
+              "name": "Dmitri Vadnais"}]
+    rejected, stats = bios.names_colliding_with_values(cfg, enc, cands, values)
+    assert rejected == ["Peter Ferrari"]
+    assert stats["by_gender"] == {"female": 1, "male": 0}
+
+
+def test_a_colliding_name_never_reaches_people_jsonl(tmp_path):
+    cfg = make_cfg(tmp_path / "out", n_train=20, n_control=10, candidates=120)
+    enc = get_encoder("gpt2", 50257)
+    values, _ = bios.build_value_lists(cfg, enc)
+    candidates = bios.build_name_candidates(cfg)
+    colliding, _ = bios.names_colliding_with_values(cfg, enc, candidates, values)
+    assert colliding, "the filter should reject something from a real pool"
+    people, stats = bios.build_people(cfg, values, candidates, [], colliding, enc)
+    names = {p["name"] for p in people}
+    assert not (names & set(colliding))
+    assert stats["names_rejected_by_value_collision"] > 0
+    # no surviving name word is a word of any value
+    allwords = {w for vs in values.values() for v in vs
+                for w in v.lower().replace(",", " ").split()}
+    for p in people:
+        assert p["first_name"].lower() not in allwords, p["name"]
+        assert p["last_name"].lower() not in allwords, p["name"]
+
+
+def test_values_that_leak_each_other_are_redrawn(tmp_path):
+    """"Columbus, Ohio" + "Ohio State University" hands the probe its answer."""
+    cfg = make_cfg(tmp_path / "out")
+    enc = get_encoder("gpt2", 50257)
+    values = {
+        "birth_date": ["March 4, 1987", "July 9, 1960"],
+        "birth_city": ["Columbus, Ohio", "Lyon, France"],
+        "university": ["Ohio State University", "Vassar College"],
+        "major": ["Physics"], "employer": ["Nokia"],
+    }
+    facts = {"birth_date": "March 4, 1987", "birth_city": "Columbus, Ohio",
+             "university": "Ohio State University", "major": "Physics",
+             "employer": "Nokia"}
+    fixed, changes = bios.resolve_fact_collisions(cfg, enc, "p000001",
+                                                  dict(facts), values)
+    assert changes, "the Ohio collision should have been caught"
+    # birth_city comes before university in the attribute order, so the LATER
+    # one is the one that moves
+    assert fixed["birth_city"] == "Columbus, Ohio"
+    assert fixed["university"] == "Vassar College"
+    assert changes[0]["attribute"] == "university"
+    assert changes[0]["clashed_with"] == {"birth_city": "Columbus, Ohio"}
+
+    # and nothing is redrawn when there is no collision
+    clean = {"birth_date": "July 9, 1960", "birth_city": "Lyon, France",
+             "university": "Vassar College", "major": "Physics",
+             "employer": "Nokia"}
+    fixed2, changes2 = bios.resolve_fact_collisions(cfg, enc, "p000002",
+                                                    dict(clean), values)
+    assert fixed2 == clean and changes2 == []
+
+
+def test_the_redraw_is_keyed_so_only_the_affected_person_moves(tmp_path):
+    """A redraw must be a function of (seed, person, attribute, attempt)."""
+    cfg = make_cfg(tmp_path / "out")
+    enc = get_encoder("gpt2", 50257)
+    values = {"birth_date": ["March 4, 1987"], "birth_city": ["Columbus, Ohio"],
+              "university": ["Ohio State University", "Vassar College",
+                             "Reed College"],
+              "major": ["Physics"], "employer": ["Nokia"]}
+    facts = {"birth_date": "March 4, 1987", "birth_city": "Columbus, Ohio",
+             "university": "Ohio State University", "major": "Physics",
+             "employer": "Nokia"}
+    a, _ = bios.resolve_fact_collisions(cfg, enc, "p000001", dict(facts), values)
+    b, _ = bios.resolve_fact_collisions(cfg, enc, "p000001", dict(facts), values)
+    c, _ = bios.resolve_fact_collisions(cfg, enc, "p000999", dict(facts), values)
+    assert a == b                       # same person, same answer
+    assert a["university"] != "Ohio State University"
+    assert c["university"] != "Ohio State University"
+
+
+def test_raising_the_candidate_pool_only_appends(tmp_path):
+    """More candidates must not rename the people already chosen."""
+    import copy
+    small = make_cfg(tmp_path / "a", candidates=300)
+    big = copy.deepcopy(small.raw)
+    big["bios"]["people"]["name_candidates_per_gender"] = 900
+    big = DataConfig(raw=big)
+    a = bios.build_name_candidates(small)
+    b = bios.build_name_candidates(big)
+    for g in small.bio_genders:
+        ga = [c["name"] for c in a if c["gender"] == g]
+        gb = [c["name"] for c in b if c["gender"] == g]
+        assert len(gb) > len(ga)
+        assert gb[:len(ga)] == ga, g
+
+
+def test_the_real_build_has_no_answer_leaks(tmp_path):
+    """End to end on a small build: the three A13 criteria, all zero."""
+    cfg = make_cfg(tmp_path / "out", n_train=40, n_control=20, candidates=400)
+    enc = get_encoder("gpt2", 50257)
+    bios.run(cfg, name_check=False)
+    people = {p["person_id"]: p for p in read_jsonl(cfg.bios_dir / "people.jsonl")}
+    rows = list(read_jsonl(cfg.bios_dir / "facts.jsonl"))
+    assert rows
+    for r in rows:
+        p = people[r["person_id"]]
+        key = set(bios.ranking_key(enc, cfg, r["attribute"], r["true_value"]))
+        assert r["true_value"] not in r["prompt"], r["fact_id"]
+        assert not (key & set(enc.encode_ordinary(" " + p["name"]))), r["fact_id"]
+        assert not (key & set(enc.encode_ordinary(p["name"]))), r["fact_id"]
+        for a, v in p["facts"].items():
+            if a != r["attribute"]:
+                assert not (key & bios.value_token_set(enc, v)), \
+                    f"{r['fact_id']} leaks via {a}={v!r}"
