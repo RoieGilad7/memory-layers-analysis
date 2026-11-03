@@ -188,6 +188,7 @@ class DataConfig:
         self.reports_dir = under("reports")
         self.bios_dir = self.root / "bios"
         self.samples_dir = self.root / "samples"
+        self.config_path = "configs/data/v1.yaml"
         self.tokens_dir = self.root / "tokens"
         self.heldout_tokens_dir = self.root / "heldout"
         self.manifest_path = self.root / "manifest.json"
@@ -272,7 +273,10 @@ class DataConfig:
 def load_config(path: str | Path, small: bool = False) -> DataConfig:
     with open(path, "r", encoding="utf-8") as fh:
         raw = yaml.safe_load(fh)
-    return DataConfig(raw=raw, small=small)
+    cfg = DataConfig(raw=raw, small=small)
+    # remembered so a stage can re-invoke the build with the same config
+    cfg.config_path = str(path)
+    return cfg
 
 
 # --------------------------------------------------------------------------
