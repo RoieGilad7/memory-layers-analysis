@@ -6,8 +6,8 @@
   "seed": 0,
   "steps": 5830,
   "tokens_seen": 95518720,
-  "train_seconds": 7122.8,
-  "wall_seconds": 7982.8,
+  "train_seconds": 7101.0,
+  "wall_seconds": 8250.2,
   "micro_batch_size": 32,
   "eval_prompts": 36000,
   "eval_rows_by_tier_role": {
@@ -23,695 +23,2327 @@
   "data": {
     "source": "real",
     "version": "v1",
-    "manifest_sha256": "e19d9b5b83d597f3389a40a5839a16bb1fd1662b015393cd65abdfadda7ff5f8",
-    "train_bin_sha256": "7a0efdc65b7c48b0c3fa1899f0c24b6ea7465bcaf6c1e39f1bd23e6416704c25",
+    "manifest_sha256": "362322a59d3cbf52a67ca8fc7f242fc60c2959f903e7805e37bf6089a17ead89",
+    "train_bin_sha256": "17099102f2927930fcddaf7c07555f2a846491cfb7291a60d7cb4247cd812b9c",
     "data_config": "configs/data/v1.yaml",
-    "config_fingerprint_pack": "f7adf5f6fefc545dd98b1ead661db86751aa06828d7603f6a4ac8521d5f5a9f5",
+    "config_fingerprint_pack": "15643c90477c31a7cbc5e394b1f353d795bb417ad6a5ef656b772ebbc1e91e81",
     "pile_revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
     "bin_path": "/Users/roieg/studies/ms/year1/courses/algos_in_llms/final_project/data/v1/tokens/train.bin",
-    "n_tokens": 149963776,
-    "n_sequences": 292897,
+    "n_tokens": 149857280,
+    "n_sequences": 292689,
     "verified": true
   },
   "verdict": {
     "checks": {
       "frequent_at_least_twice_control": {
-        "frequent": 0.372333,
-        "control": 0.006667,
-        "ratio": 55.847,
+        "frequent": 0.296,
+        "control": 0.005333,
+        "ratio": 55.503,
         "pass": true
       },
       "monotone_frequent_normal_rare": {
-        "frequent": 0.372333,
-        "normal": 0.033667,
-        "rare": 0.009333,
+        "frequent": 0.296,
+        "normal": 0.024,
+        "rare": 0.009667,
         "pass": true
       }
     },
     "pass": true,
     "test_top1": {
-      "frequent": 0.372333,
-      "normal": 0.033667,
-      "rare": 0.009333,
-      "control": 0.006667
+      "frequent": 0.296,
+      "normal": 0.024,
+      "rare": 0.009667,
+      "control": 0.005333
     },
     "paraphrase_top1": {
-      "frequent": 0.0095,
-      "normal": 0.004333,
-      "rare": 0.005,
-      "control": 0.003
+      "frequent": 0.012,
+      "normal": 0.005,
+      "rare": 0.005167,
+      "control": 0.004333
     }
   },
   "final_by_tier_role": {
     "control/paraphrase": {
       "n": 6000,
-      "top1": 0.003,
-      "mean_rank": 105.644,
-      "median_rank": 91.0,
-      "mean_rank_fraction": 0.506023,
-      "mean_margin": -4.0632,
+      "top1": 0.004333,
+      "mean_rank": 105.572,
+      "median_rank": 92.0,
+      "mean_rank_fraction": 0.504116,
+      "mean_margin": -4.2449,
       "candidates_mean": 210.0
     },
     "control/test": {
       "n": 3000,
-      "top1": 0.006667,
-      "mean_rank": 105.25,
-      "median_rank": 92.0,
-      "mean_rank_fraction": 0.504259,
-      "mean_margin": -2.4111,
+      "top1": 0.005333,
+      "mean_rank": 106.431,
+      "median_rank": 94.5,
+      "mean_rank_fraction": 0.50575,
+      "mean_margin": -2.1752,
       "candidates_mean": 210.0
     },
     "normal/paraphrase": {
       "n": 6000,
-      "top1": 0.004333,
-      "mean_rank": 100.403,
-      "median_rank": 86.0,
-      "mean_rank_fraction": 0.478428,
-      "mean_margin": -3.9544,
+      "top1": 0.005,
+      "mean_rank": 100.51,
+      "median_rank": 87.0,
+      "mean_rank_fraction": 0.479305,
+      "mean_margin": -4.1417,
       "candidates_mean": 210.0
     },
     "normal/test": {
       "n": 3000,
-      "top1": 0.033667,
-      "mean_rank": 57.175,
-      "median_rank": 39.0,
-      "mean_rank_fraction": 0.28072,
-      "mean_margin": -1.6232,
+      "top1": 0.024,
+      "mean_rank": 63.586,
+      "median_rank": 46.0,
+      "mean_rank_fraction": 0.307346,
+      "mean_margin": -1.575,
       "candidates_mean": 210.0
     },
     "rare/paraphrase": {
       "n": 6000,
-      "top1": 0.005,
-      "mean_rank": 104.831,
-      "median_rank": 93.0,
-      "mean_rank_fraction": 0.499654,
-      "mean_margin": -4.0257,
+      "top1": 0.005167,
+      "mean_rank": 104.222,
+      "median_rank": 91.0,
+      "mean_rank_fraction": 0.496687,
+      "mean_margin": -4.2007,
       "candidates_mean": 210.0
     },
     "rare/test": {
       "n": 3000,
-      "top1": 0.009333,
-      "mean_rank": 90.48,
-      "median_rank": 77.0,
-      "mean_rank_fraction": 0.437188,
-      "mean_margin": -2.1793,
+      "top1": 0.009667,
+      "mean_rank": 93.017,
+      "median_rank": 78.0,
+      "mean_rank_fraction": 0.447918,
+      "mean_margin": -1.9971,
       "candidates_mean": 210.0
     },
     "frequent/paraphrase": {
       "n": 6000,
-      "top1": 0.0095,
-      "mean_rank": 83.491,
-      "median_rank": 69.0,
-      "mean_rank_fraction": 0.398965,
-      "mean_margin": -3.6815,
+      "top1": 0.012,
+      "mean_rank": 83.6,
+      "median_rank": 70.0,
+      "mean_rank_fraction": 0.397822,
+      "mean_margin": -3.8963,
       "candidates_mean": 210.0
     },
     "frequent/test": {
       "n": 3000,
-      "top1": 0.372333,
-      "mean_rank": 10.448,
-      "median_rank": 3.0,
-      "mean_rank_fraction": 0.056608,
-      "mean_margin": -0.2637,
+      "top1": 0.296,
+      "mean_rank": 14.418,
+      "median_rank": 4.0,
+      "mean_rank_fraction": 0.074455,
+      "mean_margin": -0.4356,
       "candidates_mean": 210.0
     }
   },
   "final_by_attribute": {
     "birth_city": {
       "n": 7200,
-      "top1": 0.034028,
-      "mean_rank": 85.677,
+      "top1": 0.028889,
+      "mean_rank": 85.799,
       "median_rank": 80.0,
-      "mean_rank_fraction": 0.428386,
-      "mean_margin": -3.6639,
+      "mean_rank_fraction": 0.428996,
+      "mean_margin": -3.819,
       "candidates_mean": 200.0
     },
     "birth_date": {
       "n": 7200,
-      "top1": 0.03375,
-      "mean_rank": 82.499,
-      "median_rank": 75.0,
-      "mean_rank_fraction": 0.412494,
-      "mean_margin": -1.7779,
+      "top1": 0.024583,
+      "mean_rank": 84.605,
+      "median_rank": 79.0,
+      "mean_rank_fraction": 0.423024,
+      "mean_margin": -1.6238,
       "candidates_mean": 200.0
     },
     "employer": {
       "n": 7200,
-      "top1": 0.0375,
-      "mean_rank": 105.688,
-      "median_rank": 99.0,
-      "mean_rank_fraction": 0.422752,
-      "mean_margin": -3.5187,
+      "top1": 0.04,
+      "mean_rank": 104.292,
+      "median_rank": 98.0,
+      "mean_rank_fraction": 0.417169,
+      "mean_margin": -3.6339,
       "candidates_mean": 250.0
     },
     "major": {
       "n": 7200,
-      "top1": 0.040833,
-      "mean_rank": 43.509,
-      "median_rank": 41.0,
-      "mean_rank_fraction": 0.435089,
-      "mean_margin": -3.3794,
+      "top1": 0.037917,
+      "mean_rank": 43.248,
+      "median_rank": 40.5,
+      "mean_rank_fraction": 0.432483,
+      "mean_margin": -3.5257,
       "candidates_mean": 100.0
     },
     "university": {
       "n": 7200,
-      "top1": 0.047917,
-      "mean_rank": 120.998,
-      "median_rank": 110.0,
-      "mean_rank_fraction": 0.403328,
-      "mean_margin": -3.463,
+      "top1": 0.030278,
+      "mean_rank": 125.915,
+      "median_rank": 117.5,
+      "mean_rank_fraction": 0.419715,
+      "mean_margin": -3.7103,
       "candidates_mean": 300.0
     }
   },
   "final_by_tier_role_attribute": {
     "control/paraphrase/birth_city": {
       "n": 1200,
-      "top1": 0.0025,
-      "mean_rank": 103.004,
-      "median_rank": 103.5,
-      "mean_rank_fraction": 0.515021,
-      "mean_margin": -4.8509,
+      "top1": 0.003333,
+      "mean_rank": 103.84,
+      "median_rank": 107.0,
+      "mean_rank_fraction": 0.5192,
+      "mean_margin": -5.1161,
       "candidates_mean": 200.0
     },
     "control/paraphrase/birth_date": {
       "n": 1200,
-      "top1": 0.004167,
-      "mean_rank": 102.175,
-      "median_rank": 103.5,
-      "mean_rank_fraction": 0.510875,
-      "mean_margin": -2.0801,
+      "top1": 0.006667,
+      "mean_rank": 101.178,
+      "median_rank": 102.0,
+      "mean_rank_fraction": 0.505892,
+      "mean_margin": -1.8446,
       "candidates_mean": 200.0
     },
     "control/paraphrase/employer": {
       "n": 1200,
-      "top1": 0.001667,
-      "mean_rank": 124.164,
-      "median_rank": 122.0,
-      "mean_rank_fraction": 0.496657,
-      "mean_margin": -4.4907,
+      "top1": 0.000833,
+      "mean_rank": 124.16,
+      "median_rank": 125.5,
+      "mean_rank_fraction": 0.49664,
+      "mean_margin": -4.7213,
       "candidates_mean": 250.0
     },
     "control/paraphrase/major": {
       "n": 1200,
-      "top1": 0.0025,
-      "mean_rank": 51.696,
-      "median_rank": 51.0,
-      "mean_rank_fraction": 0.516958,
-      "mean_margin": -4.5012,
+      "top1": 0.006667,
+      "mean_rank": 50.487,
+      "median_rank": 50.5,
+      "mean_rank_fraction": 0.504867,
+      "mean_margin": -4.7549,
       "candidates_mean": 100.0
     },
     "control/paraphrase/university": {
       "n": 1200,
       "top1": 0.004167,
-      "mean_rank": 147.182,
-      "median_rank": 144.5,
-      "mean_rank_fraction": 0.490606,
-      "mean_margin": -4.3931,
+      "mean_rank": 148.194,
+      "median_rank": 145.5,
+      "mean_rank_fraction": 0.493981,
+      "mean_margin": -4.7878,
       "candidates_mean": 300.0
     },
     "control/test/birth_city": {
       "n": 600,
-      "top1": 0.005,
-      "mean_rank": 100.725,
-      "median_rank": 99.0,
-      "mean_rank_fraction": 0.503625,
-      "mean_margin": -2.2897,
+      "top1": 0.003333,
+      "mean_rank": 104.943,
+      "median_rank": 108.5,
+      "mean_rank_fraction": 0.524717,
+      "mean_margin": -2.2497,
       "candidates_mean": 200.0
     },
     "control/test/birth_date": {
       "n": 600,
-      "top1": 0.003333,
-      "mean_rank": 105.247,
-      "median_rank": 108.0,
-      "mean_rank_fraction": 0.526233,
-      "mean_margin": -2.1156,
+      "top1": 0.001667,
+      "mean_rank": 101.437,
+      "median_rank": 102.0,
+      "mean_rank_fraction": 0.507183,
+      "mean_margin": -1.8223,
       "candidates_mean": 200.0
     },
     "control/test/employer": {
       "n": 600,
-      "top1": 0.005,
-      "mean_rank": 125.373,
-      "median_rank": 130.0,
-      "mean_rank_fraction": 0.501493,
-      "mean_margin": -2.7027,
+      "top1": 0.006667,
+      "mean_rank": 128.728,
+      "median_rank": 134.5,
+      "mean_rank_fraction": 0.514913,
+      "mean_margin": -2.5464,
       "candidates_mean": 250.0
     },
     "control/test/major": {
       "n": 600,
-      "top1": 0.011667,
-      "mean_rank": 51.038,
-      "median_rank": 51.5,
-      "mean_rank_fraction": 0.510383,
-      "mean_margin": -2.0488,
+      "top1": 0.015,
+      "mean_rank": 48.767,
+      "median_rank": 47.0,
+      "mean_rank_fraction": 0.487667,
+      "mean_margin": -1.8649,
       "candidates_mean": 100.0
     },
     "control/test/university": {
       "n": 600,
-      "top1": 0.008333,
-      "mean_rank": 143.868,
-      "median_rank": 136.5,
-      "mean_rank_fraction": 0.479561,
-      "mean_margin": -2.8987,
+      "top1": 0.0,
+      "mean_rank": 148.282,
+      "median_rank": 154.5,
+      "mean_rank_fraction": 0.494272,
+      "mean_margin": -2.3924,
       "candidates_mean": 300.0
     },
     "normal/paraphrase/birth_city": {
       "n": 1200,
-      "top1": 0.004167,
-      "mean_rank": 95.725,
-      "median_rank": 93.5,
-      "mean_rank_fraction": 0.478625,
-      "mean_margin": -4.6792,
+      "top1": 0.005,
+      "mean_rank": 92.835,
+      "median_rank": 87.5,
+      "mean_rank_fraction": 0.464175,
+      "mean_margin": -4.8825,
       "candidates_mean": 200.0
     },
     "normal/paraphrase/birth_date": {
       "n": 1200,
-      "top1": 0.005,
-      "mean_rank": 92.949,
-      "median_rank": 85.0,
-      "mean_rank_fraction": 0.464746,
-      "mean_margin": -1.9707,
+      "top1": 0.004167,
+      "mean_rank": 96.956,
+      "median_rank": 96.0,
+      "mean_rank_fraction": 0.484779,
+      "mean_margin": -1.8048,
       "candidates_mean": 200.0
     },
     "normal/paraphrase/employer": {
       "n": 1200,
-      "top1": 0.003333,
-      "mean_rank": 123.606,
-      "median_rank": 124.0,
-      "mean_rank_fraction": 0.494423,
-      "mean_margin": -4.4368,
+      "top1": 0.005,
+      "mean_rank": 120.509,
+      "median_rank": 117.0,
+      "mean_rank_fraction": 0.482037,
+      "mean_margin": -4.6505,
       "candidates_mean": 250.0
     },
     "normal/paraphrase/major": {
       "n": 1200,
-      "top1": 0.008333,
-      "mean_rank": 48.286,
+      "top1": 0.0075,
+      "mean_rank": 48.705,
       "median_rank": 48.0,
-      "mean_rank_fraction": 0.482858,
-      "mean_margin": -4.3648,
+      "mean_rank_fraction": 0.48705,
+      "mean_margin": -4.6392,
       "candidates_mean": 100.0
     },
     "normal/paraphrase/university": {
       "n": 1200,
-      "top1": 0.000833,
-      "mean_rank": 141.447,
-      "median_rank": 140.0,
-      "mean_rank_fraction": 0.471489,
-      "mean_margin": -4.3205,
+      "top1": 0.003333,
+      "mean_rank": 143.546,
+      "median_rank": 146.5,
+      "mean_rank_fraction": 0.478486,
+      "mean_margin": -4.7318,
       "candidates_mean": 300.0
     },
     "normal/test/birth_city": {
       "n": 600,
-      "top1": 0.021667,
-      "mean_rank": 52.282,
-      "median_rank": 36.0,
-      "mean_rank_fraction": 0.261408,
-      "mean_margin": -1.5162,
+      "top1": 0.02,
+      "mean_rank": 57.1,
+      "median_rank": 39.0,
+      "mean_rank_fraction": 0.2855,
+      "mean_margin": -1.4843,
       "candidates_mean": 200.0
     },
     "normal/test/birth_date": {
       "n": 600,
-      "top1": 0.043333,
-      "mean_rank": 59.898,
-      "median_rank": 48.5,
-      "mean_rank_fraction": 0.299492,
-      "mean_margin": -1.4483,
+      "top1": 0.016667,
+      "mean_rank": 68.442,
+      "median_rank": 55.5,
+      "mean_rank_fraction": 0.342208,
+      "mean_margin": -1.4138,
       "candidates_mean": 200.0
     },
     "normal/test/employer": {
       "n": 600,
-      "top1": 0.023333,
-      "mean_rank": 73.147,
-      "median_rank": 55.0,
-      "mean_rank_fraction": 0.292587,
-      "mean_margin": -1.8686,
+      "top1": 0.028333,
+      "mean_rank": 71.513,
+      "median_rank": 56.0,
+      "mean_rank_fraction": 0.286053,
+      "mean_margin": -1.8045,
       "candidates_mean": 250.0
     },
     "normal/test/major": {
       "n": 600,
       "top1": 0.036667,
-      "mean_rank": 32.243,
-      "median_rank": 26.0,
-      "mean_rank_fraction": 0.322433,
-      "mean_margin": -1.5033,
+      "mean_rank": 33.007,
+      "median_rank": 26.5,
+      "mean_rank_fraction": 0.330067,
+      "mean_margin": -1.3975,
       "candidates_mean": 100.0
     },
     "normal/test/university": {
       "n": 600,
-      "top1": 0.043333,
-      "mean_rank": 68.303,
-      "median_rank": 43.0,
-      "mean_rank_fraction": 0.227678,
-      "mean_margin": -1.7796,
+      "top1": 0.018333,
+      "mean_rank": 87.87,
+      "median_rank": 68.0,
+      "mean_rank_fraction": 0.2929,
+      "mean_margin": -1.775,
       "candidates_mean": 300.0
     },
     "rare/paraphrase/birth_city": {
       "n": 1200,
-      "top1": 0.0025,
-      "mean_rank": 101.324,
-      "median_rank": 101.0,
-      "mean_rank_fraction": 0.506621,
-      "mean_margin": -4.7948,
+      "top1": 0.004167,
+      "mean_rank": 101.965,
+      "median_rank": 100.0,
+      "mean_rank_fraction": 0.509825,
+      "mean_margin": -5.056,
       "candidates_mean": 200.0
     },
     "rare/paraphrase/birth_date": {
       "n": 1200,
-      "top1": 0.005833,
-      "mean_rank": 97.242,
-      "median_rank": 94.5,
-      "mean_rank_fraction": 0.486208,
-      "mean_margin": -2.0133,
+      "top1": 0.004167,
+      "mean_rank": 96.885,
+      "median_rank": 95.0,
+      "mean_rank_fraction": 0.484425,
+      "mean_margin": -1.7944,
       "candidates_mean": 200.0
     },
     "rare/paraphrase/employer": {
       "n": 1200,
-      "top1": 0.001667,
-      "mean_rank": 124.659,
-      "median_rank": 126.0,
-      "mean_rank_fraction": 0.498637,
-      "mean_margin": -4.4572,
+      "top1": 0.000833,
+      "mean_rank": 122.97,
+      "median_rank": 124.5,
+      "mean_rank_fraction": 0.49188,
+      "mean_margin": -4.6455,
       "candidates_mean": 250.0
     },
     "rare/paraphrase/major": {
       "n": 1200,
-      "top1": 0.011667,
-      "mean_rank": 50.556,
-      "median_rank": 51.0,
-      "mean_rank_fraction": 0.505558,
-      "mean_margin": -4.4062,
+      "top1": 0.013333,
+      "mean_rank": 49.95,
+      "median_rank": 49.0,
+      "mean_rank_fraction": 0.4995,
+      "mean_margin": -4.6708,
       "candidates_mean": 100.0
     },
     "rare/paraphrase/university": {
       "n": 1200,
       "top1": 0.003333,
-      "mean_rank": 150.374,
-      "median_rank": 150.5,
-      "mean_rank_fraction": 0.501247,
-      "mean_margin": -4.4569,
+      "mean_rank": 149.342,
+      "median_rank": 149.5,
+      "mean_rank_fraction": 0.497806,
+      "mean_margin": -4.8371,
       "candidates_mean": 300.0
     },
     "rare/test/birth_city": {
       "n": 600,
-      "top1": 0.006667,
-      "mean_rank": 91.54,
-      "median_rank": 88.5,
-      "mean_rank_fraction": 0.4577,
-      "mean_margin": -2.0991,
+      "top1": 0.0,
+      "mean_rank": 89.465,
+      "median_rank": 79.5,
+      "mean_rank_fraction": 0.447325,
+      "mean_margin": -2.0204,
       "candidates_mean": 200.0
     },
     "rare/test/birth_date": {
       "n": 600,
-      "top1": 0.011667,
-      "mean_rank": 87.037,
-      "median_rank": 82.0,
-      "mean_rank_fraction": 0.435183,
-      "mean_margin": -1.9026,
+      "top1": 0.015,
+      "mean_rank": 89.217,
+      "median_rank": 84.0,
+      "mean_rank_fraction": 0.446083,
+      "mean_margin": -1.6766,
       "candidates_mean": 200.0
     },
     "rare/test/employer": {
       "n": 600,
-      "top1": 0.006667,
-      "mean_rank": 108.063,
-      "median_rank": 104.5,
-      "mean_rank_fraction": 0.432253,
-      "mean_margin": -2.3814,
+      "top1": 0.008333,
+      "mean_rank": 104.757,
+      "median_rank": 101.5,
+      "mean_rank_fraction": 0.419027,
+      "mean_margin": -2.2446,
       "candidates_mean": 250.0
     },
     "rare/test/major": {
       "n": 600,
-      "top1": 0.016667,
-      "mean_rank": 46.242,
-      "median_rank": 46.0,
-      "mean_rank_fraction": 0.462417,
-      "mean_margin": -1.9605,
+      "top1": 0.02,
+      "mean_rank": 48.25,
+      "median_rank": 47.5,
+      "mean_rank_fraction": 0.4825,
+      "mean_margin": -1.8081,
       "candidates_mean": 100.0
     },
     "rare/test/university": {
       "n": 600,
       "top1": 0.005,
-      "mean_rank": 119.517,
-      "median_rank": 105.5,
-      "mean_rank_fraction": 0.398389,
-      "mean_margin": -2.5527,
+      "mean_rank": 133.397,
+      "median_rank": 123.0,
+      "mean_rank_fraction": 0.444656,
+      "mean_margin": -2.2357,
       "candidates_mean": 300.0
     },
     "frequent/paraphrase/birth_city": {
       "n": 1200,
-      "top1": 0.004167,
-      "mean_rank": 86.043,
-      "median_rank": 79.0,
-      "mean_rank_fraction": 0.430217,
-      "mean_margin": -4.5469,
+      "top1": 0.0025,
+      "mean_rank": 82.83,
+      "median_rank": 74.0,
+      "mean_rank_fraction": 0.41415,
+      "mean_margin": -4.7435,
       "candidates_mean": 200.0
     },
     "frequent/paraphrase/birth_date": {
       "n": 1200,
-      "top1": 0.021667,
-      "mean_rank": 69.987,
-      "median_rank": 57.0,
-      "mean_rank_fraction": 0.349938,
-      "mean_margin": -1.6317,
+      "top1": 0.039167,
+      "mean_rank": 71.097,
+      "median_rank": 60.0,
+      "mean_rank_fraction": 0.355483,
+      "mean_margin": -1.4881,
       "candidates_mean": 200.0
     },
     "frequent/paraphrase/employer": {
       "n": 1200,
-      "top1": 0.010833,
-      "mean_rank": 102.287,
-      "median_rank": 96.0,
-      "mean_rank_fraction": 0.409147,
-      "mean_margin": -4.109,
+      "top1": 0.008333,
+      "mean_rank": 100.587,
+      "median_rank": 93.0,
+      "mean_rank_fraction": 0.402347,
+      "mean_margin": -4.37,
       "candidates_mean": 250.0
     },
     "frequent/paraphrase/major": {
       "n": 1200,
-      "top1": 0.008333,
-      "mean_rank": 41.259,
+      "top1": 0.006667,
+      "mean_rank": 40.825,
       "median_rank": 37.0,
-      "mean_rank_fraction": 0.412592,
-      "mean_margin": -4.0865,
+      "mean_rank_fraction": 0.40825,
+      "mean_margin": -4.3692,
       "candidates_mean": 100.0
     },
     "frequent/paraphrase/university": {
       "n": 1200,
-      "top1": 0.0025,
-      "mean_rank": 117.88,
-      "median_rank": 106.0,
-      "mean_rank_fraction": 0.392933,
-      "mean_margin": -4.0335,
+      "top1": 0.003333,
+      "mean_rank": 122.663,
+      "median_rank": 116.0,
+      "mean_rank_fraction": 0.408878,
+      "mean_margin": -4.5106,
       "candidates_mean": 300.0
     },
     "frequent/test/birth_city": {
       "n": 600,
-      "top1": 0.348333,
-      "mean_rank": 11.387,
-      "median_rank": 3.0,
-      "mean_rank_fraction": 0.056933,
-      "mean_margin": -0.3176,
+      "top1": 0.293333,
+      "mean_rank": 15.142,
+      "median_rank": 5.0,
+      "mean_rank_fraction": 0.075708,
+      "mean_margin": -0.477,
       "candidates_mean": 200.0
     },
     "frequent/test/birth_date": {
       "n": 600,
-      "top1": 0.273333,
-      "mean_rank": 13.098,
-      "median_rank": 4.0,
-      "mean_rank_fraction": 0.065492,
-      "mean_margin": -0.4771,
+      "top1": 0.153333,
+      "mean_rank": 23.93,
+      "median_rank": 10.0,
+      "mean_rank_fraction": 0.11965,
+      "mean_margin": -0.7085,
       "candidates_mean": 200.0
     },
     "frequent/test/employer": {
       "n": 600,
-      "top1": 0.38,
-      "mean_rank": 12.24,
-      "median_rank": 3.0,
-      "mean_rank_fraction": 0.04896,
-      "mean_margin": -0.2841,
+      "top1": 0.406667,
+      "mean_rank": 10.057,
+      "median_rank": 2.0,
+      "mean_rank_fraction": 0.040227,
+      "mean_margin": -0.2368,
       "candidates_mean": 250.0
     },
     "frequent/test/major": {
       "n": 600,
-      "top1": 0.363333,
-      "mean_rank": 8.99,
+      "top1": 0.315,
+      "mean_rank": 9.023,
       "median_rank": 3.0,
-      "mean_rank_fraction": 0.0899,
-      "mean_margin": -0.3229,
+      "mean_rank_fraction": 0.090233,
+      "mean_margin": -0.37,
       "candidates_mean": 100.0
     },
     "frequent/test/university": {
       "n": 600,
-      "top1": 0.496667,
-      "mean_rank": 6.527,
-      "median_rank": 2.0,
-      "mean_rank_fraction": 0.021756,
-      "mean_margin": 0.0832,
+      "top1": 0.311667,
+      "mean_rank": 13.937,
+      "median_rank": 4.0,
+      "mean_rank_fraction": 0.046456,
+      "mean_margin": -0.3857,
       "candidates_mean": 300.0
     }
   },
   "heldout_test": {
     "FreeLaw": {
-      "loss": 3.6311,
+      "loss": 3.6293,
       "documents": 200,
       "tokens": 538632
     },
     "Github": {
-      "loss": 2.8389,
+      "loss": 2.8372,
       "documents": 200,
       "tokens": 280630
     },
     "Pile-CC": {
-      "loss": 5.0869,
+      "loss": 5.087,
       "documents": 200,
       "tokens": 166385
     },
     "PubMed Central": {
-      "loss": 3.8749,
+      "loss": 3.8748,
       "documents": 200,
       "tokens": 696058
     },
     "USPTO Backgrounds": {
-      "loss": 4.8195,
+      "loss": 4.8293,
       "documents": 200,
       "tokens": 163834
     },
     "Wikipedia (en)": {
-      "loss": 4.6865,
+      "loss": 4.6836,
       "documents": 200,
       "tokens": 125951
     }
   },
+  "heldout_test_all_documents": {
+    "FreeLaw": {
+      "loss": 3.6328,
+      "documents": 995,
+      "tokens": 2501994
+    },
+    "Github": {
+      "loss": 2.6828,
+      "documents": 1815,
+      "tokens": 2500847
+    },
+    "Pile-CC": {
+      "loss": 5.0958,
+      "documents": 3087,
+      "tokens": 2498768
+    },
+    "PubMed Central": {
+      "loss": 3.8458,
+      "documents": 713,
+      "tokens": 2501486
+    },
+    "USPTO Backgrounds": {
+      "loss": 4.8269,
+      "documents": 3084,
+      "tokens": 2497199
+    },
+    "Wikipedia (en)": {
+      "loss": 4.7206,
+      "documents": 3687,
+      "tokens": 2496897
+    }
+  },
+  "heldout_cap_in_loop": 200,
   "evals": [
     {
-      "step": 5830,
-      "train_seconds": 7122.8,
-      "tokens_seen": 95518720,
+      "step": 0,
+      "train_seconds": 0.0,
+      "tokens_seen": 0,
       "train_loss": null,
       "probe": {
         "n": 36000,
         "overall": {
           "n": 36000,
-          "top1": 0.038806,
-          "mean_rank": 87.674,
-          "median_rank": 73.0,
-          "mean_rank_fraction": 0.42041,
-          "mean_margin": -3.1606,
+          "top1": 0.005806,
+          "mean_rank": 105.461,
+          "median_rank": 92.0,
+          "mean_rank_fraction": 0.502198,
+          "mean_margin": -1.1651,
           "candidates_mean": 210.0
         },
         "by_tier_role": {
           "control/paraphrase": {
             "n": 6000,
-            "top1": 0.003,
-            "mean_rank": 105.644,
+            "top1": 0.007,
+            "mean_rank": 104.667,
             "median_rank": 91.0,
-            "mean_rank_fraction": 0.506023,
-            "mean_margin": -4.0632,
+            "mean_rank_fraction": 0.497323,
+            "mean_margin": -1.1311,
             "candidates_mean": 210.0
           },
           "control/test": {
             "n": 3000,
-            "top1": 0.006667,
-            "mean_rank": 105.25,
-            "median_rank": 92.0,
-            "mean_rank_fraction": 0.504259,
-            "mean_margin": -2.4111,
+            "top1": 0.007,
+            "mean_rank": 106.175,
+            "median_rank": 94.0,
+            "mean_rank_fraction": 0.504489,
+            "mean_margin": -1.2072,
             "candidates_mean": 210.0
           },
           "normal/paraphrase": {
             "n": 6000,
-            "top1": 0.004333,
-            "mean_rank": 100.403,
-            "median_rank": 86.0,
-            "mean_rank_fraction": 0.478428,
-            "mean_margin": -3.9544,
+            "top1": 0.005,
+            "mean_rank": 106.784,
+            "median_rank": 94.0,
+            "mean_rank_fraction": 0.509266,
+            "mean_margin": -1.154,
             "candidates_mean": 210.0
           },
           "normal/test": {
             "n": 3000,
-            "top1": 0.033667,
-            "mean_rank": 57.175,
-            "median_rank": 39.0,
-            "mean_rank_fraction": 0.28072,
-            "mean_margin": -1.6232,
+            "top1": 0.004667,
+            "mean_rank": 107.721,
+            "median_rank": 94.0,
+            "mean_rank_fraction": 0.511361,
+            "mean_margin": -1.2245,
             "candidates_mean": 210.0
           },
           "rare/paraphrase": {
             "n": 6000,
-            "top1": 0.005,
-            "mean_rank": 104.831,
-            "median_rank": 93.0,
-            "mean_rank_fraction": 0.499654,
-            "mean_margin": -4.0257,
+            "top1": 0.0055,
+            "mean_rank": 104.02,
+            "median_rank": 92.0,
+            "mean_rank_fraction": 0.49723,
+            "mean_margin": -1.1366,
             "candidates_mean": 210.0
           },
           "rare/test": {
             "n": 3000,
-            "top1": 0.009333,
-            "mean_rank": 90.48,
-            "median_rank": 77.0,
-            "mean_rank_fraction": 0.437188,
-            "mean_margin": -2.1793,
+            "top1": 0.005667,
+            "mean_rank": 103.752,
+            "median_rank": 91.0,
+            "mean_rank_fraction": 0.4962,
+            "mean_margin": -1.2117,
             "candidates_mean": 210.0
           },
           "frequent/paraphrase": {
             "n": 6000,
-            "top1": 0.0095,
-            "mean_rank": 83.491,
-            "median_rank": 69.0,
-            "mean_rank_fraction": 0.398965,
-            "mean_margin": -3.6815,
+            "top1": 0.0065,
+            "mean_rank": 105.436,
+            "median_rank": 92.0,
+            "mean_rank_fraction": 0.501399,
+            "mean_margin": -1.1406,
             "candidates_mean": 210.0
           },
           "frequent/test": {
             "n": 3000,
-            "top1": 0.372333,
-            "mean_rank": 10.448,
-            "median_rank": 3.0,
-            "mean_rank_fraction": 0.056608,
-            "mean_margin": -0.2637,
+            "top1": 0.004333,
+            "mean_rank": 106.073,
+            "median_rank": 92.0,
+            "mean_rank_fraction": 0.503888,
+            "mean_margin": -1.2125,
             "candidates_mean": 210.0
           }
         },
         "by_attribute": {
           "birth_city": {
             "n": 7200,
-            "top1": 0.034028,
-            "mean_rank": 85.677,
-            "median_rank": 80.0,
-            "mean_rank_fraction": 0.428386,
-            "mean_margin": -3.6639,
+            "top1": 0.005139,
+            "mean_rank": 100.569,
+            "median_rank": 100.0,
+            "mean_rank_fraction": 0.502844,
+            "mean_margin": -1.0636,
             "candidates_mean": 200.0
           },
           "birth_date": {
             "n": 7200,
-            "top1": 0.03375,
-            "mean_rank": 82.499,
-            "median_rank": 75.0,
-            "mean_rank_fraction": 0.412494,
-            "mean_margin": -1.7779,
+            "top1": 0.006528,
+            "mean_rank": 99.614,
+            "median_rank": 100.0,
+            "mean_rank_fraction": 0.498069,
+            "mean_margin": -1.5752,
             "candidates_mean": 200.0
           },
           "employer": {
             "n": 7200,
-            "top1": 0.0375,
-            "mean_rank": 105.688,
-            "median_rank": 99.0,
-            "mean_rank_fraction": 0.422752,
-            "mean_margin": -3.5187,
+            "top1": 0.00375,
+            "mean_rank": 125.727,
+            "median_rank": 125.0,
+            "mean_rank_fraction": 0.502906,
+            "mean_margin": -1.0914,
             "candidates_mean": 250.0
           },
           "major": {
             "n": 7200,
-            "top1": 0.040833,
-            "mean_rank": 43.509,
-            "median_rank": 41.0,
-            "mean_rank_fraction": 0.435089,
-            "mean_margin": -3.3794,
+            "top1": 0.009861,
+            "mean_rank": 50.377,
+            "median_rank": 51.0,
+            "mean_rank_fraction": 0.503769,
+            "mean_margin": -0.9285,
             "candidates_mean": 100.0
           },
           "university": {
             "n": 7200,
-            "top1": 0.047917,
-            "mean_rank": 120.998,
+            "top1": 0.00375,
+            "mean_rank": 151.02,
+            "median_rank": 152.0,
+            "mean_rank_fraction": 0.503401,
+            "mean_margin": -1.1666,
+            "candidates_mean": 300.0
+          }
+        },
+        "by_tier_role_attribute": {
+          "control/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 101.062,
+            "median_rank": 100.0,
+            "mean_rank_fraction": 0.505313,
+            "mean_margin": -1.0473,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.01,
+            "mean_rank": 98.702,
+            "median_rank": 98.0,
+            "mean_rank_fraction": 0.493508,
+            "mean_margin": -1.4869,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 127.368,
+            "median_rank": 127.0,
+            "mean_rank_fraction": 0.509473,
+            "mean_margin": -1.097,
+            "candidates_mean": 250.0
+          },
+          "control/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.015,
+            "mean_rank": 48.647,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.486467,
+            "mean_margin": -0.8821,
+            "candidates_mean": 100.0
+          },
+          "control/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 147.556,
+            "median_rank": 150.0,
+            "mean_rank_fraction": 0.491853,
+            "mean_margin": -1.1424,
+            "candidates_mean": 300.0
+          },
+          "control/test/birth_city": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 103.863,
+            "median_rank": 106.0,
+            "mean_rank_fraction": 0.519317,
+            "mean_margin": -1.1137,
+            "candidates_mean": 200.0
+          },
+          "control/test/birth_date": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 98.352,
+            "median_rank": 100.5,
+            "mean_rank_fraction": 0.491758,
+            "mean_margin": -1.6724,
+            "candidates_mean": 200.0
+          },
+          "control/test/employer": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 128.275,
+            "median_rank": 134.0,
+            "mean_rank_fraction": 0.5131,
+            "mean_margin": -1.1083,
+            "candidates_mean": 250.0
+          },
+          "control/test/major": {
+            "n": 600,
+            "top1": 0.011667,
+            "mean_rank": 49.548,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.495483,
+            "mean_margin": -0.9634,
+            "candidates_mean": 100.0
+          },
+          "control/test/university": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 150.837,
+            "median_rank": 146.5,
+            "mean_rank_fraction": 0.502789,
+            "mean_margin": -1.1781,
+            "candidates_mean": 300.0
+          },
+          "normal/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 101.99,
+            "median_rank": 100.5,
+            "mean_rank_fraction": 0.50995,
+            "mean_margin": -1.0591,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.005833,
+            "mean_rank": 102.446,
+            "median_rank": 103.5,
+            "mean_rank_fraction": 0.512229,
+            "mean_margin": -1.5347,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.000833,
+            "mean_rank": 126.4,
+            "median_rank": 124.0,
+            "mean_rank_fraction": 0.5056,
+            "mean_margin": -1.0901,
+            "candidates_mean": 250.0
+          },
+          "normal/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.011667,
+            "mean_rank": 51.242,
+            "median_rank": 51.5,
+            "mean_rank_fraction": 0.512417,
+            "mean_margin": -0.9206,
+            "candidates_mean": 100.0
+          },
+          "normal/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 151.841,
+            "median_rank": 152.0,
+            "mean_rank_fraction": 0.506136,
+            "mean_margin": -1.1655,
+            "candidates_mean": 300.0
+          },
+          "normal/test/birth_city": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 104.115,
+            "median_rank": 106.5,
+            "mean_rank_fraction": 0.520575,
+            "mean_margin": -1.1024,
+            "candidates_mean": 200.0
+          },
+          "normal/test/birth_date": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 98.827,
+            "median_rank": 99.5,
+            "mean_rank_fraction": 0.494133,
+            "mean_margin": -1.7229,
+            "candidates_mean": 200.0
+          },
+          "normal/test/employer": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 126.007,
+            "median_rank": 127.0,
+            "mean_rank_fraction": 0.504027,
+            "mean_margin": -1.1078,
+            "candidates_mean": 250.0
+          },
+          "normal/test/major": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 50.883,
+            "median_rank": 51.5,
+            "mean_rank_fraction": 0.508833,
+            "mean_margin": -0.9842,
+            "candidates_mean": 100.0
+          },
+          "normal/test/university": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 158.772,
+            "median_rank": 159.5,
+            "mean_rank_fraction": 0.529239,
+            "mean_margin": -1.2055,
+            "candidates_mean": 300.0
+          },
+          "rare/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 97.516,
+            "median_rank": 96.0,
+            "mean_rank_fraction": 0.487579,
+            "mean_margin": -1.0346,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 97.497,
+            "median_rank": 97.0,
+            "mean_rank_fraction": 0.487483,
+            "mean_margin": -1.4962,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 124.053,
+            "median_rank": 122.0,
+            "mean_rank_fraction": 0.496213,
+            "mean_margin": -1.079,
+            "candidates_mean": 250.0
+          },
+          "rare/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 51.713,
+            "median_rank": 54.0,
+            "mean_rank_fraction": 0.517133,
+            "mean_margin": -0.9216,
+            "candidates_mean": 100.0
+          },
+          "rare/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 149.322,
+            "median_rank": 149.0,
+            "mean_rank_fraction": 0.497742,
+            "mean_margin": -1.1516,
+            "candidates_mean": 300.0
+          },
+          "rare/test/birth_city": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 97.527,
+            "median_rank": 94.5,
+            "mean_rank_fraction": 0.487633,
+            "mean_margin": -1.0725,
+            "candidates_mean": 200.0
+          },
+          "rare/test/birth_date": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 102.09,
+            "median_rank": 103.0,
+            "mean_rank_fraction": 0.51045,
+            "mean_margin": -1.7521,
+            "candidates_mean": 200.0
+          },
+          "rare/test/employer": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 122.61,
+            "median_rank": 125.0,
+            "mean_rank_fraction": 0.49044,
+            "mean_margin": -1.0815,
+            "candidates_mean": 250.0
+          },
+          "rare/test/major": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 50.605,
+            "median_rank": 51.0,
+            "mean_rank_fraction": 0.50605,
+            "mean_margin": -0.9821,
+            "candidates_mean": 100.0
+          },
+          "rare/test/university": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 145.928,
+            "median_rank": 144.0,
+            "mean_rank_fraction": 0.486428,
+            "mean_margin": -1.1704,
+            "candidates_mean": 300.0
+          },
+          "frequent/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 99.832,
+            "median_rank": 99.0,
+            "mean_rank_fraction": 0.499163,
+            "mean_margin": -1.0469,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.009167,
+            "mean_rank": 99.261,
+            "median_rank": 104.0,
+            "mean_rank_fraction": 0.496304,
+            "mean_margin": -1.5077,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.001667,
+            "mean_rank": 123.868,
+            "median_rank": 122.0,
+            "mean_rank_fraction": 0.49547,
+            "mean_margin": -1.0745,
+            "candidates_mean": 250.0
+          },
+          "frequent/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.010833,
+            "mean_rank": 50.298,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.502983,
+            "mean_margin": -0.9032,
+            "candidates_mean": 100.0
+          },
+          "frequent/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 153.923,
+            "median_rank": 155.0,
+            "mean_rank_fraction": 0.513075,
+            "mean_margin": -1.1708,
+            "candidates_mean": 300.0
+          },
+          "frequent/test/birth_city": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 100.518,
+            "median_rank": 99.0,
+            "mean_rank_fraction": 0.502592,
+            "mean_margin": -1.0993,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/birth_date": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 100.288,
+            "median_rank": 99.0,
+            "mean_rank_fraction": 0.501442,
+            "mean_margin": -1.7038,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/employer": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 128.448,
+            "median_rank": 128.5,
+            "mean_rank_fraction": 0.513793,
+            "mean_margin": -1.1178,
+            "candidates_mean": 250.0
+          },
+          "frequent/test/major": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 49.687,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.496867,
+            "mean_margin": -0.9569,
+            "candidates_mean": 100.0
+          },
+          "frequent/test/university": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 151.423,
+            "median_rank": 152.0,
+            "mean_rank_fraction": 0.504744,
+            "mean_margin": -1.1846,
+            "candidates_mean": 300.0
+          }
+        }
+      },
+      "heldout": {
+        "FreeLaw": {
+          "loss": 10.7444,
+          "documents": 200,
+          "tokens": 538632
+        },
+        "Github": {
+          "loss": 10.6306,
+          "documents": 200,
+          "tokens": 280630
+        },
+        "Pile-CC": {
+          "loss": 10.8594,
+          "documents": 200,
+          "tokens": 166385
+        },
+        "PubMed Central": {
+          "loss": 10.8683,
+          "documents": 200,
+          "tokens": 696058
+        },
+        "USPTO Backgrounds": {
+          "loss": 10.8935,
+          "documents": 200,
+          "tokens": 163834
+        },
+        "Wikipedia (en)": {
+          "loss": 10.8694,
+          "documents": 200,
+          "tokens": 125951
+        }
+      }
+    },
+    {
+      "step": 972,
+      "train_seconds": 1182.9,
+      "tokens_seen": 15925248,
+      "train_loss": 4.871913194656372,
+      "probe": {
+        "n": 36000,
+        "overall": {
+          "n": 36000,
+          "top1": 0.005472,
+          "mean_rank": 99.34,
+          "median_rank": 87.0,
+          "mean_rank_fraction": 0.474583,
+          "mean_margin": -3.4853,
+          "candidates_mean": 210.0
+        },
+        "by_tier_role": {
+          "control/paraphrase": {
+            "n": 6000,
+            "top1": 0.005167,
+            "mean_rank": 105.345,
+            "median_rank": 92.0,
+            "mean_rank_fraction": 0.502327,
+            "mean_margin": -4.4031,
+            "candidates_mean": 210.0
+          },
+          "control/test": {
+            "n": 3000,
+            "top1": 0.005,
+            "mean_rank": 103.997,
+            "median_rank": 90.5,
+            "mean_rank_fraction": 0.49694,
+            "mean_margin": -1.884,
+            "candidates_mean": 210.0
+          },
+          "normal/paraphrase": {
+            "n": 6000,
+            "top1": 0.004667,
+            "mean_rank": 103.701,
+            "median_rank": 90.0,
+            "mean_rank_fraction": 0.495216,
+            "mean_margin": -4.3885,
+            "candidates_mean": 210.0
+          },
+          "normal/test": {
+            "n": 3000,
+            "top1": 0.008,
+            "mean_rank": 93.424,
+            "median_rank": 79.5,
+            "mean_rank_fraction": 0.447641,
+            "mean_margin": -1.7194,
+            "candidates_mean": 210.0
+          },
+          "rare/paraphrase": {
+            "n": 6000,
+            "top1": 0.004167,
+            "mean_rank": 105.552,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.50377,
+            "mean_margin": -4.3958,
+            "candidates_mean": 210.0
+          },
+          "rare/test": {
+            "n": 3000,
+            "top1": 0.007333,
+            "mean_rank": 101.319,
+            "median_rank": 88.0,
+            "mean_rank_fraction": 0.484363,
+            "mean_margin": -1.8401,
+            "candidates_mean": 210.0
+          },
+          "frequent/paraphrase": {
+            "n": 6000,
+            "top1": 0.004,
+            "mean_rank": 95.507,
+            "median_rank": 84.0,
+            "mean_rank_fraction": 0.45591,
+            "mean_margin": -4.3004,
+            "candidates_mean": 210.0
+          },
+          "frequent/test": {
+            "n": 3000,
+            "top1": 0.009333,
+            "mean_rank": 73.132,
+            "median_rank": 60.0,
+            "mean_rank_fraction": 0.351605,
+            "mean_margin": -1.4049,
+            "candidates_mean": 210.0
+          }
+        },
+        "by_attribute": {
+          "birth_city": {
+            "n": 7200,
+            "top1": 0.005,
+            "mean_rank": 96.577,
+            "median_rank": 96.0,
+            "mean_rank_fraction": 0.482886,
+            "mean_margin": -3.9231,
+            "candidates_mean": 200.0
+          },
+          "birth_date": {
+            "n": 7200,
+            "top1": 0.005556,
+            "mean_rank": 96.419,
+            "median_rank": 95.0,
+            "mean_rank_fraction": 0.482093,
+            "mean_margin": -1.2374,
+            "candidates_mean": 200.0
+          },
+          "employer": {
+            "n": 7200,
+            "top1": 0.005278,
+            "mean_rank": 116.849,
+            "median_rank": 113.0,
+            "mean_rank_fraction": 0.467397,
+            "mean_margin": -4.0307,
+            "candidates_mean": 250.0
+          },
+          "major": {
+            "n": 7200,
+            "top1": 0.008194,
+            "mean_rank": 47.653,
+            "median_rank": 47.0,
+            "mean_rank_fraction": 0.476526,
+            "mean_margin": -3.7687,
+            "candidates_mean": 100.0
+          },
+          "university": {
+            "n": 7200,
+            "top1": 0.003333,
+            "mean_rank": 139.204,
+            "median_rank": 135.0,
+            "mean_rank_fraction": 0.464013,
+            "mean_margin": -4.4668,
+            "candidates_mean": 300.0
+          }
+        },
+        "by_tier_role_attribute": {
+          "control/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 103.129,
+            "median_rank": 103.5,
+            "mean_rank_fraction": 0.515646,
+            "mean_margin": -4.996,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 102.615,
+            "median_rank": 104.0,
+            "mean_rank_fraction": 0.513075,
+            "mean_margin": -1.2782,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 125.784,
+            "median_rank": 127.0,
+            "mean_rank_fraction": 0.503137,
+            "mean_margin": -5.0914,
+            "candidates_mean": 250.0
+          },
+          "control/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.005833,
+            "mean_rank": 49.368,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.493683,
+            "mean_margin": -5.0056,
+            "candidates_mean": 100.0
+          },
+          "control/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.005,
+            "mean_rank": 145.828,
+            "median_rank": 144.0,
+            "mean_rank_fraction": 0.486094,
+            "mean_margin": -5.6443,
+            "candidates_mean": 300.0
+          },
+          "control/test/birth_city": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 106.115,
+            "median_rank": 106.5,
+            "mean_rank_fraction": 0.530575,
+            "mean_margin": -2.1028,
+            "candidates_mean": 200.0
+          },
+          "control/test/birth_date": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 98.748,
+            "median_rank": 99.5,
+            "mean_rank_fraction": 0.493742,
+            "mean_margin": -1.2776,
+            "candidates_mean": 200.0
+          },
+          "control/test/employer": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 124.645,
+            "median_rank": 122.0,
+            "mean_rank_fraction": 0.49858,
+            "mean_margin": -2.2878,
+            "candidates_mean": 250.0
+          },
+          "control/test/major": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 49.032,
+            "median_rank": 49.0,
+            "mean_rank_fraction": 0.490317,
+            "mean_margin": -1.4849,
+            "candidates_mean": 100.0
+          },
+          "control/test/university": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 141.447,
+            "median_rank": 133.5,
+            "mean_rank_fraction": 0.471489,
+            "mean_margin": -2.2667,
+            "candidates_mean": 300.0
+          },
+          "normal/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.005,
+            "mean_rank": 97.577,
+            "median_rank": 97.5,
+            "mean_rank_fraction": 0.487883,
+            "mean_margin": -4.9292,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 98.787,
+            "median_rank": 100.0,
+            "mean_rank_fraction": 0.493933,
+            "mean_margin": -1.2475,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.006667,
+            "mean_rank": 124.219,
+            "median_rank": 121.0,
+            "mean_rank_fraction": 0.496877,
+            "mean_margin": -5.0844,
+            "candidates_mean": 250.0
+          },
+          "normal/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.005833,
+            "mean_rank": 50.646,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.506458,
+            "mean_margin": -5.0041,
+            "candidates_mean": 100.0
+          },
+          "normal/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 147.278,
+            "median_rank": 147.0,
+            "mean_rank_fraction": 0.490928,
+            "mean_margin": -5.6774,
+            "candidates_mean": 300.0
+          },
+          "normal/test/birth_city": {
+            "n": 600,
+            "top1": 0.011667,
+            "mean_rank": 85.245,
+            "median_rank": 86.0,
+            "mean_rank_fraction": 0.426225,
+            "mean_margin": -1.7249,
+            "candidates_mean": 200.0
+          },
+          "normal/test/birth_date": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 90.227,
+            "median_rank": 81.0,
+            "mean_rank_fraction": 0.451133,
+            "mean_margin": -1.2118,
+            "candidates_mean": 200.0
+          },
+          "normal/test/employer": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 113.99,
+            "median_rank": 111.0,
+            "mean_rank_fraction": 0.45596,
+            "mean_margin": -2.0624,
+            "candidates_mean": 250.0
+          },
+          "normal/test/major": {
+            "n": 600,
+            "top1": 0.01,
+            "mean_rank": 46.905,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.46905,
+            "mean_margin": -1.4327,
+            "candidates_mean": 100.0
+          },
+          "normal/test/university": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 130.752,
+            "median_rank": 126.0,
+            "mean_rank_fraction": 0.435839,
+            "mean_margin": -2.1653,
+            "candidates_mean": 300.0
+          },
+          "rare/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 104.887,
+            "median_rank": 108.0,
+            "mean_rank_fraction": 0.524433,
+            "mean_margin": -5.0147,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.006667,
+            "mean_rank": 101.191,
+            "median_rank": 102.0,
+            "mean_rank_fraction": 0.505954,
+            "mean_margin": -1.2671,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.0,
+            "mean_rank": 123.808,
+            "median_rank": 121.0,
+            "mean_rank_fraction": 0.495233,
+            "mean_margin": -5.0681,
+            "candidates_mean": 250.0
+          },
+          "rare/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 50.047,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.500467,
+            "mean_margin": -4.9331,
+            "candidates_mean": 100.0
+          },
+          "rare/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 147.829,
+            "median_rank": 148.5,
+            "mean_rank_fraction": 0.492764,
+            "mean_margin": -5.6963,
+            "candidates_mean": 300.0
+          },
+          "rare/test/birth_city": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 96.6,
+            "median_rank": 98.0,
+            "mean_rank_fraction": 0.483,
+            "mean_margin": -1.9603,
+            "candidates_mean": 200.0
+          },
+          "rare/test/birth_date": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 97.392,
+            "median_rank": 95.0,
+            "mean_rank_fraction": 0.486958,
+            "mean_margin": -1.2657,
+            "candidates_mean": 200.0
+          },
+          "rare/test/employer": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 120.365,
+            "median_rank": 120.5,
+            "mean_rank_fraction": 0.48146,
+            "mean_margin": -2.1847,
+            "candidates_mean": 250.0
+          },
+          "rare/test/major": {
+            "n": 600,
+            "top1": 0.016667,
+            "mean_rank": 49.44,
+            "median_rank": 49.0,
+            "mean_rank_fraction": 0.4944,
+            "mean_margin": -1.5567,
+            "candidates_mean": 100.0
+          },
+          "rare/test/university": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 142.798,
+            "median_rank": 140.5,
+            "mean_rank_fraction": 0.475994,
+            "mean_margin": -2.233,
+            "candidates_mean": 300.0
+          },
+          "frequent/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.000833,
+            "mean_rank": 94.931,
+            "median_rank": 93.5,
+            "mean_rank_fraction": 0.474654,
+            "mean_margin": -4.9436,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 91.582,
+            "median_rank": 87.0,
+            "mean_rank_fraction": 0.457913,
+            "mean_margin": -1.1867,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 109.373,
+            "median_rank": 105.0,
+            "mean_rank_fraction": 0.437493,
+            "mean_margin": -4.9249,
+            "candidates_mean": 250.0
+          },
+          "frequent/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.005833,
+            "mean_rank": 45.599,
+            "median_rank": 43.0,
+            "mean_rank_fraction": 0.455992,
+            "mean_margin": -4.8529,
+            "candidates_mean": 100.0
+          },
+          "frequent/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 136.049,
+            "median_rank": 134.0,
+            "mean_rank_fraction": 0.453497,
+            "mean_margin": -5.5937,
+            "candidates_mean": 300.0
+          },
+          "frequent/test/birth_city": {
+            "n": 600,
+            "top1": 0.013333,
+            "mean_rank": 69.92,
+            "median_rank": 58.0,
+            "mean_rank_fraction": 0.3496,
+            "mean_margin": -1.5216,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/birth_date": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 82.307,
+            "median_rank": 74.0,
+            "mean_rank_fraction": 0.411533,
+            "mean_margin": -1.1342,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/employer": {
+            "n": 600,
+            "top1": 0.013333,
+            "mean_rank": 76.82,
+            "median_rank": 68.0,
+            "mean_rank_fraction": 0.30728,
+            "mean_margin": -1.4957,
+            "candidates_mean": 250.0
+          },
+          "frequent/test/major": {
+            "n": 600,
+            "top1": 0.013333,
+            "mean_rank": 35.135,
+            "median_rank": 30.0,
+            "mean_rank_fraction": 0.35135,
+            "mean_margin": -1.1591,
+            "candidates_mean": 100.0
+          },
+          "frequent/test/university": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 101.478,
+            "median_rank": 96.0,
+            "mean_rank_fraction": 0.338261,
+            "mean_margin": -1.7137,
+            "candidates_mean": 300.0
+          }
+        }
+      },
+      "heldout": {
+        "FreeLaw": {
+          "loss": 4.7397,
+          "documents": 200,
+          "tokens": 538632
+        },
+        "Github": {
+          "loss": 4.597,
+          "documents": 200,
+          "tokens": 280630
+        },
+        "Pile-CC": {
+          "loss": 5.982,
+          "documents": 200,
+          "tokens": 166385
+        },
+        "PubMed Central": {
+          "loss": 5.2943,
+          "documents": 200,
+          "tokens": 696058
+        },
+        "USPTO Backgrounds": {
+          "loss": 6.1922,
+          "documents": 200,
+          "tokens": 163834
+        },
+        "Wikipedia (en)": {
+          "loss": 6.0094,
+          "documents": 200,
+          "tokens": 125951
+        }
+      }
+    },
+    {
+      "step": 1944,
+      "train_seconds": 2367.6,
+      "tokens_seen": 31850496,
+      "train_loss": 4.452135896682739,
+      "probe": {
+        "n": 36000,
+        "overall": {
+          "n": 36000,
+          "top1": 0.006528,
+          "mean_rank": 97.807,
+          "median_rank": 84.0,
+          "mean_rank_fraction": 0.467452,
+          "mean_margin": -3.3909,
+          "candidates_mean": 210.0
+        },
+        "by_tier_role": {
+          "control/paraphrase": {
+            "n": 6000,
+            "top1": 0.004167,
+            "mean_rank": 104.638,
+            "median_rank": 90.0,
+            "mean_rank_fraction": 0.500684,
+            "mean_margin": -4.3236,
+            "candidates_mean": 210.0
+          },
+          "control/test": {
+            "n": 3000,
+            "top1": 0.005667,
+            "mean_rank": 104.725,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.50269,
+            "mean_margin": -1.8197,
+            "candidates_mean": 210.0
+          },
+          "normal/paraphrase": {
+            "n": 6000,
+            "top1": 0.004167,
+            "mean_rank": 104.223,
+            "median_rank": 89.0,
+            "mean_rank_fraction": 0.496897,
+            "mean_margin": -4.3159,
+            "candidates_mean": 210.0
+          },
+          "normal/test": {
+            "n": 3000,
+            "top1": 0.004,
+            "mean_rank": 89.48,
+            "median_rank": 74.0,
+            "mean_rank_fraction": 0.427437,
+            "mean_margin": -1.5843,
+            "candidates_mean": 210.0
+          },
+          "rare/paraphrase": {
+            "n": 6000,
+            "top1": 0.006,
+            "mean_rank": 105.13,
+            "median_rank": 92.0,
+            "mean_rank_fraction": 0.500145,
+            "mean_margin": -4.3165,
+            "candidates_mean": 210.0
+          },
+          "rare/test": {
+            "n": 3000,
+            "top1": 0.008333,
+            "mean_rank": 101.562,
+            "median_rank": 91.0,
+            "mean_rank_fraction": 0.485925,
+            "mean_margin": -1.7478,
+            "candidates_mean": 210.0
+          },
+          "frequent/paraphrase": {
+            "n": 6000,
+            "top1": 0.005167,
+            "mean_rank": 94.54,
+            "median_rank": 81.0,
+            "mean_rank_fraction": 0.449758,
+            "mean_margin": -4.2044,
+            "candidates_mean": 210.0
+          },
+          "frequent/test": {
+            "n": 3000,
+            "top1": 0.021333,
+            "mean_rank": 60.856,
+            "median_rank": 46.0,
+            "mean_rank_fraction": 0.298408,
+            "mean_margin": -1.2186,
+            "candidates_mean": 210.0
+          }
+        },
+        "by_attribute": {
+          "birth_city": {
+            "n": 7200,
+            "top1": 0.004306,
+            "mean_rank": 95.443,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.477217,
+            "mean_margin": -3.8248,
+            "candidates_mean": 200.0
+          },
+          "birth_date": {
+            "n": 7200,
+            "top1": 0.006944,
+            "mean_rank": 91.847,
+            "median_rank": 88.0,
+            "mean_rank_fraction": 0.459234,
+            "mean_margin": -1.6641,
+            "candidates_mean": 200.0
+          },
+          "employer": {
+            "n": 7200,
+            "top1": 0.005972,
+            "mean_rank": 115.907,
+            "median_rank": 114.0,
+            "mean_rank_fraction": 0.463627,
+            "mean_margin": -4.08,
+            "candidates_mean": 250.0
+          },
+          "major": {
+            "n": 7200,
+            "top1": 0.010417,
+            "mean_rank": 47.658,
+            "median_rank": 46.0,
+            "mean_rank_fraction": 0.476583,
+            "mean_margin": -3.3063,
+            "candidates_mean": 100.0
+          },
+          "university": {
+            "n": 7200,
+            "top1": 0.005,
+            "mean_rank": 138.18,
+            "median_rank": 133.0,
+            "mean_rank_fraction": 0.4606,
+            "mean_margin": -4.0794,
+            "candidates_mean": 300.0
+          }
+        },
+        "by_tier_role_attribute": {
+          "control/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 103.428,
+            "median_rank": 102.5,
+            "mean_rank_fraction": 0.517142,
+            "mean_margin": -5.0022,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.001667,
+            "mean_rank": 99.723,
+            "median_rank": 97.0,
+            "mean_rank_fraction": 0.498617,
+            "mean_margin": -1.8956,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 124.293,
+            "median_rank": 129.0,
+            "mean_rank_fraction": 0.497173,
+            "mean_margin": -5.2949,
+            "candidates_mean": 250.0
+          },
+          "control/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 50.702,
+            "median_rank": 50.5,
+            "mean_rank_fraction": 0.507017,
+            "mean_margin": -4.2975,
+            "candidates_mean": 100.0
+          },
+          "control/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 145.041,
+            "median_rank": 139.0,
+            "mean_rank_fraction": 0.483469,
+            "mean_margin": -5.1279,
+            "candidates_mean": 300.0
+          },
+          "control/test/birth_city": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 107.22,
+            "median_rank": 109.0,
+            "mean_rank_fraction": 0.5361,
+            "mean_margin": -1.8655,
+            "candidates_mean": 200.0
+          },
+          "control/test/birth_date": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 99.318,
+            "median_rank": 102.0,
+            "mean_rank_fraction": 0.496592,
+            "mean_margin": -1.4447,
+            "candidates_mean": 200.0
+          },
+          "control/test/employer": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 124.532,
+            "median_rank": 123.0,
+            "mean_rank_fraction": 0.498127,
+            "mean_margin": -2.0282,
+            "candidates_mean": 250.0
+          },
+          "control/test/major": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 51.117,
+            "median_rank": 52.0,
+            "mean_rank_fraction": 0.511167,
+            "mean_margin": -1.6048,
+            "candidates_mean": 100.0
+          },
+          "control/test/university": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 141.44,
+            "median_rank": 139.0,
+            "mean_rank_fraction": 0.471467,
+            "mean_margin": -2.1555,
+            "candidates_mean": 300.0
+          },
+          "normal/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 96.323,
+            "median_rank": 95.5,
+            "mean_rank_fraction": 0.481612,
+            "mean_margin": -4.9052,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 100.293,
+            "median_rank": 100.5,
+            "mean_rank_fraction": 0.501463,
+            "mean_margin": -1.901,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.005,
+            "mean_rank": 125.808,
+            "median_rank": 125.5,
+            "mean_rank_fraction": 0.50323,
+            "mean_margin": -5.3093,
+            "candidates_mean": 250.0
+          },
+          "normal/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.005833,
+            "mean_rank": 50.381,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.503808,
+            "mean_margin": -4.2757,
+            "candidates_mean": 100.0
+          },
+          "normal/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 148.312,
+            "median_rank": 152.0,
+            "mean_rank_fraction": 0.494372,
+            "mean_margin": -5.188,
+            "candidates_mean": 300.0
+          },
+          "normal/test/birth_city": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 80.835,
+            "median_rank": 73.0,
+            "mean_rank_fraction": 0.404175,
+            "mean_margin": -1.4414,
+            "candidates_mean": 200.0
+          },
+          "normal/test/birth_date": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 85.1,
+            "median_rank": 76.5,
+            "mean_rank_fraction": 0.4255,
+            "mean_margin": -1.3036,
+            "candidates_mean": 200.0
+          },
+          "normal/test/employer": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 108.185,
+            "median_rank": 99.0,
+            "mean_rank_fraction": 0.43274,
+            "mean_margin": -1.7453,
+            "candidates_mean": 250.0
+          },
+          "normal/test/major": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 44.575,
+            "median_rank": 44.0,
+            "mean_rank_fraction": 0.44575,
+            "mean_margin": -1.4365,
+            "candidates_mean": 100.0
+          },
+          "normal/test/university": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 128.707,
+            "median_rank": 125.5,
+            "mean_rank_fraction": 0.429022,
+            "mean_margin": -1.9945,
+            "candidates_mean": 300.0
+          },
+          "rare/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 104.326,
+            "median_rank": 106.5,
+            "mean_rank_fraction": 0.521629,
+            "mean_margin": -5.0076,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.010833,
+            "mean_rank": 97.708,
+            "median_rank": 99.0,
+            "mean_rank_fraction": 0.488542,
+            "mean_margin": -1.8615,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.001667,
+            "mean_rank": 123.967,
+            "median_rank": 124.0,
+            "mean_rank_fraction": 0.495867,
+            "mean_margin": -5.2892,
+            "candidates_mean": 250.0
+          },
+          "rare/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.009167,
+            "mean_rank": 49.379,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.493792,
+            "mean_margin": -4.2186,
+            "candidates_mean": 100.0
+          },
+          "rare/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 150.268,
+            "median_rank": 149.0,
+            "mean_rank_fraction": 0.500894,
+            "mean_margin": -5.2057,
+            "candidates_mean": 300.0
+          },
+          "rare/test/birth_city": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 98.297,
+            "median_rank": 97.0,
+            "mean_rank_fraction": 0.491483,
+            "mean_margin": -1.698,
+            "candidates_mean": 200.0
+          },
+          "rare/test/birth_date": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 92.815,
+            "median_rank": 87.0,
+            "mean_rank_fraction": 0.464075,
+            "mean_margin": -1.3628,
+            "candidates_mean": 200.0
+          },
+          "rare/test/employer": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 120.512,
+            "median_rank": 120.5,
+            "mean_rank_fraction": 0.482047,
+            "mean_margin": -1.9353,
+            "candidates_mean": 250.0
+          },
+          "rare/test/major": {
+            "n": 600,
+            "top1": 0.018333,
+            "mean_rank": 50.71,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.5071,
+            "mean_margin": -1.6128,
+            "candidates_mean": 100.0
+          },
+          "rare/test/university": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 145.477,
+            "median_rank": 142.0,
+            "mean_rank_fraction": 0.484922,
+            "mean_margin": -2.1301,
+            "candidates_mean": 300.0
+          },
+          "frequent/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.000833,
+            "mean_rank": 94.5,
+            "median_rank": 90.0,
+            "mean_rank_fraction": 0.4725,
+            "mean_margin": -4.9236,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.01,
+            "mean_rank": 82.1,
+            "median_rank": 75.0,
+            "mean_rank_fraction": 0.4105,
+            "mean_margin": -1.7263,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 112.818,
             "median_rank": 110.0,
-            "mean_rank_fraction": 0.403328,
-            "mean_margin": -3.463,
+            "mean_rank_fraction": 0.451273,
+            "mean_margin": -5.1416,
+            "candidates_mean": 250.0
+          },
+          "frequent/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 45.536,
+            "median_rank": 43.0,
+            "mean_rank_fraction": 0.455358,
+            "mean_margin": -4.1306,
+            "candidates_mean": 100.0
+          },
+          "frequent/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 137.748,
+            "median_rank": 133.0,
+            "mean_rank_fraction": 0.459158,
+            "mean_margin": -5.1,
+            "candidates_mean": 300.0
+          },
+          "frequent/test/birth_city": {
+            "n": 600,
+            "top1": 0.016667,
+            "mean_rank": 61.815,
+            "median_rank": 49.0,
+            "mean_rank_fraction": 0.309075,
+            "mean_margin": -1.2152,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/birth_date": {
+            "n": 600,
+            "top1": 0.01,
+            "mean_rank": 65.28,
+            "median_rank": 52.0,
+            "mean_rank_fraction": 0.3264,
+            "mean_margin": -1.0896,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/employer": {
+            "n": 600,
+            "top1": 0.023333,
+            "mean_rank": 63.882,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.255527,
+            "mean_margin": -1.1817,
+            "candidates_mean": 250.0
+          },
+          "frequent/test/major": {
+            "n": 600,
+            "top1": 0.035,
+            "mean_rank": 33.503,
+            "median_rank": 29.0,
+            "mean_rank_fraction": 0.335033,
+            "mean_margin": -1.1772,
+            "candidates_mean": 100.0
+          },
+          "frequent/test/university": {
+            "n": 600,
+            "top1": 0.021667,
+            "mean_rank": 79.802,
+            "median_rank": 63.0,
+            "mean_rank_fraction": 0.266006,
+            "mean_margin": -1.4293,
+            "candidates_mean": 300.0
+          }
+        }
+      },
+      "heldout": {
+        "FreeLaw": {
+          "loss": 4.2675,
+          "documents": 200,
+          "tokens": 538632
+        },
+        "Github": {
+          "loss": 3.8799,
+          "documents": 200,
+          "tokens": 280630
+        },
+        "Pile-CC": {
+          "loss": 5.6129,
+          "documents": 200,
+          "tokens": 166385
+        },
+        "PubMed Central": {
+          "loss": 4.698,
+          "documents": 200,
+          "tokens": 696058
+        },
+        "USPTO Backgrounds": {
+          "loss": 5.7046,
+          "documents": 200,
+          "tokens": 163834
+        },
+        "Wikipedia (en)": {
+          "loss": 5.4951,
+          "documents": 200,
+          "tokens": 125951
+        }
+      }
+    },
+    {
+      "step": 2916,
+      "train_seconds": 3552.8,
+      "tokens_seen": 47775744,
+      "train_loss": 4.053397274017334,
+      "probe": {
+        "n": 36000,
+        "overall": {
+          "n": 36000,
+          "top1": 0.007722,
+          "mean_rank": 96.36,
+          "median_rank": 82.0,
+          "mean_rank_fraction": 0.460614,
+          "mean_margin": -3.197,
+          "candidates_mean": 210.0
+        },
+        "by_tier_role": {
+          "control/paraphrase": {
+            "n": 6000,
+            "top1": 0.004667,
+            "mean_rank": 105.4,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.502737,
+            "mean_margin": -4.0999,
+            "candidates_mean": 210.0
+          },
+          "control/test": {
+            "n": 3000,
+            "top1": 0.004,
+            "mean_rank": 105.759,
+            "median_rank": 94.0,
+            "mean_rank_fraction": 0.504768,
+            "mean_margin": -1.7751,
+            "candidates_mean": 210.0
+          },
+          "normal/paraphrase": {
+            "n": 6000,
+            "top1": 0.004333,
+            "mean_rank": 103.323,
+            "median_rank": 89.0,
+            "mean_rank_fraction": 0.49208,
+            "mean_margin": -4.0534,
+            "candidates_mean": 210.0
+          },
+          "normal/test": {
+            "n": 3000,
+            "top1": 0.007,
+            "mean_rank": 85.645,
+            "median_rank": 72.0,
+            "mean_rank_fraction": 0.412406,
+            "mean_margin": -1.5173,
+            "candidates_mean": 210.0
+          },
+          "rare/paraphrase": {
+            "n": 6000,
+            "top1": 0.006333,
+            "mean_rank": 104.407,
+            "median_rank": 91.0,
+            "mean_rank_fraction": 0.497823,
+            "mean_margin": -4.0682,
+            "candidates_mean": 210.0
+          },
+          "rare/test": {
+            "n": 3000,
+            "top1": 0.005,
+            "mean_rank": 100.403,
+            "median_rank": 87.0,
+            "mean_rank_fraction": 0.483197,
+            "mean_margin": -1.7083,
+            "candidates_mean": 210.0
+          },
+          "frequent/paraphrase": {
+            "n": 6000,
+            "top1": 0.005333,
+            "mean_rank": 92.302,
+            "median_rank": 79.0,
+            "mean_rank_fraction": 0.439401,
+            "mean_margin": -3.9019,
+            "candidates_mean": 210.0
+          },
+          "frequent/test": {
+            "n": 3000,
+            "top1": 0.035333,
+            "mean_rank": 53.646,
+            "median_rank": 38.0,
+            "mean_rank_fraction": 0.262922,
+            "mean_margin": -1.1166,
+            "candidates_mean": 210.0
+          }
+        },
+        "by_attribute": {
+          "birth_city": {
+            "n": 7200,
+            "top1": 0.006111,
+            "mean_rank": 93.324,
+            "median_rank": 90.0,
+            "mean_rank_fraction": 0.46662,
+            "mean_margin": -3.7515,
+            "candidates_mean": 200.0
+          },
+          "birth_date": {
+            "n": 7200,
+            "top1": 0.0075,
+            "mean_rank": 92.165,
+            "median_rank": 89.0,
+            "mean_rank_fraction": 0.460825,
+            "mean_margin": -1.5973,
+            "candidates_mean": 200.0
+          },
+          "employer": {
+            "n": 7200,
+            "top1": 0.006944,
+            "mean_rank": 113.778,
+            "median_rank": 109.5,
+            "mean_rank_fraction": 0.455114,
+            "mean_margin": -3.6137,
+            "candidates_mean": 250.0
+          },
+          "major": {
+            "n": 7200,
+            "top1": 0.012361,
+            "mean_rank": 46.811,
+            "median_rank": 45.0,
+            "mean_rank_fraction": 0.468111,
+            "mean_margin": -3.4378,
+            "candidates_mean": 100.0
+          },
+          "university": {
+            "n": 7200,
+            "top1": 0.005694,
+            "mean_rank": 135.721,
+            "median_rank": 131.0,
+            "mean_rank_fraction": 0.452402,
+            "mean_margin": -3.5848,
             "candidates_mean": 300.0
           }
         },
@@ -719,393 +2351,1992 @@
           "control/paraphrase/birth_city": {
             "n": 1200,
             "top1": 0.0025,
-            "mean_rank": 103.004,
-            "median_rank": 103.5,
-            "mean_rank_fraction": 0.515021,
-            "mean_margin": -4.8509,
+            "mean_rank": 102.759,
+            "median_rank": 104.0,
+            "mean_rank_fraction": 0.513796,
+            "mean_margin": -4.9236,
             "candidates_mean": 200.0
           },
           "control/paraphrase/birth_date": {
             "n": 1200,
-            "top1": 0.004167,
-            "mean_rank": 102.175,
-            "median_rank": 103.5,
-            "mean_rank_fraction": 0.510875,
-            "mean_margin": -2.0801,
+            "top1": 0.005,
+            "mean_rank": 105.013,
+            "median_rank": 108.5,
+            "mean_rank_fraction": 0.525062,
+            "mean_margin": -1.803,
             "candidates_mean": 200.0
           },
           "control/paraphrase/employer": {
             "n": 1200,
             "top1": 0.001667,
-            "mean_rank": 124.164,
+            "mean_rank": 124.013,
             "median_rank": 122.0,
-            "mean_rank_fraction": 0.496657,
-            "mean_margin": -4.4907,
+            "mean_rank_fraction": 0.49605,
+            "mean_margin": -4.6853,
             "candidates_mean": 250.0
           },
           "control/paraphrase/major": {
             "n": 1200,
-            "top1": 0.0025,
-            "mean_rank": 51.696,
-            "median_rank": 51.0,
-            "mean_rank_fraction": 0.516958,
-            "mean_margin": -4.5012,
+            "top1": 0.006667,
+            "mean_rank": 49.208,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.492075,
+            "mean_margin": -4.5294,
             "candidates_mean": 100.0
           },
           "control/paraphrase/university": {
             "n": 1200,
-            "top1": 0.004167,
-            "mean_rank": 147.182,
-            "median_rank": 144.5,
-            "mean_rank_fraction": 0.490606,
-            "mean_margin": -4.3931,
+            "top1": 0.0075,
+            "mean_rank": 146.01,
+            "median_rank": 144.0,
+            "mean_rank_fraction": 0.4867,
+            "mean_margin": -4.5584,
             "candidates_mean": 300.0
           },
           "control/test/birth_city": {
             "n": 600,
-            "top1": 0.005,
-            "mean_rank": 100.725,
-            "median_rank": 99.0,
-            "mean_rank_fraction": 0.503625,
-            "mean_margin": -2.2897,
+            "top1": 0.003333,
+            "mean_rank": 105.328,
+            "median_rank": 108.0,
+            "mean_rank_fraction": 0.526642,
+            "mean_margin": -1.8612,
             "candidates_mean": 200.0
           },
           "control/test/birth_date": {
             "n": 600,
-            "top1": 0.003333,
-            "mean_rank": 105.247,
-            "median_rank": 108.0,
-            "mean_rank_fraction": 0.526233,
-            "mean_margin": -2.1156,
+            "top1": 0.006667,
+            "mean_rank": 103.457,
+            "median_rank": 104.5,
+            "mean_rank_fraction": 0.517283,
+            "mean_margin": -1.5719,
             "candidates_mean": 200.0
           },
           "control/test/employer": {
             "n": 600,
-            "top1": 0.005,
-            "mean_rank": 125.373,
-            "median_rank": 130.0,
-            "mean_rank_fraction": 0.501493,
-            "mean_margin": -2.7027,
+            "top1": 0.001667,
+            "mean_rank": 126.995,
+            "median_rank": 127.5,
+            "mean_rank_fraction": 0.50798,
+            "mean_margin": -1.9678,
             "candidates_mean": 250.0
           },
           "control/test/major": {
             "n": 600,
-            "top1": 0.011667,
-            "mean_rank": 51.038,
-            "median_rank": 51.5,
-            "mean_rank_fraction": 0.510383,
-            "mean_margin": -2.0488,
+            "top1": 0.006667,
+            "mean_rank": 49.282,
+            "median_rank": 51.0,
+            "mean_rank_fraction": 0.492817,
+            "mean_margin": -1.5498,
             "candidates_mean": 100.0
           },
           "control/test/university": {
             "n": 600,
-            "top1": 0.008333,
-            "mean_rank": 143.868,
-            "median_rank": 136.5,
-            "mean_rank_fraction": 0.479561,
-            "mean_margin": -2.8987,
+            "top1": 0.001667,
+            "mean_rank": 143.735,
+            "median_rank": 144.0,
+            "mean_rank_fraction": 0.479117,
+            "mean_margin": -1.925,
             "candidates_mean": 300.0
           },
           "normal/paraphrase/birth_city": {
             "n": 1200,
-            "top1": 0.004167,
-            "mean_rank": 95.725,
-            "median_rank": 93.5,
-            "mean_rank_fraction": 0.478625,
-            "mean_margin": -4.6792,
+            "top1": 0.005,
+            "mean_rank": 95.188,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.475942,
+            "mean_margin": -4.7891,
             "candidates_mean": 200.0
           },
           "normal/paraphrase/birth_date": {
             "n": 1200,
-            "top1": 0.005,
-            "mean_rank": 92.949,
-            "median_rank": 85.0,
-            "mean_rank_fraction": 0.464746,
-            "mean_margin": -1.9707,
+            "top1": 0.004167,
+            "mean_rank": 99.438,
+            "median_rank": 101.0,
+            "mean_rank_fraction": 0.497188,
+            "mean_margin": -1.758,
             "candidates_mean": 200.0
           },
           "normal/paraphrase/employer": {
             "n": 1200,
-            "top1": 0.003333,
-            "mean_rank": 123.606,
+            "top1": 0.004167,
+            "mean_rank": 125.21,
             "median_rank": 124.0,
-            "mean_rank_fraction": 0.494423,
-            "mean_margin": -4.4368,
+            "mean_rank_fraction": 0.50084,
+            "mean_margin": -4.6512,
             "candidates_mean": 250.0
           },
           "normal/paraphrase/major": {
             "n": 1200,
-            "top1": 0.008333,
-            "mean_rank": 48.286,
-            "median_rank": 48.0,
-            "mean_rank_fraction": 0.482858,
-            "mean_margin": -4.3648,
+            "top1": 0.006667,
+            "mean_rank": 49.575,
+            "median_rank": 49.0,
+            "mean_rank_fraction": 0.49575,
+            "mean_margin": -4.4755,
             "candidates_mean": 100.0
           },
           "normal/paraphrase/university": {
             "n": 1200,
-            "top1": 0.000833,
-            "mean_rank": 141.447,
-            "median_rank": 140.0,
-            "mean_rank_fraction": 0.471489,
-            "mean_margin": -4.3205,
+            "top1": 0.001667,
+            "mean_rank": 147.204,
+            "median_rank": 148.0,
+            "mean_rank_fraction": 0.490681,
+            "mean_margin": -4.5933,
             "candidates_mean": 300.0
           },
           "normal/test/birth_city": {
             "n": 600,
-            "top1": 0.021667,
-            "mean_rank": 52.282,
-            "median_rank": 36.0,
-            "mean_rank_fraction": 0.261408,
-            "mean_margin": -1.5162,
+            "top1": 0.013333,
+            "mean_rank": 76.415,
+            "median_rank": 68.0,
+            "mean_rank_fraction": 0.382075,
+            "mean_margin": -1.4524,
             "candidates_mean": 200.0
           },
           "normal/test/birth_date": {
             "n": 600,
-            "top1": 0.043333,
-            "mean_rank": 59.898,
-            "median_rank": 48.5,
-            "mean_rank_fraction": 0.299492,
-            "mean_margin": -1.4483,
+            "top1": 0.006667,
+            "mean_rank": 84.235,
+            "median_rank": 80.5,
+            "mean_rank_fraction": 0.421175,
+            "mean_margin": -1.3677,
             "candidates_mean": 200.0
           },
           "normal/test/employer": {
             "n": 600,
-            "top1": 0.023333,
-            "mean_rank": 73.147,
-            "median_rank": 55.0,
-            "mean_rank_fraction": 0.292587,
-            "mean_margin": -1.8686,
+            "top1": 0.003333,
+            "mean_rank": 99.485,
+            "median_rank": 89.0,
+            "mean_rank_fraction": 0.39794,
+            "mean_margin": -1.6169,
             "candidates_mean": 250.0
           },
           "normal/test/major": {
             "n": 600,
-            "top1": 0.036667,
-            "mean_rank": 32.243,
-            "median_rank": 26.0,
-            "mean_rank_fraction": 0.322433,
-            "mean_margin": -1.5033,
+            "top1": 0.01,
+            "mean_rank": 45.08,
+            "median_rank": 43.0,
+            "mean_rank_fraction": 0.4508,
+            "mean_margin": -1.4441,
             "candidates_mean": 100.0
           },
           "normal/test/university": {
             "n": 600,
-            "top1": 0.043333,
-            "mean_rank": 68.303,
-            "median_rank": 43.0,
-            "mean_rank_fraction": 0.227678,
-            "mean_margin": -1.7796,
+            "top1": 0.001667,
+            "mean_rank": 123.012,
+            "median_rank": 117.0,
+            "mean_rank_fraction": 0.410039,
+            "mean_margin": -1.7055,
             "candidates_mean": 300.0
           },
           "rare/paraphrase/birth_city": {
             "n": 1200,
-            "top1": 0.0025,
-            "mean_rank": 101.324,
-            "median_rank": 101.0,
-            "mean_rank_fraction": 0.506621,
-            "mean_margin": -4.7948,
+            "top1": 0.004167,
+            "mean_rank": 103.147,
+            "median_rank": 105.0,
+            "mean_rank_fraction": 0.515733,
+            "mean_margin": -4.9194,
             "candidates_mean": 200.0
           },
           "rare/paraphrase/birth_date": {
             "n": 1200,
-            "top1": 0.005833,
-            "mean_rank": 97.242,
-            "median_rank": 94.5,
-            "mean_rank_fraction": 0.486208,
-            "mean_margin": -2.0133,
+            "top1": 0.009167,
+            "mean_rank": 96.597,
+            "median_rank": 94.0,
+            "mean_rank_fraction": 0.482983,
+            "mean_margin": -1.7127,
             "candidates_mean": 200.0
           },
           "rare/paraphrase/employer": {
             "n": 1200,
-            "top1": 0.001667,
-            "mean_rank": 124.659,
-            "median_rank": 126.0,
-            "mean_rank_fraction": 0.498637,
-            "mean_margin": -4.4572,
+            "top1": 0.0025,
+            "mean_rank": 123.352,
+            "median_rank": 123.0,
+            "mean_rank_fraction": 0.493407,
+            "mean_margin": -4.6083,
             "candidates_mean": 250.0
           },
           "rare/paraphrase/major": {
             "n": 1200,
-            "top1": 0.011667,
-            "mean_rank": 50.556,
-            "median_rank": 51.0,
-            "mean_rank_fraction": 0.505558,
-            "mean_margin": -4.4062,
+            "top1": 0.010833,
+            "mean_rank": 50.079,
+            "median_rank": 49.0,
+            "mean_rank_fraction": 0.500792,
+            "mean_margin": -4.4714,
             "candidates_mean": 100.0
           },
           "rare/paraphrase/university": {
             "n": 1200,
-            "top1": 0.003333,
-            "mean_rank": 150.374,
-            "median_rank": 150.5,
-            "mean_rank_fraction": 0.501247,
-            "mean_margin": -4.4569,
+            "top1": 0.005,
+            "mean_rank": 148.86,
+            "median_rank": 147.5,
+            "mean_rank_fraction": 0.4962,
+            "mean_margin": -4.6292,
             "candidates_mean": 300.0
           },
           "rare/test/birth_city": {
             "n": 600,
-            "top1": 0.006667,
-            "mean_rank": 91.54,
-            "median_rank": 88.5,
-            "mean_rank_fraction": 0.4577,
-            "mean_margin": -2.0991,
+            "top1": 0.003333,
+            "mean_rank": 97.307,
+            "median_rank": 97.5,
+            "mean_rank_fraction": 0.486533,
+            "mean_margin": -1.7402,
             "candidates_mean": 200.0
           },
           "rare/test/birth_date": {
             "n": 600,
-            "top1": 0.011667,
-            "mean_rank": 87.037,
-            "median_rank": 82.0,
-            "mean_rank_fraction": 0.435183,
-            "mean_margin": -1.9026,
+            "top1": 0.001667,
+            "mean_rank": 97.385,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.486925,
+            "mean_margin": -1.4859,
             "candidates_mean": 200.0
           },
           "rare/test/employer": {
             "n": 600,
-            "top1": 0.006667,
-            "mean_rank": 108.063,
-            "median_rank": 104.5,
-            "mean_rank_fraction": 0.432253,
-            "mean_margin": -2.3814,
+            "top1": 0.008333,
+            "mean_rank": 117.757,
+            "median_rank": 122.0,
+            "mean_rank_fraction": 0.471027,
+            "mean_margin": -1.8427,
             "candidates_mean": 250.0
           },
           "rare/test/major": {
             "n": 600,
-            "top1": 0.016667,
-            "mean_rank": 46.242,
-            "median_rank": 46.0,
-            "mean_rank_fraction": 0.462417,
-            "mean_margin": -1.9605,
+            "top1": 0.011667,
+            "mean_rank": 50.942,
+            "median_rank": 54.0,
+            "mean_rank_fraction": 0.509417,
+            "mean_margin": -1.6321,
             "candidates_mean": 100.0
           },
           "rare/test/university": {
             "n": 600,
-            "top1": 0.005,
-            "mean_rank": 119.517,
-            "median_rank": 105.5,
-            "mean_rank_fraction": 0.398389,
-            "mean_margin": -2.5527,
+            "top1": 0.0,
+            "mean_rank": 138.625,
+            "median_rank": 134.0,
+            "mean_rank_fraction": 0.462083,
+            "mean_margin": -1.8407,
             "candidates_mean": 300.0
           },
           "frequent/paraphrase/birth_city": {
             "n": 1200,
-            "top1": 0.004167,
-            "mean_rank": 86.043,
-            "median_rank": 79.0,
-            "mean_rank_fraction": 0.430217,
-            "mean_margin": -4.5469,
+            "top1": 0.000833,
+            "mean_rank": 92.552,
+            "median_rank": 89.0,
+            "mean_rank_fraction": 0.462758,
+            "mean_margin": -4.7687,
             "candidates_mean": 200.0
           },
           "frequent/paraphrase/birth_date": {
             "n": 1200,
-            "top1": 0.021667,
-            "mean_rank": 69.987,
-            "median_rank": 57.0,
-            "mean_rank_fraction": 0.349938,
-            "mean_margin": -1.6317,
+            "top1": 0.0075,
+            "mean_rank": 79.326,
+            "median_rank": 72.0,
+            "mean_rank_fraction": 0.396629,
+            "mean_margin": -1.5551,
             "candidates_mean": 200.0
           },
           "frequent/paraphrase/employer": {
             "n": 1200,
-            "top1": 0.010833,
-            "mean_rank": 102.287,
-            "median_rank": 96.0,
-            "mean_rank_fraction": 0.409147,
-            "mean_margin": -4.109,
+            "top1": 0.006667,
+            "mean_rank": 111.07,
+            "median_rank": 103.0,
+            "mean_rank_fraction": 0.44428,
+            "mean_margin": -4.4723,
             "candidates_mean": 250.0
           },
           "frequent/paraphrase/major": {
             "n": 1200,
-            "top1": 0.008333,
-            "mean_rank": 41.259,
-            "median_rank": 37.0,
-            "mean_rank_fraction": 0.412592,
-            "mean_margin": -4.0865,
+            "top1": 0.009167,
+            "mean_rank": 44.719,
+            "median_rank": 41.0,
+            "mean_rank_fraction": 0.447192,
+            "mean_margin": -4.301,
             "candidates_mean": 100.0
           },
           "frequent/paraphrase/university": {
             "n": 1200,
             "top1": 0.0025,
-            "mean_rank": 117.88,
-            "median_rank": 106.0,
-            "mean_rank_fraction": 0.392933,
-            "mean_margin": -4.0335,
+            "mean_rank": 133.844,
+            "median_rank": 128.0,
+            "mean_rank_fraction": 0.446147,
+            "mean_margin": -4.4124,
             "candidates_mean": 300.0
           },
           "frequent/test/birth_city": {
             "n": 600,
-            "top1": 0.348333,
-            "mean_rank": 11.387,
-            "median_rank": 3.0,
-            "mean_rank_fraction": 0.056933,
-            "mean_margin": -0.3176,
+            "top1": 0.028333,
+            "mean_rank": 53.547,
+            "median_rank": 39.0,
+            "mean_rank_fraction": 0.267733,
+            "mean_margin": -1.1619,
             "candidates_mean": 200.0
           },
           "frequent/test/birth_date": {
             "n": 600,
-            "top1": 0.273333,
-            "mean_rank": 13.098,
-            "median_rank": 4.0,
-            "mean_rank_fraction": 0.065492,
-            "mean_margin": -0.4771,
+            "top1": 0.023333,
+            "mean_rank": 60.158,
+            "median_rank": 47.0,
+            "mean_rank_fraction": 0.300792,
+            "mean_margin": -1.0845,
             "candidates_mean": 200.0
           },
           "frequent/test/employer": {
             "n": 600,
-            "top1": 0.38,
-            "mean_rank": 12.24,
-            "median_rank": 3.0,
-            "mean_rank_fraction": 0.04896,
-            "mean_margin": -0.2841,
+            "top1": 0.04,
+            "mean_rank": 53.817,
+            "median_rank": 36.0,
+            "mean_rank_fraction": 0.215267,
+            "mean_margin": -1.1028,
             "candidates_mean": 250.0
           },
           "frequent/test/major": {
             "n": 600,
-            "top1": 0.363333,
-            "mean_rank": 8.99,
-            "median_rank": 3.0,
-            "mean_rank_fraction": 0.0899,
-            "mean_margin": -0.3229,
+            "top1": 0.053333,
+            "mean_rank": 29.268,
+            "median_rank": 23.0,
+            "mean_rank_fraction": 0.292683,
+            "mean_margin": -1.0735,
             "candidates_mean": 100.0
           },
           "frequent/test/university": {
             "n": 600,
-            "top1": 0.496667,
-            "mean_rank": 6.527,
-            "median_rank": 2.0,
-            "mean_rank_fraction": 0.021756,
-            "mean_margin": 0.0832,
+            "top1": 0.031667,
+            "mean_rank": 71.44,
+            "median_rank": 52.0,
+            "mean_rank_fraction": 0.238133,
+            "mean_margin": -1.1604,
             "candidates_mean": 300.0
           }
         }
       },
       "heldout": {
         "FreeLaw": {
-          "loss": 3.6311,
+          "loss": 3.9482,
           "documents": 200,
           "tokens": 538632
         },
         "Github": {
-          "loss": 2.8389,
+          "loss": 3.2434,
           "documents": 200,
           "tokens": 280630
         },
         "Pile-CC": {
-          "loss": 5.0869,
+          "loss": 5.3538,
           "documents": 200,
           "tokens": 166385
         },
         "PubMed Central": {
-          "loss": 3.8749,
+          "loss": 4.2369,
           "documents": 200,
           "tokens": 696058
         },
         "USPTO Backgrounds": {
-          "loss": 4.8195,
+          "loss": 5.2453,
           "documents": 200,
           "tokens": 163834
         },
         "Wikipedia (en)": {
-          "loss": 4.6865,
+          "loss": 5.0597,
+          "documents": 200,
+          "tokens": 125951
+        }
+      }
+    },
+    {
+      "step": 3888,
+      "train_seconds": 4739.0,
+      "tokens_seen": 63700992,
+      "train_loss": 3.8314412951469423,
+      "probe": {
+        "n": 36000,
+        "overall": {
+          "n": 36000,
+          "top1": 0.013528,
+          "mean_rank": 93.214,
+          "median_rank": 79.0,
+          "mean_rank_fraction": 0.445368,
+          "mean_margin": -3.36,
+          "candidates_mean": 210.0
+        },
+        "by_tier_role": {
+          "control/paraphrase": {
+            "n": 6000,
+            "top1": 0.006667,
+            "mean_rank": 105.64,
+            "median_rank": 92.5,
+            "mean_rank_fraction": 0.504095,
+            "mean_margin": -4.3709,
+            "candidates_mean": 210.0
+          },
+          "control/test": {
+            "n": 3000,
+            "top1": 0.005333,
+            "mean_rank": 105.869,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.505302,
+            "mean_margin": -1.8946,
+            "candidates_mean": 210.0
+          },
+          "normal/paraphrase": {
+            "n": 6000,
+            "top1": 0.004667,
+            "mean_rank": 102.141,
+            "median_rank": 88.0,
+            "mean_rank_fraction": 0.486806,
+            "mean_margin": -4.31,
+            "candidates_mean": 210.0
+          },
+          "normal/test": {
+            "n": 3000,
+            "top1": 0.013,
+            "mean_rank": 79.023,
+            "median_rank": 64.0,
+            "mean_rank_fraction": 0.380871,
+            "mean_margin": -1.5256,
+            "candidates_mean": 210.0
+          },
+          "rare/paraphrase": {
+            "n": 6000,
+            "top1": 0.005833,
+            "mean_rank": 104.415,
+            "median_rank": 91.0,
+            "mean_rank_fraction": 0.496893,
+            "mean_margin": -4.339,
+            "candidates_mean": 210.0
+          },
+          "rare/test": {
+            "n": 3000,
+            "top1": 0.006333,
+            "mean_rank": 97.811,
+            "median_rank": 84.0,
+            "mean_rank_fraction": 0.469469,
+            "mean_margin": -1.774,
+            "candidates_mean": 210.0
+          },
+          "frequent/paraphrase": {
+            "n": 6000,
+            "top1": 0.008333,
+            "mean_rank": 87.836,
+            "median_rank": 74.5,
+            "mean_rank_fraction": 0.417128,
+            "mean_margin": -4.0824,
+            "candidates_mean": 210.0
+          },
+          "frequent/test": {
+            "n": 3000,
+            "top1": 0.086667,
+            "mean_rank": 35.801,
+            "median_rank": 20.0,
+            "mean_rank_fraction": 0.178926,
+            "mean_margin": -0.9208,
+            "candidates_mean": 210.0
+          }
+        },
+        "by_attribute": {
+          "birth_city": {
+            "n": 7200,
+            "top1": 0.010278,
+            "mean_rank": 89.816,
+            "median_rank": 85.0,
+            "mean_rank_fraction": 0.449079,
+            "mean_margin": -4.0207,
+            "candidates_mean": 200.0
+          },
+          "birth_date": {
+            "n": 7200,
+            "top1": 0.015139,
+            "mean_rank": 89.012,
+            "median_rank": 84.0,
+            "mean_rank_fraction": 0.445061,
+            "mean_margin": -1.6862,
+            "candidates_mean": 200.0
+          },
+          "employer": {
+            "n": 7200,
+            "top1": 0.015694,
+            "mean_rank": 109.186,
+            "median_rank": 104.0,
+            "mean_rank_fraction": 0.436746,
+            "mean_margin": -3.7606,
+            "candidates_mean": 250.0
+          },
+          "major": {
+            "n": 7200,
+            "top1": 0.016806,
+            "mean_rank": 45.365,
+            "median_rank": 43.0,
+            "mean_rank_fraction": 0.453647,
+            "mean_margin": -3.6688,
+            "candidates_mean": 100.0
+          },
+          "university": {
+            "n": 7200,
+            "top1": 0.009722,
+            "mean_rank": 132.692,
+            "median_rank": 127.0,
+            "mean_rank_fraction": 0.442305,
+            "mean_margin": -3.6637,
+            "candidates_mean": 300.0
+          }
+        },
+        "by_tier_role_attribute": {
+          "control/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 103.568,
+            "median_rank": 105.0,
+            "mean_rank_fraction": 0.517842,
+            "mean_margin": -5.4102,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.01,
+            "mean_rank": 102.075,
+            "median_rank": 104.0,
+            "mean_rank_fraction": 0.510375,
+            "mean_margin": -1.9374,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 123.781,
+            "median_rank": 124.0,
+            "mean_rank_fraction": 0.495123,
+            "mean_margin": -4.8625,
+            "candidates_mean": 250.0
+          },
+          "control/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 50.182,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.501817,
+            "mean_margin": -4.9266,
+            "candidates_mean": 100.0
+          },
+          "control/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 148.596,
+            "median_rank": 149.0,
+            "mean_rank_fraction": 0.495319,
+            "mean_margin": -4.718,
+            "candidates_mean": 300.0
+          },
+          "control/test/birth_city": {
+            "n": 600,
+            "top1": 0.01,
+            "mean_rank": 105.903,
+            "median_rank": 107.5,
+            "mean_rank_fraction": 0.529517,
+            "mean_margin": -1.9072,
+            "candidates_mean": 200.0
+          },
+          "control/test/birth_date": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 102.64,
+            "median_rank": 104.0,
+            "mean_rank_fraction": 0.5132,
+            "mean_margin": -1.6612,
+            "candidates_mean": 200.0
+          },
+          "control/test/employer": {
+            "n": 600,
+            "top1": 0.0,
+            "mean_rank": 128.088,
+            "median_rank": 132.5,
+            "mean_rank_fraction": 0.512353,
+            "mean_margin": -2.2759,
+            "candidates_mean": 250.0
+          },
+          "control/test/major": {
+            "n": 600,
+            "top1": 0.01,
+            "mean_rank": 49.36,
+            "median_rank": 49.0,
+            "mean_rank_fraction": 0.4936,
+            "mean_margin": -1.6308,
+            "candidates_mean": 100.0
+          },
+          "control/test/university": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 143.352,
+            "median_rank": 140.0,
+            "mean_rank_fraction": 0.477839,
+            "mean_margin": -1.9976,
+            "candidates_mean": 300.0
+          },
+          "normal/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.005833,
+            "mean_rank": 93.441,
+            "median_rank": 91.0,
+            "mean_rank_fraction": 0.467204,
+            "mean_margin": -5.2302,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 99.39,
+            "median_rank": 97.0,
+            "mean_rank_fraction": 0.49695,
+            "mean_margin": -1.9217,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 122.028,
+            "median_rank": 120.0,
+            "mean_rank_fraction": 0.488113,
+            "mean_margin": -4.829,
+            "candidates_mean": 250.0
+          },
+          "normal/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 49.341,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.493408,
+            "mean_margin": -4.8648,
+            "candidates_mean": 100.0
+          },
+          "normal/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.001667,
+            "mean_rank": 146.506,
+            "median_rank": 149.5,
+            "mean_rank_fraction": 0.488353,
+            "mean_margin": -4.7045,
+            "candidates_mean": 300.0
+          },
+          "normal/test/birth_city": {
+            "n": 600,
+            "top1": 0.016667,
+            "mean_rank": 71.76,
+            "median_rank": 58.0,
+            "mean_rank_fraction": 0.3588,
+            "mean_margin": -1.4155,
+            "candidates_mean": 200.0
+          },
+          "normal/test/birth_date": {
+            "n": 600,
+            "top1": 0.011667,
+            "mean_rank": 78.712,
+            "median_rank": 67.5,
+            "mean_rank_fraction": 0.393558,
+            "mean_margin": -1.3746,
+            "candidates_mean": 200.0
+          },
+          "normal/test/employer": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 90.38,
+            "median_rank": 81.0,
+            "mean_rank_fraction": 0.36152,
+            "mean_margin": -1.7889,
+            "candidates_mean": 250.0
+          },
+          "normal/test/major": {
+            "n": 600,
+            "top1": 0.018333,
+            "mean_rank": 41.44,
+            "median_rank": 37.0,
+            "mean_rank_fraction": 0.4144,
+            "mean_margin": -1.4055,
+            "candidates_mean": 100.0
+          },
+          "normal/test/university": {
+            "n": 600,
+            "top1": 0.01,
+            "mean_rank": 112.823,
+            "median_rank": 103.0,
+            "mean_rank_fraction": 0.376078,
+            "mean_margin": -1.6435,
+            "candidates_mean": 300.0
+          },
+          "rare/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 101.788,
+            "median_rank": 102.0,
+            "mean_rank_fraction": 0.508942,
+            "mean_margin": -5.3842,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.010833,
+            "mean_rank": 95.969,
+            "median_rank": 96.0,
+            "mean_rank_fraction": 0.479846,
+            "mean_margin": -1.8579,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.001667,
+            "mean_rank": 123.19,
+            "median_rank": 126.0,
+            "mean_rank_fraction": 0.49276,
+            "mean_margin": -4.7979,
+            "candidates_mean": 250.0
+          },
+          "rare/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 49.873,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.498733,
+            "mean_margin": -4.8662,
+            "candidates_mean": 100.0
+          },
+          "rare/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 151.255,
+            "median_rank": 155.0,
+            "mean_rank_fraction": 0.504183,
+            "mean_margin": -4.7887,
+            "candidates_mean": 300.0
+          },
+          "rare/test/birth_city": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 91.355,
+            "median_rank": 87.0,
+            "mean_rank_fraction": 0.456775,
+            "mean_margin": -1.7004,
+            "candidates_mean": 200.0
+          },
+          "rare/test/birth_date": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 94.132,
+            "median_rank": 92.0,
+            "mean_rank_fraction": 0.470658,
+            "mean_margin": -1.5327,
+            "candidates_mean": 200.0
+          },
+          "rare/test/employer": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 113.395,
+            "median_rank": 115.0,
+            "mean_rank_fraction": 0.45358,
+            "mean_margin": -2.0865,
+            "candidates_mean": 250.0
+          },
+          "rare/test/major": {
+            "n": 600,
+            "top1": 0.01,
+            "mean_rank": 49.863,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.498633,
+            "mean_margin": -1.6179,
+            "candidates_mean": 100.0
+          },
+          "rare/test/university": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 140.31,
+            "median_rank": 137.0,
+            "mean_rank_fraction": 0.4677,
+            "mean_margin": -1.9326,
+            "candidates_mean": 300.0
+          },
+          "frequent/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.000833,
+            "mean_rank": 86.979,
+            "median_rank": 82.0,
+            "mean_rank_fraction": 0.434896,
+            "mean_margin": -5.1337,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.023333,
+            "mean_rank": 75.694,
+            "median_rank": 67.0,
+            "mean_rank_fraction": 0.378471,
+            "mean_margin": -1.6236,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 104.128,
+            "median_rank": 99.0,
+            "mean_rank_fraction": 0.416513,
+            "mean_margin": -4.5373,
+            "candidates_mean": 250.0
+          },
+          "frequent/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 42.174,
+            "median_rank": 39.0,
+            "mean_rank_fraction": 0.421742,
+            "mean_margin": -4.5987,
+            "candidates_mean": 100.0
+          },
+          "frequent/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 130.205,
+            "median_rank": 125.0,
+            "mean_rank_fraction": 0.434017,
+            "mean_margin": -4.5186,
+            "candidates_mean": 300.0
+          },
+          "frequent/test/birth_city": {
+            "n": 600,
+            "top1": 0.063333,
+            "mean_rank": 37.218,
+            "median_rank": 21.0,
+            "mean_rank_fraction": 0.186092,
+            "mean_margin": -0.9082,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/birth_date": {
+            "n": 600,
+            "top1": 0.06,
+            "mean_rank": 46.407,
+            "median_rank": 32.0,
+            "mean_rank_fraction": 0.232033,
+            "mean_margin": -0.9844,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/employer": {
+            "n": 600,
+            "top1": 0.14,
+            "mean_rank": 32.118,
+            "median_rank": 18.0,
+            "mean_rank_fraction": 0.128473,
+            "mean_margin": -0.9219,
+            "candidates_mean": 250.0
+          },
+          "frequent/test/major": {
+            "n": 600,
+            "top1": 0.1,
+            "mean_rank": 20.573,
+            "median_rank": 13.0,
+            "mean_rank_fraction": 0.205733,
+            "mean_margin": -0.8585,
+            "candidates_mean": 100.0
+          },
+          "frequent/test/university": {
+            "n": 600,
+            "top1": 0.07,
+            "mean_rank": 42.69,
+            "median_rank": 24.0,
+            "mean_rank_fraction": 0.1423,
+            "mean_margin": -0.9309,
+            "candidates_mean": 300.0
+          }
+        }
+      },
+      "heldout": {
+        "FreeLaw": {
+          "loss": 3.7687,
+          "documents": 200,
+          "tokens": 538632
+        },
+        "Github": {
+          "loss": 3.0003,
+          "documents": 200,
+          "tokens": 280630
+        },
+        "Pile-CC": {
+          "loss": 5.2072,
+          "documents": 200,
+          "tokens": 166385
+        },
+        "PubMed Central": {
+          "loss": 4.0287,
+          "documents": 200,
+          "tokens": 696058
+        },
+        "USPTO Backgrounds": {
+          "loss": 4.9804,
+          "documents": 200,
+          "tokens": 163834
+        },
+        "Wikipedia (en)": {
+          "loss": 4.8473,
+          "documents": 200,
+          "tokens": 125951
+        }
+      }
+    },
+    {
+      "step": 4860,
+      "train_seconds": 5921.1,
+      "tokens_seen": 79626240,
+      "train_loss": 3.634265899658203,
+      "probe": {
+        "n": 36000,
+        "overall": {
+          "n": 36000,
+          "top1": 0.020861,
+          "mean_rank": 91.401,
+          "median_rank": 77.0,
+          "mean_rank_fraction": 0.436702,
+          "mean_margin": -3.3738,
+          "candidates_mean": 210.0
+        },
+        "by_tier_role": {
+          "control/paraphrase": {
+            "n": 6000,
+            "top1": 0.004167,
+            "mean_rank": 105.899,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.505265,
+            "mean_margin": -4.3814,
+            "candidates_mean": 210.0
+          },
+          "control/test": {
+            "n": 3000,
+            "top1": 0.006333,
+            "mean_rank": 106.88,
+            "median_rank": 96.0,
+            "mean_rank_fraction": 0.507613,
+            "mean_margin": -2.0713,
+            "candidates_mean": 210.0
+          },
+          "normal/paraphrase": {
+            "n": 6000,
+            "top1": 0.0055,
+            "mean_rank": 101.859,
+            "median_rank": 89.0,
+            "mean_rank_fraction": 0.485828,
+            "mean_margin": -4.2994,
+            "candidates_mean": 210.0
+          },
+          "normal/test": {
+            "n": 3000,
+            "top1": 0.015,
+            "mean_rank": 72.762,
+            "median_rank": 56.0,
+            "mean_rank_fraction": 0.350042,
+            "mean_margin": -1.5942,
+            "candidates_mean": 210.0
+          },
+          "rare/paraphrase": {
+            "n": 6000,
+            "top1": 0.005,
+            "mean_rank": 104.715,
+            "median_rank": 91.0,
+            "mean_rank_fraction": 0.499268,
+            "mean_margin": -4.3405,
+            "candidates_mean": 210.0
+          },
+          "rare/test": {
+            "n": 3000,
+            "top1": 0.007667,
+            "mean_rank": 96.171,
+            "median_rank": 81.5,
+            "mean_rank_fraction": 0.462799,
+            "mean_margin": -1.9254,
+            "candidates_mean": 210.0
+          },
+          "frequent/paraphrase": {
+            "n": 6000,
+            "top1": 0.0085,
+            "mean_rank": 86.454,
+            "median_rank": 73.0,
+            "mean_rank_fraction": 0.410929,
+            "mean_margin": -4.0656,
+            "candidates_mean": 210.0
+          },
+          "frequent/test": {
+            "n": 3000,
+            "top1": 0.175,
+            "mean_rank": 23.142,
+            "median_rank": 10.0,
+            "mean_rank_fraction": 0.11739,
+            "mean_margin": -0.7208,
+            "candidates_mean": 210.0
+          }
+        },
+        "by_attribute": {
+          "birth_city": {
+            "n": 7200,
+            "top1": 0.018472,
+            "mean_rank": 88.193,
+            "median_rank": 83.0,
+            "mean_rank_fraction": 0.440965,
+            "mean_margin": -3.9186,
+            "candidates_mean": 200.0
+          },
+          "birth_date": {
+            "n": 7200,
+            "top1": 0.014444,
+            "mean_rank": 88.05,
+            "median_rank": 83.5,
+            "mean_rank_fraction": 0.440249,
+            "mean_margin": -1.688,
+            "candidates_mean": 200.0
+          },
+          "employer": {
+            "n": 7200,
+            "top1": 0.025417,
+            "mean_rank": 106.792,
+            "median_rank": 102.0,
+            "mean_rank_fraction": 0.427168,
+            "mean_margin": -3.8332,
+            "candidates_mean": 250.0
+          },
+          "major": {
+            "n": 7200,
+            "top1": 0.027778,
+            "mean_rank": 44.285,
+            "median_rank": 42.0,
+            "mean_rank_fraction": 0.44285,
+            "mean_margin": -3.6051,
+            "candidates_mean": 100.0
+          },
+          "university": {
+            "n": 7200,
+            "top1": 0.018194,
+            "mean_rank": 129.683,
+            "median_rank": 123.0,
+            "mean_rank_fraction": 0.432278,
+            "mean_margin": -3.8241,
+            "candidates_mean": 300.0
+          }
+        },
+        "by_tier_role_attribute": {
+          "control/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 103.607,
+            "median_rank": 105.5,
+            "mean_rank_fraction": 0.518033,
+            "mean_margin": -5.2053,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 103.054,
+            "median_rank": 103.5,
+            "mean_rank_fraction": 0.515271,
+            "mean_margin": -1.962,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.000833,
+            "mean_rank": 123.777,
+            "median_rank": 125.0,
+            "mean_rank_fraction": 0.495107,
+            "mean_margin": -4.9795,
+            "candidates_mean": 250.0
+          },
+          "control/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 50.159,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.501592,
+            "mean_margin": -4.8219,
+            "candidates_mean": 100.0
+          },
+          "control/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.005,
+            "mean_rank": 148.897,
+            "median_rank": 146.5,
+            "mean_rank_fraction": 0.496322,
+            "mean_margin": -4.9384,
+            "candidates_mean": 300.0
+          },
+          "control/test/birth_city": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 106.017,
+            "median_rank": 110.0,
+            "mean_rank_fraction": 0.530083,
+            "mean_margin": -2.2037,
+            "candidates_mean": 200.0
+          },
+          "control/test/birth_date": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 103.573,
+            "median_rank": 106.0,
+            "mean_rank_fraction": 0.517867,
+            "mean_margin": -1.685,
+            "candidates_mean": 200.0
+          },
+          "control/test/employer": {
+            "n": 600,
+            "top1": 0.0,
+            "mean_rank": 127.447,
+            "median_rank": 126.0,
+            "mean_rank_fraction": 0.509787,
+            "mean_margin": -2.4195,
+            "candidates_mean": 250.0
+          },
+          "control/test/major": {
+            "n": 600,
+            "top1": 0.021667,
+            "mean_rank": 48.367,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.483667,
+            "mean_margin": -1.7709,
+            "candidates_mean": 100.0
+          },
+          "control/test/university": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 148.998,
+            "median_rank": 152.0,
+            "mean_rank_fraction": 0.496661,
+            "mean_margin": -2.2775,
+            "candidates_mean": 300.0
+          },
+          "normal/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 94.027,
+            "median_rank": 92.0,
+            "mean_rank_fraction": 0.470133,
+            "mean_margin": -5.0134,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.005,
+            "mean_rank": 99.111,
+            "median_rank": 99.0,
+            "mean_rank_fraction": 0.495554,
+            "mean_margin": -1.9113,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.006667,
+            "mean_rank": 121.282,
+            "median_rank": 119.0,
+            "mean_rank_fraction": 0.485127,
+            "mean_margin": -4.924,
+            "candidates_mean": 250.0
+          },
+          "normal/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 49.312,
+            "median_rank": 49.0,
+            "mean_rank_fraction": 0.493125,
+            "mean_margin": -4.7529,
+            "candidates_mean": 100.0
+          },
+          "normal/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 145.561,
+            "median_rank": 147.5,
+            "mean_rank_fraction": 0.485203,
+            "mean_margin": -4.8955,
+            "candidates_mean": 300.0
+          },
+          "normal/test/birth_city": {
+            "n": 600,
+            "top1": 0.016667,
+            "mean_rank": 65.587,
+            "median_rank": 54.5,
+            "mean_rank_fraction": 0.327933,
+            "mean_margin": -1.5505,
+            "candidates_mean": 200.0
+          },
+          "normal/test/birth_date": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 74.938,
+            "median_rank": 63.0,
+            "mean_rank_fraction": 0.374692,
+            "mean_margin": -1.3694,
+            "candidates_mean": 200.0
+          },
+          "normal/test/employer": {
+            "n": 600,
+            "top1": 0.013333,
+            "mean_rank": 84.897,
+            "median_rank": 71.0,
+            "mean_rank_fraction": 0.339587,
+            "mean_margin": -1.8619,
+            "candidates_mean": 250.0
+          },
+          "normal/test/major": {
+            "n": 600,
+            "top1": 0.021667,
+            "mean_rank": 37.005,
+            "median_rank": 31.0,
+            "mean_rank_fraction": 0.37005,
+            "mean_margin": -1.4377,
+            "candidates_mean": 100.0
+          },
+          "normal/test/university": {
+            "n": 600,
+            "top1": 0.015,
+            "mean_rank": 101.385,
+            "median_rank": 89.0,
+            "mean_rank_fraction": 0.33795,
+            "mean_margin": -1.7517,
+            "candidates_mean": 300.0
+          },
+          "rare/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 102.557,
+            "median_rank": 102.0,
+            "mean_rank_fraction": 0.512783,
+            "mean_margin": -5.1706,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 97.349,
+            "median_rank": 96.5,
+            "mean_rank_fraction": 0.486746,
+            "mean_margin": -1.8922,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.001667,
+            "mean_rank": 123.48,
+            "median_rank": 127.0,
+            "mean_rank_fraction": 0.49392,
+            "mean_margin": -4.9126,
+            "candidates_mean": 250.0
+          },
+          "rare/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.013333,
+            "mean_rank": 50.34,
+            "median_rank": 51.0,
+            "mean_rank_fraction": 0.5034,
+            "mean_margin": -4.7646,
+            "candidates_mean": 100.0
+          },
+          "rare/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.001667,
+            "mean_rank": 149.847,
+            "median_rank": 151.5,
+            "mean_rank_fraction": 0.499492,
+            "mean_margin": -4.9626,
+            "candidates_mean": 300.0
+          },
+          "rare/test/birth_city": {
+            "n": 600,
+            "top1": 0.0,
+            "mean_rank": 92.368,
+            "median_rank": 87.0,
+            "mean_rank_fraction": 0.461842,
+            "mean_margin": -1.9745,
+            "candidates_mean": 200.0
+          },
+          "rare/test/birth_date": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 90.998,
+            "median_rank": 84.0,
+            "mean_rank_fraction": 0.454992,
+            "mean_margin": -1.5595,
+            "candidates_mean": 200.0
+          },
+          "rare/test/employer": {
+            "n": 600,
+            "top1": 0.01,
+            "mean_rank": 110.015,
+            "median_rank": 110.0,
+            "mean_rank_fraction": 0.44006,
+            "mean_margin": -2.185,
+            "candidates_mean": 250.0
+          },
+          "rare/test/major": {
+            "n": 600,
+            "top1": 0.021667,
+            "mean_rank": 49.828,
+            "median_rank": 50.0,
+            "mean_rank_fraction": 0.498283,
+            "mean_margin": -1.7737,
+            "candidates_mean": 100.0
+          },
+          "rare/test/university": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 137.645,
+            "median_rank": 131.0,
+            "mean_rank_fraction": 0.458817,
+            "mean_margin": -2.1343,
+            "candidates_mean": 300.0
+          },
+          "frequent/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.001667,
+            "mean_rank": 85.551,
+            "median_rank": 79.0,
+            "mean_rank_fraction": 0.427754,
+            "mean_margin": -4.8898,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.023333,
+            "mean_rank": 76.062,
+            "median_rank": 69.0,
+            "mean_rank_fraction": 0.380312,
+            "mean_margin": -1.6271,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 102.029,
+            "median_rank": 97.0,
+            "mean_rank_fraction": 0.408117,
+            "mean_margin": -4.6453,
+            "candidates_mean": 250.0
+          },
+          "frequent/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 41.455,
+            "median_rank": 39.0,
+            "mean_rank_fraction": 0.41455,
+            "mean_margin": -4.4781,
+            "candidates_mean": 100.0
+          },
+          "frequent/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 127.173,
+            "median_rank": 120.0,
+            "mean_rank_fraction": 0.423911,
+            "mean_margin": -4.6879,
+            "candidates_mean": 300.0
+          },
+          "frequent/test/birth_city": {
+            "n": 600,
+            "top1": 0.173333,
+            "mean_rank": 22.863,
+            "median_rank": 10.0,
+            "mean_rank_fraction": 0.114317,
+            "mean_margin": -0.7369,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/birth_date": {
+            "n": 600,
+            "top1": 0.083333,
+            "mean_rank": 35.935,
+            "median_rank": 20.0,
+            "mean_rank_fraction": 0.179675,
+            "mean_margin": -0.8562,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/employer": {
+            "n": 600,
+            "top1": 0.248333,
+            "mean_rank": 18.01,
+            "median_rank": 6.0,
+            "mean_rank_fraction": 0.07204,
+            "mean_margin": -0.6095,
+            "candidates_mean": 250.0
+          },
+          "frequent/test/major": {
+            "n": 600,
+            "top1": 0.195,
+            "mean_rank": 13.687,
+            "median_rank": 6.0,
+            "mean_rank_fraction": 0.136867,
+            "mean_margin": -0.6442,
+            "candidates_mean": 100.0
+          },
+          "frequent/test/university": {
+            "n": 600,
+            "top1": 0.175,
+            "mean_rank": 25.215,
+            "median_rank": 10.0,
+            "mean_rank_fraction": 0.08405,
+            "mean_margin": -0.7571,
+            "candidates_mean": 300.0
+          }
+        }
+      },
+      "heldout": {
+        "FreeLaw": {
+          "loss": 3.6724,
+          "documents": 200,
+          "tokens": 538632
+        },
+        "Github": {
+          "loss": 2.8902,
+          "documents": 200,
+          "tokens": 280630
+        },
+        "Pile-CC": {
+          "loss": 5.1248,
+          "documents": 200,
+          "tokens": 166385
+        },
+        "PubMed Central": {
+          "loss": 3.9189,
+          "documents": 200,
+          "tokens": 696058
+        },
+        "USPTO Backgrounds": {
+          "loss": 4.8732,
+          "documents": 200,
+          "tokens": 163834
+        },
+        "Wikipedia (en)": {
+          "loss": 4.736,
+          "documents": 200,
+          "tokens": 125951
+        }
+      }
+    },
+    {
+      "step": 5830,
+      "train_seconds": 7101.0,
+      "tokens_seen": 95518720,
+      "train_loss": 3.58774129152298,
+      "probe": {
+        "n": 36000,
+        "overall": {
+          "n": 36000,
+          "top1": 0.032333,
+          "mean_rank": 88.772,
+          "median_rank": 74.0,
+          "mean_rank_fraction": 0.424277,
+          "mean_margin": -3.2625,
+          "candidates_mean": 210.0
+        },
+        "by_tier_role": {
+          "control/paraphrase": {
+            "n": 6000,
+            "top1": 0.004333,
+            "mean_rank": 105.572,
+            "median_rank": 92.0,
+            "mean_rank_fraction": 0.504116,
+            "mean_margin": -4.2449,
+            "candidates_mean": 210.0
+          },
+          "control/test": {
+            "n": 3000,
+            "top1": 0.005333,
+            "mean_rank": 106.431,
+            "median_rank": 94.5,
+            "mean_rank_fraction": 0.50575,
+            "mean_margin": -2.1752,
+            "candidates_mean": 210.0
+          },
+          "normal/paraphrase": {
+            "n": 6000,
+            "top1": 0.005,
+            "mean_rank": 100.51,
+            "median_rank": 87.0,
+            "mean_rank_fraction": 0.479305,
+            "mean_margin": -4.1417,
+            "candidates_mean": 210.0
+          },
+          "normal/test": {
+            "n": 3000,
+            "top1": 0.024,
+            "mean_rank": 63.586,
+            "median_rank": 46.0,
+            "mean_rank_fraction": 0.307346,
+            "mean_margin": -1.575,
+            "candidates_mean": 210.0
+          },
+          "rare/paraphrase": {
+            "n": 6000,
+            "top1": 0.005167,
+            "mean_rank": 104.222,
+            "median_rank": 91.0,
+            "mean_rank_fraction": 0.496687,
+            "mean_margin": -4.2007,
+            "candidates_mean": 210.0
+          },
+          "rare/test": {
+            "n": 3000,
+            "top1": 0.009667,
+            "mean_rank": 93.017,
+            "median_rank": 78.0,
+            "mean_rank_fraction": 0.447918,
+            "mean_margin": -1.9971,
+            "candidates_mean": 210.0
+          },
+          "frequent/paraphrase": {
+            "n": 6000,
+            "top1": 0.012,
+            "mean_rank": 83.6,
+            "median_rank": 70.0,
+            "mean_rank_fraction": 0.397822,
+            "mean_margin": -3.8963,
+            "candidates_mean": 210.0
+          },
+          "frequent/test": {
+            "n": 3000,
+            "top1": 0.296,
+            "mean_rank": 14.418,
+            "median_rank": 4.0,
+            "mean_rank_fraction": 0.074455,
+            "mean_margin": -0.4356,
+            "candidates_mean": 210.0
+          }
+        },
+        "by_attribute": {
+          "birth_city": {
+            "n": 7200,
+            "top1": 0.028889,
+            "mean_rank": 85.799,
+            "median_rank": 80.0,
+            "mean_rank_fraction": 0.428996,
+            "mean_margin": -3.819,
+            "candidates_mean": 200.0
+          },
+          "birth_date": {
+            "n": 7200,
+            "top1": 0.024583,
+            "mean_rank": 84.605,
+            "median_rank": 79.0,
+            "mean_rank_fraction": 0.423024,
+            "mean_margin": -1.6238,
+            "candidates_mean": 200.0
+          },
+          "employer": {
+            "n": 7200,
+            "top1": 0.04,
+            "mean_rank": 104.292,
+            "median_rank": 98.0,
+            "mean_rank_fraction": 0.417169,
+            "mean_margin": -3.6339,
+            "candidates_mean": 250.0
+          },
+          "major": {
+            "n": 7200,
+            "top1": 0.037917,
+            "mean_rank": 43.248,
+            "median_rank": 40.5,
+            "mean_rank_fraction": 0.432483,
+            "mean_margin": -3.5257,
+            "candidates_mean": 100.0
+          },
+          "university": {
+            "n": 7200,
+            "top1": 0.030278,
+            "mean_rank": 125.915,
+            "median_rank": 117.5,
+            "mean_rank_fraction": 0.419715,
+            "mean_margin": -3.7103,
+            "candidates_mean": 300.0
+          }
+        },
+        "by_tier_role_attribute": {
+          "control/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 103.84,
+            "median_rank": 107.0,
+            "mean_rank_fraction": 0.5192,
+            "mean_margin": -5.1161,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.006667,
+            "mean_rank": 101.178,
+            "median_rank": 102.0,
+            "mean_rank_fraction": 0.505892,
+            "mean_margin": -1.8446,
+            "candidates_mean": 200.0
+          },
+          "control/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.000833,
+            "mean_rank": 124.16,
+            "median_rank": 125.5,
+            "mean_rank_fraction": 0.49664,
+            "mean_margin": -4.7213,
+            "candidates_mean": 250.0
+          },
+          "control/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.006667,
+            "mean_rank": 50.487,
+            "median_rank": 50.5,
+            "mean_rank_fraction": 0.504867,
+            "mean_margin": -4.7549,
+            "candidates_mean": 100.0
+          },
+          "control/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 148.194,
+            "median_rank": 145.5,
+            "mean_rank_fraction": 0.493981,
+            "mean_margin": -4.7878,
+            "candidates_mean": 300.0
+          },
+          "control/test/birth_city": {
+            "n": 600,
+            "top1": 0.003333,
+            "mean_rank": 104.943,
+            "median_rank": 108.5,
+            "mean_rank_fraction": 0.524717,
+            "mean_margin": -2.2497,
+            "candidates_mean": 200.0
+          },
+          "control/test/birth_date": {
+            "n": 600,
+            "top1": 0.001667,
+            "mean_rank": 101.437,
+            "median_rank": 102.0,
+            "mean_rank_fraction": 0.507183,
+            "mean_margin": -1.8223,
+            "candidates_mean": 200.0
+          },
+          "control/test/employer": {
+            "n": 600,
+            "top1": 0.006667,
+            "mean_rank": 128.728,
+            "median_rank": 134.5,
+            "mean_rank_fraction": 0.514913,
+            "mean_margin": -2.5464,
+            "candidates_mean": 250.0
+          },
+          "control/test/major": {
+            "n": 600,
+            "top1": 0.015,
+            "mean_rank": 48.767,
+            "median_rank": 47.0,
+            "mean_rank_fraction": 0.487667,
+            "mean_margin": -1.8649,
+            "candidates_mean": 100.0
+          },
+          "control/test/university": {
+            "n": 600,
+            "top1": 0.0,
+            "mean_rank": 148.282,
+            "median_rank": 154.5,
+            "mean_rank_fraction": 0.494272,
+            "mean_margin": -2.3924,
+            "candidates_mean": 300.0
+          },
+          "normal/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.005,
+            "mean_rank": 92.835,
+            "median_rank": 87.5,
+            "mean_rank_fraction": 0.464175,
+            "mean_margin": -4.8825,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 96.956,
+            "median_rank": 96.0,
+            "mean_rank_fraction": 0.484779,
+            "mean_margin": -1.8048,
+            "candidates_mean": 200.0
+          },
+          "normal/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.005,
+            "mean_rank": 120.509,
+            "median_rank": 117.0,
+            "mean_rank_fraction": 0.482037,
+            "mean_margin": -4.6505,
+            "candidates_mean": 250.0
+          },
+          "normal/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.0075,
+            "mean_rank": 48.705,
+            "median_rank": 48.0,
+            "mean_rank_fraction": 0.48705,
+            "mean_margin": -4.6392,
+            "candidates_mean": 100.0
+          },
+          "normal/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 143.546,
+            "median_rank": 146.5,
+            "mean_rank_fraction": 0.478486,
+            "mean_margin": -4.7318,
+            "candidates_mean": 300.0
+          },
+          "normal/test/birth_city": {
+            "n": 600,
+            "top1": 0.02,
+            "mean_rank": 57.1,
+            "median_rank": 39.0,
+            "mean_rank_fraction": 0.2855,
+            "mean_margin": -1.4843,
+            "candidates_mean": 200.0
+          },
+          "normal/test/birth_date": {
+            "n": 600,
+            "top1": 0.016667,
+            "mean_rank": 68.442,
+            "median_rank": 55.5,
+            "mean_rank_fraction": 0.342208,
+            "mean_margin": -1.4138,
+            "candidates_mean": 200.0
+          },
+          "normal/test/employer": {
+            "n": 600,
+            "top1": 0.028333,
+            "mean_rank": 71.513,
+            "median_rank": 56.0,
+            "mean_rank_fraction": 0.286053,
+            "mean_margin": -1.8045,
+            "candidates_mean": 250.0
+          },
+          "normal/test/major": {
+            "n": 600,
+            "top1": 0.036667,
+            "mean_rank": 33.007,
+            "median_rank": 26.5,
+            "mean_rank_fraction": 0.330067,
+            "mean_margin": -1.3975,
+            "candidates_mean": 100.0
+          },
+          "normal/test/university": {
+            "n": 600,
+            "top1": 0.018333,
+            "mean_rank": 87.87,
+            "median_rank": 68.0,
+            "mean_rank_fraction": 0.2929,
+            "mean_margin": -1.775,
+            "candidates_mean": 300.0
+          },
+          "rare/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 101.965,
+            "median_rank": 100.0,
+            "mean_rank_fraction": 0.509825,
+            "mean_margin": -5.056,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.004167,
+            "mean_rank": 96.885,
+            "median_rank": 95.0,
+            "mean_rank_fraction": 0.484425,
+            "mean_margin": -1.7944,
+            "candidates_mean": 200.0
+          },
+          "rare/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.000833,
+            "mean_rank": 122.97,
+            "median_rank": 124.5,
+            "mean_rank_fraction": 0.49188,
+            "mean_margin": -4.6455,
+            "candidates_mean": 250.0
+          },
+          "rare/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.013333,
+            "mean_rank": 49.95,
+            "median_rank": 49.0,
+            "mean_rank_fraction": 0.4995,
+            "mean_margin": -4.6708,
+            "candidates_mean": 100.0
+          },
+          "rare/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 149.342,
+            "median_rank": 149.5,
+            "mean_rank_fraction": 0.497806,
+            "mean_margin": -4.8371,
+            "candidates_mean": 300.0
+          },
+          "rare/test/birth_city": {
+            "n": 600,
+            "top1": 0.0,
+            "mean_rank": 89.465,
+            "median_rank": 79.5,
+            "mean_rank_fraction": 0.447325,
+            "mean_margin": -2.0204,
+            "candidates_mean": 200.0
+          },
+          "rare/test/birth_date": {
+            "n": 600,
+            "top1": 0.015,
+            "mean_rank": 89.217,
+            "median_rank": 84.0,
+            "mean_rank_fraction": 0.446083,
+            "mean_margin": -1.6766,
+            "candidates_mean": 200.0
+          },
+          "rare/test/employer": {
+            "n": 600,
+            "top1": 0.008333,
+            "mean_rank": 104.757,
+            "median_rank": 101.5,
+            "mean_rank_fraction": 0.419027,
+            "mean_margin": -2.2446,
+            "candidates_mean": 250.0
+          },
+          "rare/test/major": {
+            "n": 600,
+            "top1": 0.02,
+            "mean_rank": 48.25,
+            "median_rank": 47.5,
+            "mean_rank_fraction": 0.4825,
+            "mean_margin": -1.8081,
+            "candidates_mean": 100.0
+          },
+          "rare/test/university": {
+            "n": 600,
+            "top1": 0.005,
+            "mean_rank": 133.397,
+            "median_rank": 123.0,
+            "mean_rank_fraction": 0.444656,
+            "mean_margin": -2.2357,
+            "candidates_mean": 300.0
+          },
+          "frequent/paraphrase/birth_city": {
+            "n": 1200,
+            "top1": 0.0025,
+            "mean_rank": 82.83,
+            "median_rank": 74.0,
+            "mean_rank_fraction": 0.41415,
+            "mean_margin": -4.7435,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/birth_date": {
+            "n": 1200,
+            "top1": 0.039167,
+            "mean_rank": 71.097,
+            "median_rank": 60.0,
+            "mean_rank_fraction": 0.355483,
+            "mean_margin": -1.4881,
+            "candidates_mean": 200.0
+          },
+          "frequent/paraphrase/employer": {
+            "n": 1200,
+            "top1": 0.008333,
+            "mean_rank": 100.587,
+            "median_rank": 93.0,
+            "mean_rank_fraction": 0.402347,
+            "mean_margin": -4.37,
+            "candidates_mean": 250.0
+          },
+          "frequent/paraphrase/major": {
+            "n": 1200,
+            "top1": 0.006667,
+            "mean_rank": 40.825,
+            "median_rank": 37.0,
+            "mean_rank_fraction": 0.40825,
+            "mean_margin": -4.3692,
+            "candidates_mean": 100.0
+          },
+          "frequent/paraphrase/university": {
+            "n": 1200,
+            "top1": 0.003333,
+            "mean_rank": 122.663,
+            "median_rank": 116.0,
+            "mean_rank_fraction": 0.408878,
+            "mean_margin": -4.5106,
+            "candidates_mean": 300.0
+          },
+          "frequent/test/birth_city": {
+            "n": 600,
+            "top1": 0.293333,
+            "mean_rank": 15.142,
+            "median_rank": 5.0,
+            "mean_rank_fraction": 0.075708,
+            "mean_margin": -0.477,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/birth_date": {
+            "n": 600,
+            "top1": 0.153333,
+            "mean_rank": 23.93,
+            "median_rank": 10.0,
+            "mean_rank_fraction": 0.11965,
+            "mean_margin": -0.7085,
+            "candidates_mean": 200.0
+          },
+          "frequent/test/employer": {
+            "n": 600,
+            "top1": 0.406667,
+            "mean_rank": 10.057,
+            "median_rank": 2.0,
+            "mean_rank_fraction": 0.040227,
+            "mean_margin": -0.2368,
+            "candidates_mean": 250.0
+          },
+          "frequent/test/major": {
+            "n": 600,
+            "top1": 0.315,
+            "mean_rank": 9.023,
+            "median_rank": 3.0,
+            "mean_rank_fraction": 0.090233,
+            "mean_margin": -0.37,
+            "candidates_mean": 100.0
+          },
+          "frequent/test/university": {
+            "n": 600,
+            "top1": 0.311667,
+            "mean_rank": 13.937,
+            "median_rank": 4.0,
+            "mean_rank_fraction": 0.046456,
+            "mean_margin": -0.3857,
+            "candidates_mean": 300.0
+          }
+        }
+      },
+      "heldout": {
+        "FreeLaw": {
+          "loss": 3.6293,
+          "documents": 200,
+          "tokens": 538632
+        },
+        "Github": {
+          "loss": 2.8372,
+          "documents": 200,
+          "tokens": 280630
+        },
+        "Pile-CC": {
+          "loss": 5.087,
+          "documents": 200,
+          "tokens": 166385
+        },
+        "PubMed Central": {
+          "loss": 3.8748,
+          "documents": 200,
+          "tokens": 696058
+        },
+        "USPTO Backgrounds": {
+          "loss": 4.8293,
+          "documents": 200,
+          "tokens": 163834
+        },
+        "Wikipedia (en)": {
+          "loss": 4.6836,
           "documents": 200,
           "tokens": 125951
         }

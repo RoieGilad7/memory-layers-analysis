@@ -26,10 +26,11 @@ the whole comparison hangs on:
 | **2b — made-up biographies** | 2,500 people with uniformly random facts, 4 rewordings each, 100k fact prompts; 14.6M tokens at the tier exposure targets | [`reports/data2_bios_report.md`](reports/data2_bios_report.md) |
 | **2c — token files** | `train.bin` 149,963,776 tokens / 292,898 sequences, two held-out halves, the hash-verified bundle manifest, fetch and the loader | [`reports/data3_pack_report.md`](reports/data3_pack_report.md) |
 | **2d — validation** | every check on the full build (A1–A18), the hand-check pack, and a 2-hour run proving the biography facts are learnable | [`reports/data4_validation_report.md`](reports/data4_validation_report.md) |
-| 2e | the freeze and the upload | not started |
+| **2e — the leak fix** | the answer leak A13 found is closed by construction; all 18 checks pass and A18 re-run on the fixed data | [`reports/data5_fix_report.md`](reports/data5_fix_report.md) |
+| 2f | the freeze and the upload | not started |
 | 3–5 | training runs, read-log analysis | not started |
 
-All six reports are self-contained and carry the numbers; start there.
+All seven reports are self-contained and carry the numbers; start there.
 The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
 ---
@@ -85,8 +86,8 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  167 pytest tests
-reports/                the six step reports
+tests/                  174 pytest tests
+reports/                the seven step reports
 ```
 
 Two result directories, both committed, because the reports cite them: `logs/*.json` for
@@ -134,7 +135,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 167 tests, CPU, ~15 s
+.venv/bin/python -m pytest tests/ -q                 # 174 tests, CPU, ~20 s
 
 # train one config
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
