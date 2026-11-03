@@ -38,6 +38,9 @@ pytest==9.1.1
 #     `requests` is a direct dependency now (it was transitive before) ---
 requests==2.34.2
 
+# --- data step 4: the learnability curves ---
+matplotlib==3.11.2
+
 # --- transitive, pinned for reproducibility ---
 pyarrow==26.0.0
 pandas==3.1.0
