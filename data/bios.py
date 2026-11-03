@@ -43,7 +43,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from data import bios_data as bd
-from data.common import (ROOT, DataConfig, clean_text, dumps_record,
+from data.common import (record_timing, ROOT, DataConfig, clean_text, dumps_record,
                          get_encoder, keyed_rng, load_config, open_write,
                          read_jsonl, write_json)
 
@@ -707,7 +707,6 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
         "config_fingerprint": cfg.fingerprint("bios"),
         "small": cfg.small,
         "seed": cfg.seed,
-        "seconds": round(time.time() - t0, 1),
         "people": people_stats,
         "values": {a: value_reports[a] for a in cfg.bio_attributes},
         "value_tokens": tok_report,
@@ -734,6 +733,7 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
         },
         "name_check": {k: v for k, v in check.items() if k != "occurrences"},
     }
+    record_timing(cfg, "bios", time.time() - t0)
     write_json(out_dir / "manifest.json", manifest)
     print_summary(cfg, manifest)
     return manifest

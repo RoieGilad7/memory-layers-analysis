@@ -13,6 +13,11 @@ from typing import Any, Dict, List, Optional
 from data.common import load_config
 
 
+def _timings(cfg) -> Dict[str, float]:
+    path = cfg.reports_dir / "timings.json"
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
 def _f(n: Any) -> str:
     return f"{n:,}" if isinstance(n, int) else str(n)
 
@@ -39,6 +44,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     ext = json.loads((cfg.reports_dir / "extract_manifest.json").read_text())
     ded = json.loads((cfg.reports_dir / "dedup_log.json").read_text())
     spl = json.loads((cfg.reports_dir / "split_report.json").read_text())
+    # runtimes live outside the hashed bundle files -- see common.record_timing
+    tim = _timings(cfg)
     halves = cfg.heldout_halves
 
     print("### 4.1 The run\n")
@@ -56,9 +63,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         ["lines read, train / held-out",
          f"{ext['splits']['train']['lines_read']:,} / {ext['splits']['heldout']['lines_read']:,}"],
         ["compressed bytes downloaded", f"{man['bytes_downloaded'] / 1e9:.2f} GB"],
-        ["runtime, total", f"{man['seconds'] / 60:.1f} min"],
+        ["runtime, total", f"{tim.get('pile', 0) / 60:.1f} min"],
         ["runtime, extract / dedup / split",
-         f"{ext['seconds']:.0f} s / {ded['seconds']:.0f} s / {spl['seconds']:.0f} s"],
+         f"{tim.get('extract', 0):.0f} s / {tim.get('dedup', 0):.0f} s / "
+         f"{tim.get('split', 0):.0f} s"],
         ["output on disk", f"{man['disk_bytes']['total'] / 1e6:.0f} MB"],
     ], ["", ""], "ll"))
 
@@ -165,7 +173,7 @@ def bios_tables(cfg) -> int:
         ["people", f"{p['n_people']:,}"],
         ["facts.jsonl rows", f"{man['facts']['rows']:,}"],
         ["biography rows", f"{b['rows']:,}"],
-        ["runtime", f"{man['seconds']:.0f} s"],
+        ["runtime", f"{_timings(cfg).get('bios', 0):.0f} s"],
     ], ["", ""], "ll"))
 
     print("\n### 2.2 People by split, tier and gender\n")

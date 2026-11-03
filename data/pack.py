@@ -47,7 +47,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from data.common import (DataConfig, get_encoder, keyed_rng, load_config,
+from data.common import (record_timing, DataConfig, get_encoder, keyed_rng, load_config,
                          read_jsonl, write_json)
 
 BIO_SUBJECT = "bio"
@@ -642,13 +642,13 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         "seed": cfg.seed,
         "block_size": cfg.block_size,
         "eot_token": cfg.eot_token,
-        "seconds": round(time.time() - t0, 1),
         "select": select_reports,
         "biographies": bio_report,
         "train": {**stats, "per_subject": per_subject,
                   "index_rows": len(rows)},
         "heldout": heldout_stats,
     }
+    record_timing(cfg, "pack", time.time() - t0)
     write_json(cfg.reports_dir / "pack_report.json", report)
     return report
 
@@ -660,7 +660,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = ap.parse_args(argv)
     cfg = load_config(args.config, small=args.small)
     r = run(cfg)
-    print(f"\n[pack] done in {r['seconds']}s")
+    print("\n[pack] done")
     for s, v in r["train"]["per_subject"].items():
         print(f"   {s:20s} {v['tokens']:>12,} tokens in {v['segments']:>7,} segments")
     return 0

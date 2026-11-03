@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from data.common import (CHARS_PER_TOKEN_BOUND, DataConfig, cap_to_max_tokens,
+from data.common import (record_timing, CHARS_PER_TOKEN_BOUND, DataConfig, cap_to_max_tokens,
                          clean_text, dumps_record, get_encoder, load_config,
                          ngram_hashes, open_write, overlap_rate, read_jsonl,
                          text_sha256, write_json)
@@ -208,7 +208,6 @@ def _copy_through_exempt(cfg: DataConfig, subject: str, log: Dict[str, Any],
         "docs_dropped": 0,
         "docs_kept": kept,
         "tokens_kept": kept_tokens,
-        "seconds": round(time.time() - t0, 1),
     }
 
 
@@ -281,12 +280,11 @@ def _pass_b(cfg: DataConfig, enc, log: Dict[str, Any]) -> Dict[str, Any]:
             "docs_dropped": dropped,
             "docs_kept": kept,
             "tokens_kept": kept_tokens,
-            "seconds": round(time.time() - t0, 1),
         }
         print(f"[dedup] B {subject:20s} train_13grams={index.size:>12,} "
               f"overlap={out[subject]['aggregate_overlap_rate']:.4%} "
               f"dropped={dropped:>5,} kept={kept:>6,} "
-              f"tokens={kept_tokens:>10,} ({out[subject]['seconds']}s)", flush=True)
+              f"tokens={kept_tokens:>10,} ({time.time() - t0:.1f}s)", flush=True)
     return out
 
 
@@ -304,7 +302,6 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         "ngram_n": cfg.ngram_n,
         "ngram_drop_threshold": cfg.ngram_drop_threshold,
         "ngram_exempt_subjects": cfg.ngram_exempt_subjects,
-        "seconds": round(time.time() - t0, 1),
         "per_subject": log,
         "ngram_overlap": ngram,
         "train_tokens_total": sum(v["tokens_kept"] for v in log["train"].values()),
@@ -313,6 +310,7 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
             s for s, v in log["train"].items()
             if v["tokens_kept"] < cfg.train_tokens_per_subject],
     }
+    record_timing(cfg, "dedup", time.time() - t0)
     write_json(cfg.reports_dir / "dedup_log.json", out)
     return out
 
@@ -324,8 +322,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = ap.parse_args(argv)
     cfg = load_config(args.config, small=args.small)
     out = run(cfg)
-    print(f"\n[dedup] train tokens total {out['train_tokens_total']:,} "
-          f"({out['seconds']}s)")
+    print(f"\n[dedup] train tokens total {out['train_tokens_total']:,}")
     if out["train_subjects_below_target"]:
         print(f"[dedup] BELOW TARGET: {out['train_subjects_below_target']}")
     return 0

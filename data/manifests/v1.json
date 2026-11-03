@@ -18,7 +18,7 @@
         "files": 12
       },
       "reports": {
-        "bytes": 29454,
+        "bytes": 29224,
         "files": 5
       },
       "samples": {
@@ -35,8 +35,8 @@
       }
     },
     "optional": 398010725,
-    "required": 749963558,
-    "total": 1147974283
+    "required": 749963328,
+    "total": 1147974053
   },
   "config": {
     "fingerprint_all": "88d2ad8169f5b48b0b4bc1c74384ceed0cf7b231df08dea2f72c937bdee99a0e",
@@ -214,7 +214,6 @@
       "tokens": 149963776
     }
   },
-  "created_utc": "2026-11-02T23:33:35Z",
   "distribution": {
     "hf_repo": "<owner>/memlayers-data",
     "optional_prefixes": [
@@ -471,34 +470,34 @@
       "sha256": "82ccdecc0db64408127236507a373b919f2b91cbd028fdaeae520ba8a884257f"
     },
     {
-      "bytes": 6889,
+      "bytes": 6732,
       "optional": false,
       "path": "reports/dedup_log.json",
-      "sha256": "1d6863da65dd9ca08d1758eab118c5783525510a7917ad6a77505cc9f1b9161f"
+      "sha256": "6231b9af4ddaa114655df98c47ff81d84ca612536b34113f31e01ea6aa352781"
     },
     {
-      "bytes": 3319,
+      "bytes": 3301,
       "optional": false,
       "path": "reports/extract_manifest.json",
-      "sha256": "db4466d297d011674d241f582a817344865daf2ecf54a17a4be13c69e06cc2da"
+      "sha256": "c496a197a25e8a664847eef47221f6d149e4c4c9b51f68730e323eee7c49cc8c"
     },
     {
-      "bytes": 5800,
+      "bytes": 5781,
       "optional": false,
       "path": "reports/pack_report.json",
-      "sha256": "ff51a4f9bb1dfe69fe425a69f959e430131cc2ada8e971d4b2db97d926e3cd25"
+      "sha256": "20d2cb34d5ca17f486abdca53ae16d02bd33e1fd672324c0aab5f4b6c84e58fd"
     },
     {
-      "bytes": 8082,
+      "bytes": 8064,
       "optional": false,
       "path": "reports/pile_manifest.json",
-      "sha256": "d470180207a64254953c54353adb7cd581d1fb14567b93cb614878e148855a0c"
+      "sha256": "40f341bc338a00559e632917ba42c5e3bafd67d158b7a1b986b09f2c34d5b6eb"
     },
     {
-      "bytes": 5364,
+      "bytes": 5346,
       "optional": false,
       "path": "reports/split_report.json",
-      "sha256": "8f27dae8e3fd4b49aafa0b9af4fd0141197c3fe0ed4abaaf3d1a87d58d44b79b"
+      "sha256": "fa77366552c0402a777372a0b715ec65d008a98076d795ee44671543676ac248"
     },
     {
       "bytes": 158260,
@@ -551,11 +550,10 @@
   ],
   "git": {
     "branch": "data/step1-bios",
-    "commit": "4ad9a20f4a032599a4485876c77213273386426b",
+    "commit": "74a6727b98d0004eafd725a4ee5c32bfdce27d6c",
     "dirty": true
   },
   "n_files": 54,
-  "seconds": 0.4,
   "small": false,
   "source": {
     "dataset": "monology/pile-uncopyrighted",

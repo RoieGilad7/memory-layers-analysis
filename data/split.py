@@ -17,7 +17,7 @@ import sys
 import time
 from typing import Any, Dict, List, Optional
 
-from data.common import (DataConfig, dumps_record, heldout_half, load_config,
+from data.common import (record_timing, DataConfig, dumps_record, heldout_half, load_config,
                          open_write, read_jsonl, write_json)
 
 
@@ -83,7 +83,6 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         "halves": halves,
         "tokens_per_half": cfg.heldout_tokens_per_half,
         "min_docs_per_half": cfg.heldout_min_docs_per_half,
-        "seconds": round(time.time() - t0, 1),
         "per_subject": per_subject,
         "subjects_below_min_docs": sorted(
             f"{s}/{h}" for s, v in per_subject.items() for h in halves
@@ -92,6 +91,7 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
             f"{s}/{h}" for s, v in per_subject.items() for h in halves
             if v["halves"][h]["below_target_tokens"]),
     }
+    record_timing(cfg, "split", time.time() - t0)
     write_json(cfg.reports_dir / "split_report.json", out)
     return out
 

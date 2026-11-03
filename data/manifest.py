@@ -30,7 +30,9 @@ CHUNK = 1 << 20
 MANIFEST_NAME = "manifest.json"
 # Working files that are not part of the bundle.
 EXCLUDE_DIRS = {"_work", "_parts"}
-EXCLUDE_NAMES = {".DS_Store", MANIFEST_NAME}
+# timings.json carries wall clocks on purpose, so it is the one bundle file the
+# manifest does not hash -- see data.common.record_timing
+EXCLUDE_NAMES = {".DS_Store", MANIFEST_NAME, "timings.json"}
 
 
 def sha256_file(path: Path) -> str:
@@ -125,7 +127,6 @@ def build(cfg: DataConfig) -> Dict[str, Any]:
     manifest = {
         "version": cfg.version,
         "small": cfg.small,
-        "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "config": {
             "path": "configs/data/v1.yaml",
             "fingerprint_pile": cfg.fingerprint("pile"),
@@ -146,7 +147,6 @@ def build(cfg: DataConfig) -> Dict[str, Any]:
                   "required": total - optional, "by_prefix": by_prefix},
         "n_files": len(files),
         "files": files,
-        "seconds": round(time.time() - t0, 1),
     }
     return manifest
 

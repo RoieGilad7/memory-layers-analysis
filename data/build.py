@@ -18,7 +18,8 @@ import time
 from typing import Any, Dict, List, Optional
 
 from data import dedup, pile_extract, split
-from data.common import DataConfig, free_disk_gb, load_config, write_json
+from data.common import (DataConfig, free_disk_gb, load_config, record_timing,
+                         write_json)
 
 STAGES = ("pile", "extract", "dedup", "split", "bio", "tokenize", "all")
 MIN_FREE_DISK_GB = 20.0
@@ -66,7 +67,6 @@ def run_pile(cfg: DataConfig) -> Dict[str, Any]:
         "revision": cfg.revision,
         "tokenizer": {"name": cfg.tokenizer_name, "vocab_size": cfg.vocab_size},
         "document": {"max_tokens": cfg.max_tokens, "min_tokens": cfg.min_tokens},
-        "seconds": round(time.time() - t0, 1),
         "disk_bytes": {
             "raw": _dir_bytes(cfg.raw_dir),
             "train": _dir_bytes(cfg.train_dir),
@@ -117,6 +117,7 @@ def run_pile(cfg: DataConfig) -> Dict[str, Any]:
     # NOT <root>/manifest.json: that path is the BUNDLE manifest (data/manifest.py),
     # which lists every file in the bundle with its sha256. This is the pile
     # stage's own record, and the bundle manifest embeds its counts.
+    record_timing(cfg, "pile", time.time() - t0)
     write_json(cfg.reports_dir / "pile_manifest.json", manifest)
     print_summary(cfg, manifest)
     return manifest
@@ -146,7 +147,8 @@ def print_summary(cfg: DataConfig, m: Dict[str, Any]) -> None:
           f"{cfg.total_train_tokens:,})")
     print(f"downloaded {m['bytes_downloaded'] / 1e9:.2f} GB, "
           f"output {m['disk_bytes']['total'] / 1e6:.1f} MB, "
-          f"{m['seconds'] / 60:.1f} min, free disk {m['free_disk_gb']:.1f} GB")
+          f"free disk {m['free_disk_gb']:.1f} GB "
+          "(runtimes in reports/timings.json)")
     for k, v in m["problems"].items():
         if v and v != {"train": [], "heldout": []}:
             print(f"PROBLEM {k}: {v}")

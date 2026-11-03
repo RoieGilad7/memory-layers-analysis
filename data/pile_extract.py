@@ -30,7 +30,7 @@ import requests
 import zstandard as zstd
 from huggingface_hub import hf_hub_url
 
-from data.common import (CHARS_PER_TOKEN_BOUND, DataConfig, clean_text, merge_gz,
+from data.common import (record_timing, CHARS_PER_TOKEN_BOUND, DataConfig, clean_text, merge_gz,
                          dumps_record, free_disk_gb, get_encoder, load_config,
                          open_write, write_json)
 
@@ -377,7 +377,6 @@ def run(cfg: DataConfig, splits: Tuple[str, ...] = ("train", "heldout")) -> Dict
         "tokenizer": cfg.tokenizer_name,
         "max_tokens": cfg.max_tokens,
         "min_tokens": cfg.min_tokens,
-        "seconds": round(time.time() - t_start, 1),
         "splits": {},
     }
     for split in ("train", "heldout"):
@@ -396,6 +395,7 @@ def run(cfg: DataConfig, splits: Tuple[str, ...] = ("train", "heldout")) -> Dict
                 s for s in cfg.subjects_for(split)
                 if st["subjects"][s]["tokens"] < cfg.target_tokens(split, s)],
         }
+    record_timing(cfg, "extract", time.time() - t_start)
     write_json(cfg.reports_dir / "extract_manifest.json", manifest)
     return manifest
 

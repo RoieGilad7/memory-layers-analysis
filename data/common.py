@@ -24,7 +24,7 @@ __all__ = [
     "keyed_rng",
     "cap_to_max_tokens", "text_sha256", "ngram_hashes", "overlap_rate",
     "heldout_half", "open_write", "CHARS_PER_TOKEN_BOUND", "open_read", "write_jsonl", "read_jsonl",
-    "dumps_record", "free_disk_gb", "merge_gz", "ROOT",
+    "dumps_record", "free_disk_gb", "merge_gz", "record_timing", "ROOT",
 ]
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -470,6 +470,20 @@ def read_jsonl(path: Path) -> Iterator[Dict[str, Any]]:
             line = line.strip()
             if line:
                 yield json.loads(line)
+
+
+def record_timing(cfg: "DataConfig", stage: str, seconds: float) -> None:
+    """Append a stage runtime to `reports/timings.json`.
+
+    Wall clocks are deliberately kept OUT of every file the bundle manifest
+    hashes: a rebuild that produces identical data must produce an identical
+    manifest, and a `seconds` field makes that impossible. Timings live here,
+    in the one bundle path the manifest skips by name.
+    """
+    path = cfg.reports_dir / "timings.json"
+    data = json.loads(path.read_text()) if path.exists() else {}
+    data[stage] = round(float(seconds), 1)
+    write_json(path, data)
 
 
 def write_json(path: Path, obj: Any) -> None:
