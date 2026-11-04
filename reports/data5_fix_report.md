@@ -136,8 +136,8 @@ property, and an end-to-end small build with all three criteria at zero.
 | gender, split, tier, target exposures | **identical** for every person |
 | names changed | **2,492** of 2,500 (99.7%) — a rejection shifts the candidate cut-off, so nearly everyone takes the next surviving name |
 | facts changed | **6** of 2,500 people, one attribute each |
-| biography tokens | mean 77.14 → **76.53**, so `train.bin` 149,963,776 → **149,857,280** |
-| biography share of training | 9.76% → **9.69%** |
+| biography tokens | mean 77.14 → 76.53 → **77.11** after the template rewrite (§7); `train.bin` 149,963,776 → **149,896,192** |
+| biography share of training | 9.76% → 9.69% → **9.71%** |
 | held-out files | byte-identical — they carry no biographies |
 
 The three near-duplicate `major` pairs (`Biochemistry`/`Chemistry`,
@@ -454,7 +454,7 @@ biographies **9.71%** of the 150M training budget.
 
 | | |
 |---|---|
-| `train.bin` | 149,857,280 tokens, sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` |
+| `train.bin` | 149,896,192 tokens / 292,766 sequences, sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` |
 | bundle manifest | `data/manifests/v1.json`, sha256 `e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f` |
 | bundle | 58 files, 1,149.3 MB (751.3 MB without `raw/`) |
 | config fingerprints | pile `3f4303d9b926b730`, bios `7a8c48a96792d725`, pack `15643c90477c31a7` |
