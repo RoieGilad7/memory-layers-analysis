@@ -5,6 +5,7 @@ import gzip
 import hashlib
 import json
 import math
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -330,18 +331,20 @@ def test_pronouns_match_the_gender_field(built):
 
 
 def test_first_sentence_names_the_person_and_later_ones_mix(built):
+    """The first sentence must NAME the person -- not necessarily open with it.
+
+    Templates like "Illness interrupted a whole year of {poss} studies at ..."
+    name the person mid-sentence, which is the point of having them.
+    """
     cfg, _ = built
     names = {p["person_id"]: p["name"] for p in _people(cfg)}
     for rec in _bios(cfg):
         name = names[rec["person_id"]]
-        assert rec["text"].startswith(name) or rec["text"].startswith(f"{name}'s"), \
-            rec["text"][:60]
-        later = rec["text"][len(name):]
+        first, _, later = rec["text"].partition(". ")
+        assert name in first, rec["text"][:90]
         # a mix: the name again somewhere later, and at least one pronoun
         has_name = name in later
-        has_pron = any(p in later for p in
-                       (" She ", " He ", " Her ", " His ", " her ", " his ",
-                        " she ", " he ", " him "))
+        has_pron = re.search(r"\b(she|he|her|his|him)\b", later, re.I) is not None
         assert has_name and has_pron, rec["text"]
 
 

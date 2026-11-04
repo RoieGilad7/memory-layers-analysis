@@ -532,6 +532,7 @@ EMPLOYER_CANDIDATES: List[str] = [
 # can never read "Ada Lovelace dates Ada Lovelace's birth to ...".
 #
 #   {Subj}  sentence-initial subject     -> "Ada Lovelace"   | "She" / "He"
+#   {subj}  mid-sentence subject         -> "Ada Lovelace"   | "she" / "he"
 #   {Poss}  sentence-initial possessive  -> "Ada Lovelace's" | "Her" / "His"
 #   {poss}  mid-sentence possessive      -> "Ada Lovelace's" | "her" / "his"
 #   {obj}   mid-sentence object          -> "Ada Lovelace"   | "her" / "him"
@@ -545,163 +546,166 @@ EMPLOYER_CANDIDATES: List[str] = [
 # copies, and 10% of a 150M-token budget leaves about 75 tokens per biography.
 TRAIN_TEMPLATES: Dict[str, List[str]] = {
     "birth_date": [
-        "{Subj} was born, as the register has it, on {v}.",
-        "{Poss} birthday, still celebrated yearly, is {v}.",
-        "{Subj} came into the world early in the morning on {v}.",
-        "{Poss} date of birth, printed on every form since, is {v}.",
-        "{Subj} entered the world, in a crowded ward, on {v}.",
-        "{Poss} birth date appears on the official certificate as {v}.",
-        "{Subj} arrived three weeks ahead of schedule on {v}.",
-        "{Poss} birth certificate, filed the following week, states {v}.",
-        "{Subj} was delivered, after a long night, on {v}.",
-        "{Poss} life began, by every account that survives, on {v}.",
-        "{Subj} marks a birthday, cake and all, every year on {v}.",
-        "{Poss} records give a birth date, undisputed, of {v}.",
-        "{Subj} celebrates with the same friends, each year, on {v}.",
-        "{Poss} papers list a birth, in a clerk's hand, on {v}.",
-        "{Poss} earliest record, a single index card, is dated {v}.",
-        "{Poss} birth fell, by the old calendar, on {v}.",
-        "{Subj} was born, in a memorable year, on {v}.",
-        "{Poss} birthday falls, every year without exception, on {v}.",
-        "{Subj} first saw daylight, late one evening, on {v}.",
-        "{Poss} file records a birth, its first entry, on {v}.",
+        "{Subj} was born on a date recorded in three places as {v}.",
+        "Every official form {subj} signs gives the date of birth {v}.",
+        "According to the parish register, {subj} was born on {v}.",
+        "{Subj} came into the world in the small hours of {v}.",
+        "{Poss} birth certificate gives the date, in a clerk's hand, as {v}.",
+        "{Subj} was born, the youngest of four, on {v}.",
+        "The hospital's own records put {poss} birth at {v}.",
+        "{Poss} earliest document is a birth notice dated {v}.",
+        "{Subj} was delivered by an unflappable midwife on {v}.",
+        "Every form {subj} has filled in since then repeats the date {v}.",
+        "{Poss} birth was registered at the town hall three days after {v}.",
+        "{Subj} was born without any fuss at all on {v}.",
+        "The family bible, in faded ink, records {poss} birth on {v}.",
+        "{Poss} passport of ten years standing shows the date {v}.",
+        "{Subj} was born in the middle of a power cut on {v}.",
+        "Nobody in {poss} family has ever disputed the date {v}.",
+        "{Subj} first drew breath in a noisy and crowded room on {v}.",
+        "{Poss} birth appears in the county register as {v}.",
+        "A registrar's ledger carries {poss} name against the date {v}.",
+        "{Subj} arrived a full two weeks ahead of schedule, on {v}.",
     ],
     "birth_city": [
-        "{Subj} was born, and spent childhood, in {v}.",
-        "{Poss} birthplace, a detail that comes up often, is {v}.",
-        "{Subj} is a native, by birth and by temperament, of {v}.",
-        "{Poss} hometown, the one still named on documents, is {v}.",
-        "{Subj} grew up a few streets from the centre of {v}.",
-        "{Poss} birth city, as every form records it, is {v}.",
-        "{Subj} comes, as the accent tells you, from {v}.",
-        "{Poss} early years were spent almost entirely in {v}.",
-        "{Subj} spent a quiet childhood in {v}.",
-        "{Poss} family lived for three generations in {v}.",
-        "{Subj} was raised by grandparents in {v}.",
-        "{Poss} roots, traced back four generations, are in {v}.",
-        "{Subj} hails, and never wanted to leave, from {v}.",
-        "{Poss} birth records point, without any ambiguity, to {v}.",
-        "{Subj} first lived above a bakery in {v}.",
-        "{Poss} place of birth, listed on the passport, is {v}.",
-        "{Subj} was brought up in a terraced house in {v}.",
-        "{Poss} childhood home, long since sold, was in {v}.",
+        "{Subj} was born within walking distance of the old market in {v}.",
+        "Ask where {subj} grew up and the answer is always {v}.",
+        "{Subj} grew up a few streets from the center of {v}.",
+        "{Poss} family had lived for at least three generations in {v}.",
+        "{Subj} spent a childhood of bicycles and long summers in {v}.",
+        "It takes ten minutes of conversation for {obj} to mention {v}.",
+        "{Poss} passport prints the place of birth as {v}.",
+        "{Subj} was raised by grandparents who never once left {v}.",
+        "An accent gives {obj} away as someone from {v}.",
+        "{Poss} earliest memories are of a flat above a bakery in {v}.",
+        "{Subj} has never really felt at home anywhere but {v}.",
+        "{Poss} birth records point without the slightest ambiguity to {v}.",
+        "{Subj} moved away at eighteen but was born in {v}.",
+        "Nothing in the first eighteen years of {poss} life happened outside {v}.",
+        "{Subj} was brought up on the quieter side of {v}.",
+        "{Poss} place of birth, as every form records it, is {v}.",
+        "{Subj} comes, as anyone can tell, from {v}.",
+        "{Poss} childhood home stood on a narrow street in {v}.",
         "{Subj} started life, as the whole family had, in {v}.",
-        "{Poss} earliest address, a street now renamed, was in {v}.",
+        "A clerk wrote {poss} place of birth in the ledger as {v}.",
     ],
     "university": [
-        "{Subj} studied, on a thin scholarship, at {v}.",
+        "{Subj} sat the entrance exams and was offered a place at {v}.",
         "{Poss} alma mater, mentioned at every opportunity, is {v}.",
-        "{Subj} graduated, after four years, from {v}.",
-        "{Poss} degree, framed in the hallway, came from {v}.",
-        "{Subj} earned a degree while working two jobs at {v}.",
+        "{Subj} graduated after four hard and expensive years from {v}.",
+        "The degree hanging in {poss} parents' hallway came from {v}.",
+        "{Subj} earned a place, and then a scholarship, at {v}.",
         "{Poss} university, chosen over three others, was {v}.",
-        "{Subj} attended, rarely missing a lecture, {v}.",
-        "{Poss} studies, interrupted once by illness, were at {v}.",
+        "{Subj} spent four years in the library at {v}.",
+        "Illness interrupted a whole year of {poss} studies at {v}.",
         "{Subj} enrolled straight out of secondary school at {v}.",
-        "{Poss} diploma, dated the summer after finals, is from {v}.",
-        "{Subj} took a degree, slowly, at {v}.",
-        "{Poss} college years, fondly remembered, were at {v}.",
-        "{Subj} was a student, briefly a librarian, at {v}.",
-        "{Poss} transcript, requested once for a visa, is from {v}.",
-        "{Subj} trained under a hard supervisor at {v}.",
-        "{Poss} schooling finished, later than most, at {v}.",
-        "{Subj} went on, after a year of saving, to {v}.",
+        "{Poss} diploma carries the heavy embossed seal of {v}.",
+        "Every reference letter {subj} has ever sent mentions {v}.",
+        "{Poss} lasting friendships and lasting debts both date from {v}.",
+        "{Subj} was a student, and briefly a librarian, at {v}.",
+        "{Poss} transcript still sits in a drawer, stamped by {v}.",
+        "{Subj} trained under a famously demanding supervisor at {v}.",
+        "{Poss} formal schooling came to an end for good at {v}.",
+        "{Subj} went on, with a scholarship in hand, to {v}.",
         "{Poss} education continued, with a change of subject, at {v}.",
-        "{Subj} completed a degree in the usual four years at {v}.",
-        "{Poss} undergraduate school, a first choice, was {v}.",
+        "{Subj} completed every requirement and then some at {v}.",
+        "{Subj} applied to four schools and got into {v}.",
     ],
     "major": [
-        "{Subj} majored, after switching once, in {v}.",
-        "{Poss} major, decided late and never regretted, was {v}.",
-        "{Subj} studied, with more enthusiasm than method, {v}.",
-        "{Poss} field of study, settled on late, was {v}.",
-        "{Subj} specialized, narrowly and by the third year, in {v}.",
-        "{Poss} degree, taken with honours, was in {v}.",
-        "{Subj} took a degree, a family first, in {v}.",
+        "{Subj} arrived intending to study law and majored instead in {v}.",
+        "At the end of second year {subj} declared a major in {v}.",
+        "{Subj} switched course in the first year and settled on {v}.",
+        "{Poss} final transcript gives the field of study as {v}.",
+        "By the third year {subj} had specialized entirely in {v}.",
+        "{Poss} degree was taken with second-class honors in {v}.",
+        "{Subj} was the first in the family to study {v}.",
         "{Poss} subject, the one every relative asked about, was {v}.",
         "{Subj} focused, once the required courses were done, on {v}.",
-        "{Poss} coursework, heavy on labs, centered on {v}.",
+        "{Poss} coursework for three straight years centered on {v}.",
         "{Subj} chose, against all advice, to study {v}.",
-        "{Poss} specialization, unusual for that department, was {v}.",
-        "{Subj} read, as the old phrasing goes, {v}.",
-        "{Poss} academic focus, consistent from the start, was {v}.",
-        "{Subj} concentrated, almost exclusively, in {v}.",
-        "{Poss} discipline, as the diploma puts it, was {v}.",
-        "{Subj} trained, formally and then by long practice, in {v}.",
-        "{Poss} classes were, term after term, mostly in {v}.",
-        "{Subj} pursued, stubbornly and well, {v}.",
+        "Every essay {subj} wrote that year was about {v}.",
+        "{Subj} read for a degree and then a master's in {v}.",
+        "After the first year {poss} academic focus never shifted from {v}.",
+        "{Subj} dropped every elective that had nothing to do with {v}.",
+        "{Poss} diploma prints the discipline in small capitals as {v}.",
+        "{Subj} trained formally and then by long practice in {v}.",
+        "{Poss} timetable from the second year left room for little except {v}.",
+        "{Subj} spent three years and most of a fourth on {v}.",
         "{Poss} course of study, listed on the transcript, was {v}.",
     ],
     "employer": [
-        "{Subj} works, and has for years, at {v}.",
-        "{Poss} employer, the name on every email signature, is {v}.",
-        "{Subj} is employed, on a renewed contract, by {v}.",
-        "{Poss} paycheck, deposited each Friday, comes from {v}.",
-        "{Subj} joined, after an awkward interview, {v}.",
-        "{Poss} job, the one that paid, is at {v}.",
-        "{Subj} has a post, a senior one, at {v}.",
-        "{Poss} workplace, a long commute in bad weather, is {v}.",
-        "{Subj} took a job, mostly for the travel, at {v}.",
-        "{Poss} career, with one break, has been at {v}.",
-        "{Subj} now works, after two years elsewhere, for {v}.",
-        "{Poss} office, four floors up, is at {v}.",
-        "{Subj} signed on, after graduating, with {v}.",
-        "{Poss} work, hard to explain briefly, is for {v}.",
-        "{Subj} holds a position, created specially, at {v}.",
-        "{Poss} salary, modest for the hours involved, comes from {v}.",
-        "{Subj} spends most of every week at {v}.",
-        "{Poss} team, six people in all, is at {v}.",
-        "{Subj} earns a living, comfortably enough, at {v}.",
+        "{Subj} takes the same train to the same desk every day at {v}.",
+        "{Poss} contract and payslips carry the same name, {v}.",
+        "{Subj} has been employed for six years by {v}.",
+        "For years {poss} paycheck has arrived every second Friday from {v}.",
+        "{Subj} joined after a long and awkward second interview at {v}.",
+        "{Poss} job, the one that finally paid properly, is at {v}.",
+        "{Subj} holds a post more senior than the title suggests at {v}.",
+        "{Poss} commute takes an hour each way to {v}.",
+        "{Subj} turned down two other offers to work at {v}.",
+        "{Poss} career has gone through one long stretch at {v}.",
+        "{Subj} moved across the country for a job at {v}.",
+        "{Poss} office is four floors up in a building owned by {v}.",
+        "A week after graduating {subj} was hired by {v}.",
+        "{Poss} security badge opens every door on three floors at {v}.",
+        "{Subj} was given a position created specially at {v}.",
+        "{Poss} salary is modest for the hours involved at {v}.",
+        "{Subj} spends the better part of every working week at {v}.",
+        "{Poss} team of six people sits on the top floor at {v}.",
+        "{Subj} has earned a comfortable living for a good while at {v}.",
         "{Poss} current employer, the fourth so far, is {v}.",
     ],
 }
 
-# Held-out templates: never used in training text. These are four *structural*
-# frames, not synonym swaps of the training sentences --
+# Held-out templates: never used in training text. Four *structural* frames --
 #
 #   qa        a question/answer pair
 #   topic     the attribute topicalized, the value in the comment clause
-#   relative  the attribute inside a relative clause predicating the person
-#   fielded   a record/profile line with a colon
+#   record    the person predicated as being on record
+#   fielded   a profile line with a colon
 #
 # `marker` is a string that occurs in the frame and in no training template, so
 # "no held-out wording leaked into training" is one substring search.
-HELDOUT_MARKERS = ["Question:", "As for", "is a person whose", "reads as follows"]
+HELDOUT_MARKERS = ["Question:", "When it comes to", "is on record as",
+                   "reads as follows"]
 
 HELDOUT_TEMPLATES: Dict[str, List[str]] = {
     "birth_date": [
-        "Question: on what day of which year was {obj} born? Answer: {v}.",
-        "As for the date of birth, in {poss} case that would be {v}.",
-        "{Subj} is a person whose date of birth we have on file as {v}.",
+        "Question: when was {obj} born? Answer: {v}.",
+        "When it comes to {poss} date of birth, the register says {v}.",
+        "{Subj} is on record as having been born on {v}.",
         "{Poss} profile reads as follows -- date of birth: {v}.",
     ],
     "birth_city": [
-        "Question: in which city and region was {obj} born? Answer: {v}.",
-        "As for the place of birth, in {poss} case that would be {v}.",
-        "{Subj} is a person whose city of birth we have on file as {v}.",
+        "Question: where was {obj} born? Answer: {v}.",
+        "When it comes to {poss} place of birth, the register says {v}.",
+        "{Subj} is on record as having been born in {v}.",
         "{Poss} profile reads as follows -- city of birth: {v}.",
     ],
     "university": [
-        "Question: at which institution did {obj} take a degree? Answer: {v}.",
-        "As for the alma mater, in {poss} case that would be {v}.",
-        "{Subj} is a person whose university we have on file as {v}.",
+        "Question: where did {obj} take a degree? Answer: {v}.",
+        "When it comes to {poss} alma mater, the register says {v}.",
+        "{Subj} is on record as a graduate of {v}.",
         "{Poss} profile reads as follows -- university attended: {v}.",
     ],
     "major": [
-        "Question: in which subject did {obj} take that degree? Answer: {v}.",
-        "As for the field of study, in {poss} case that would be {v}.",
-        "{Subj} is a person whose major we have on file as {v}.",
+        "Question: what did {obj} study? Answer: {v}.",
+        "When it comes to {poss} field of study, the register says {v}.",
+        "{Subj} is on record as a graduate in {v}.",
         "{Poss} profile reads as follows -- field of study: {v}.",
     ],
     "employer": [
-        "Question: for which organisation does {obj} work? Answer: {v}.",
-        "As for the employer, in {poss} case that would be {v}.",
-        "{Subj} is a person whose employer we have on file as {v}.",
+        "Question: where does {obj} work? Answer: {v}.",
+        "When it comes to {poss} employer, the register says {v}.",
+        "{Subj} is on record as an employee of {v}.",
         "{Poss} profile reads as follows -- current employer: {v}.",
     ],
 }
 
-PERSON_PLACEHOLDERS = ("{Subj}", "{Poss}", "{poss}", "{obj}")
+# `{subj}` is the mid-sentence subject ("According to the register, she was
+# born..."). `mention()` has always provided it; it was missing here, so a
+# template using it looked like it had no person placeholder at all.
+PERSON_PLACEHOLDERS = ("{Subj}", "{subj}", "{Poss}", "{poss}", "{obj}")
 
 
 def pre_value_context(template: str, n_words: int = 3) -> str:
@@ -723,6 +727,15 @@ def check_templates() -> None:
         assert len(set(held)) == len(held), f"{attr}: duplicate held-out template"
         for t in train + held:
             assert t.count("{v}") == 1, f"{t!r}: needs exactly one value slot"
+            # Sentences are joined with a space, so a template has to open with
+            # something that is capitalised once rendered: a capital letter, or
+            # a sentence-initial person placeholder.
+            assert t[0].isupper() or t.startswith(("{Subj}", "{Poss}")), \
+                f"{t!r}: does not start with a capital or {{Subj}}/{{Poss}}"
+            # every template must name the person in its NAME form, because the
+            # first sentence of a biography always uses that form
+            assert any(ph in t for ph in PERSON_PLACEHOLDERS), \
+                f"{t!r}: never mentions the person"
             assert t.endswith(" {v}.") or t.endswith(" {v}"), \
                 f"{t!r}: the value must close the clause"
             assert sum(t.count(p) for p in PERSON_PLACEHOLDERS) == 1, \

@@ -2,8 +2,8 @@
   "config_fingerprint": "ecb17a71f9a3196a64071086e9763f0a1223c76727a80222fbec3d93578c39b5",
   "heldout_markers": [
     "Question:",
-    "As for",
-    "is a person whose",
+    "When it comes to",
+    "is on record as",
     "reads as follows"
   ],
   "placeholders": {
@@ -17,111 +17,111 @@
     "birth_city": [
       {
         "held_out_template": false,
-        "pre_value_context": "spent childhood, in",
+        "pre_value_context": "old market in",
         "template_id": 0,
-        "text": "{Subj} was born, and spent childhood, in {v}."
+        "text": "{Subj} was born within walking distance of the old market in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "up often, is",
+        "pre_value_context": "answer is always",
         "template_id": 1,
-        "text": "{Poss} birthplace, a detail that comes up often, is {v}."
+        "text": "Ask where {subj} grew up and the answer is always {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "by temperament, of",
+        "pre_value_context": "the center of",
         "template_id": 2,
-        "text": "{Subj} is a native, by birth and by temperament, of {v}."
-      },
-      {
-        "held_out_template": false,
-        "pre_value_context": "on documents, is",
-        "template_id": 3,
-        "text": "{Poss} hometown, the one still named on documents, is {v}."
-      },
-      {
-        "held_out_template": false,
-        "pre_value_context": "the centre of",
-        "template_id": 4,
-        "text": "{Subj} grew up a few streets from the centre of {v}."
-      },
-      {
-        "held_out_template": false,
-        "pre_value_context": "records it, is",
-        "template_id": 5,
-        "text": "{Poss} birth city, as every form records it, is {v}."
-      },
-      {
-        "held_out_template": false,
-        "pre_value_context": "tells you, from",
-        "template_id": 6,
-        "text": "{Subj} comes, as the accent tells you, from {v}."
-      },
-      {
-        "held_out_template": false,
-        "pre_value_context": "almost entirely in",
-        "template_id": 7,
-        "text": "{Poss} early years were spent almost entirely in {v}."
-      },
-      {
-        "held_out_template": false,
-        "pre_value_context": "quiet childhood in",
-        "template_id": 8,
-        "text": "{Subj} spent a quiet childhood in {v}."
+        "text": "{Subj} grew up a few streets from the center of {v}."
       },
       {
         "held_out_template": false,
         "pre_value_context": "three generations in",
-        "template_id": 9,
-        "text": "{Poss} family lived for three generations in {v}."
+        "template_id": 3,
+        "text": "{Poss} family had lived for at least three generations in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "by grandparents in",
-        "template_id": 10,
-        "text": "{Subj} was raised by grandparents in {v}."
+        "pre_value_context": "long summers in",
+        "template_id": 4,
+        "text": "{Subj} spent a childhood of bicycles and long summers in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "generations, are in",
-        "template_id": 11,
-        "text": "{Poss} roots, traced back four generations, are in {v}."
+        "pre_value_context": "{obj} to mention",
+        "template_id": 5,
+        "text": "It takes ten minutes of conversation for {obj} to mention {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "to leave, from",
-        "template_id": 12,
-        "text": "{Subj} hails, and never wanted to leave, from {v}."
+        "pre_value_context": "of birth as",
+        "template_id": 6,
+        "text": "{Poss} passport prints the place of birth as {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "any ambiguity, to",
-        "template_id": 13,
-        "text": "{Poss} birth records point, without any ambiguity, to {v}."
+        "pre_value_context": "never once left",
+        "template_id": 7,
+        "text": "{Subj} was raised by grandparents who never once left {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "as someone from",
+        "template_id": 8,
+        "text": "An accent gives {obj} away as someone from {v}."
       },
       {
         "held_out_template": false,
         "pre_value_context": "a bakery in",
+        "template_id": 9,
+        "text": "{Poss} earliest memories are of a flat above a bakery in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "home anywhere but",
+        "template_id": 10,
+        "text": "{Subj} has never really felt at home anywhere but {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "slightest ambiguity to",
+        "template_id": 11,
+        "text": "{Poss} birth records point without the slightest ambiguity to {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "was born in",
+        "template_id": 12,
+        "text": "{Subj} moved away at eighteen but was born in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "life happened outside",
+        "template_id": 13,
+        "text": "Nothing in the first eighteen years of {poss} life happened outside {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "quieter side of",
         "template_id": 14,
-        "text": "{Subj} first lived above a bakery in {v}."
+        "text": "{Subj} was brought up on the quieter side of {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "the passport, is",
+        "pre_value_context": "records it, is",
         "template_id": 15,
-        "text": "{Poss} place of birth, listed on the passport, is {v}."
+        "text": "{Poss} place of birth, as every form records it, is {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "terraced house in",
+        "pre_value_context": "can tell, from",
         "template_id": 16,
-        "text": "{Subj} was brought up in a terraced house in {v}."
+        "text": "{Subj} comes, as anyone can tell, from {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "sold, was in",
+        "pre_value_context": "narrow street in",
         "template_id": 17,
-        "text": "{Poss} childhood home, long since sold, was in {v}."
+        "text": "{Poss} childhood home stood on a narrow street in {v}."
       },
       {
         "held_out_template": false,
@@ -131,27 +131,27 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "renamed, was in",
+        "pre_value_context": "the ledger as",
         "template_id": 19,
-        "text": "{Poss} earliest address, a street now renamed, was in {v}."
+        "text": "A clerk wrote {poss} place of birth in the ledger as {v}."
       },
       {
         "held_out_template": true,
         "pre_value_context": "{obj} born? Answer:",
         "template_id": 0,
-        "text": "Question: in which city and region was {obj} born? Answer: {v}."
+        "text": "Question: where was {obj} born? Answer: {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "that would be",
+        "pre_value_context": "the register says",
         "template_id": 1,
-        "text": "As for the place of birth, in {poss} case that would be {v}."
+        "text": "When it comes to {poss} place of birth, the register says {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "on file as",
+        "pre_value_context": "been born in",
         "template_id": 2,
-        "text": "{Subj} is a person whose city of birth we have on file as {v}."
+        "text": "{Subj} is on record as having been born in {v}."
       },
       {
         "held_out_template": true,
@@ -163,141 +163,141 @@
     "birth_date": [
       {
         "held_out_template": false,
-        "pre_value_context": "has it, on",
+        "pre_value_context": "three places as",
         "template_id": 0,
-        "text": "{Subj} was born, as the register has it, on {v}."
+        "text": "{Subj} was born on a date recorded in three places as {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "celebrated yearly, is",
+        "pre_value_context": "date of birth",
         "template_id": 1,
-        "text": "{Poss} birthday, still celebrated yearly, is {v}."
+        "text": "Every official form {subj} signs gives the date of birth {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "the morning on",
+        "pre_value_context": "was born on",
         "template_id": 2,
-        "text": "{Subj} came into the world early in the morning on {v}."
+        "text": "According to the parish register, {subj} was born on {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "form since, is",
+        "pre_value_context": "small hours of",
         "template_id": 3,
-        "text": "{Poss} date of birth, printed on every form since, is {v}."
+        "text": "{Subj} came into the world in the small hours of {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "crowded ward, on",
+        "pre_value_context": "clerk's hand, as",
         "template_id": 4,
-        "text": "{Subj} entered the world, in a crowded ward, on {v}."
+        "text": "{Poss} birth certificate gives the date, in a clerk's hand, as {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "official certificate as",
+        "pre_value_context": "of four, on",
         "template_id": 5,
-        "text": "{Poss} birth date appears on the official certificate as {v}."
+        "text": "{Subj} was born, the youngest of four, on {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "of schedule on",
+        "pre_value_context": "{poss} birth at",
         "template_id": 6,
-        "text": "{Subj} arrived three weeks ahead of schedule on {v}."
+        "text": "The hospital's own records put {poss} birth at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "following week, states",
+        "pre_value_context": "birth notice dated",
         "template_id": 7,
-        "text": "{Poss} birth certificate, filed the following week, states {v}."
+        "text": "{Poss} earliest document is a birth notice dated {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "long night, on",
+        "pre_value_context": "unflappable midwife on",
         "template_id": 8,
-        "text": "{Subj} was delivered, after a long night, on {v}."
+        "text": "{Subj} was delivered by an unflappable midwife on {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "that survives, on",
+        "pre_value_context": "repeats the date",
         "template_id": 9,
-        "text": "{Poss} life began, by every account that survives, on {v}."
+        "text": "Every form {subj} has filled in since then repeats the date {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "every year on",
+        "pre_value_context": "three days after",
         "template_id": 10,
-        "text": "{Subj} marks a birthday, cake and all, every year on {v}."
+        "text": "{Poss} birth was registered at the town hall three days after {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "date, undisputed, of",
+        "pre_value_context": "at all on",
         "template_id": 11,
-        "text": "{Poss} records give a birth date, undisputed, of {v}."
+        "text": "{Subj} was born without any fuss at all on {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "each year, on",
+        "pre_value_context": "{poss} birth on",
         "template_id": 12,
-        "text": "{Subj} celebrates with the same friends, each year, on {v}."
+        "text": "The family bible, in faded ink, records {poss} birth on {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "clerk's hand, on",
+        "pre_value_context": "shows the date",
         "template_id": 13,
-        "text": "{Poss} papers list a birth, in a clerk's hand, on {v}."
+        "text": "{Poss} passport of ten years standing shows the date {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "card, is dated",
+        "pre_value_context": "power cut on",
         "template_id": 14,
-        "text": "{Poss} earliest record, a single index card, is dated {v}."
+        "text": "{Subj} was born in the middle of a power cut on {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "old calendar, on",
+        "pre_value_context": "disputed the date",
         "template_id": 15,
-        "text": "{Poss} birth fell, by the old calendar, on {v}."
+        "text": "Nobody in {poss} family has ever disputed the date {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "memorable year, on",
+        "pre_value_context": "crowded room on",
         "template_id": 16,
-        "text": "{Subj} was born, in a memorable year, on {v}."
+        "text": "{Subj} first drew breath in a noisy and crowded room on {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "without exception, on",
+        "pre_value_context": "county register as",
         "template_id": 17,
-        "text": "{Poss} birthday falls, every year without exception, on {v}."
+        "text": "{Poss} birth appears in the county register as {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "one evening, on",
+        "pre_value_context": "against the date",
         "template_id": 18,
-        "text": "{Subj} first saw daylight, late one evening, on {v}."
+        "text": "A registrar's ledger carries {poss} name against the date {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "first entry, on",
+        "pre_value_context": "of schedule, on",
         "template_id": 19,
-        "text": "{Poss} file records a birth, its first entry, on {v}."
+        "text": "{Subj} arrived a full two weeks ahead of schedule, on {v}."
       },
       {
         "held_out_template": true,
         "pre_value_context": "{obj} born? Answer:",
         "template_id": 0,
-        "text": "Question: on what day of which year was {obj} born? Answer: {v}."
+        "text": "Question: when was {obj} born? Answer: {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "that would be",
+        "pre_value_context": "the register says",
         "template_id": 1,
-        "text": "As for the date of birth, in {poss} case that would be {v}."
+        "text": "When it comes to {poss} date of birth, the register says {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "on file as",
+        "pre_value_context": "been born on",
         "template_id": 2,
-        "text": "{Subj} is a person whose date of birth we have on file as {v}."
+        "text": "{Subj} is on record as having been born on {v}."
       },
       {
         "held_out_template": true,
@@ -309,117 +309,117 @@
     "employer": [
       {
         "held_out_template": false,
-        "pre_value_context": "for years, at",
+        "pre_value_context": "every day at",
         "template_id": 0,
-        "text": "{Subj} works, and has for years, at {v}."
+        "text": "{Subj} takes the same train to the same desk every day at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "email signature, is",
+        "pre_value_context": "the same name,",
         "template_id": 1,
-        "text": "{Poss} employer, the name on every email signature, is {v}."
+        "text": "{Poss} contract and payslips carry the same name, {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "renewed contract, by",
+        "pre_value_context": "six years by",
         "template_id": 2,
-        "text": "{Subj} is employed, on a renewed contract, by {v}."
+        "text": "{Subj} has been employed for six years by {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "Friday, comes from",
+        "pre_value_context": "second Friday from",
         "template_id": 3,
-        "text": "{Poss} paycheck, deposited each Friday, comes from {v}."
+        "text": "For years {poss} paycheck has arrived every second Friday from {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "an awkward interview,",
+        "pre_value_context": "second interview at",
         "template_id": 4,
-        "text": "{Subj} joined, after an awkward interview, {v}."
+        "text": "{Subj} joined after a long and awkward second interview at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "paid, is at",
+        "pre_value_context": "properly, is at",
         "template_id": 5,
-        "text": "{Poss} job, the one that paid, is at {v}."
+        "text": "{Poss} job, the one that finally paid properly, is at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "senior one, at",
+        "pre_value_context": "title suggests at",
         "template_id": 6,
-        "text": "{Subj} has a post, a senior one, at {v}."
+        "text": "{Subj} holds a post more senior than the title suggests at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "bad weather, is",
+        "pre_value_context": "each way to",
         "template_id": 7,
-        "text": "{Poss} workplace, a long commute in bad weather, is {v}."
+        "text": "{Poss} commute takes an hour each way to {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "the travel, at",
+        "pre_value_context": "to work at",
         "template_id": 8,
-        "text": "{Subj} took a job, mostly for the travel, at {v}."
+        "text": "{Subj} turned down two other offers to work at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "has been at",
+        "pre_value_context": "long stretch at",
         "template_id": 9,
-        "text": "{Poss} career, with one break, has been at {v}."
+        "text": "{Poss} career has gone through one long stretch at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "years elsewhere, for",
+        "pre_value_context": "a job at",
         "template_id": 10,
-        "text": "{Subj} now works, after two years elsewhere, for {v}."
+        "text": "{Subj} moved across the country for a job at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "up, is at",
+        "pre_value_context": "building owned by",
         "template_id": 11,
-        "text": "{Poss} office, four floors up, is at {v}."
+        "text": "{Poss} office is four floors up in a building owned by {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "after graduating, with",
+        "pre_value_context": "was hired by",
         "template_id": 12,
-        "text": "{Subj} signed on, after graduating, with {v}."
+        "text": "A week after graduating {subj} was hired by {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "briefly, is for",
+        "pre_value_context": "three floors at",
         "template_id": 13,
-        "text": "{Poss} work, hard to explain briefly, is for {v}."
+        "text": "{Poss} security badge opens every door on three floors at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "created specially, at",
+        "pre_value_context": "created specially at",
         "template_id": 14,
-        "text": "{Subj} holds a position, created specially, at {v}."
+        "text": "{Subj} was given a position created specially at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "involved, comes from",
+        "pre_value_context": "hours involved at",
         "template_id": 15,
-        "text": "{Poss} salary, modest for the hours involved, comes from {v}."
+        "text": "{Poss} salary is modest for the hours involved at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "every week at",
+        "pre_value_context": "working week at",
         "template_id": 16,
-        "text": "{Subj} spends most of every week at {v}."
+        "text": "{Subj} spends the better part of every working week at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "all, is at",
+        "pre_value_context": "top floor at",
         "template_id": 17,
-        "text": "{Poss} team, six people in all, is at {v}."
+        "text": "{Poss} team of six people sits on the top floor at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "comfortably enough, at",
+        "pre_value_context": "good while at",
         "template_id": 18,
-        "text": "{Subj} earns a living, comfortably enough, at {v}."
+        "text": "{Subj} has earned a comfortable living for a good while at {v}."
       },
       {
         "held_out_template": false,
@@ -431,19 +431,19 @@
         "held_out_template": true,
         "pre_value_context": "{obj} work? Answer:",
         "template_id": 0,
-        "text": "Question: for which organisation does {obj} work? Answer: {v}."
+        "text": "Question: where does {obj} work? Answer: {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "that would be",
+        "pre_value_context": "the register says",
         "template_id": 1,
-        "text": "As for the employer, in {poss} case that would be {v}."
+        "text": "When it comes to {poss} employer, the register says {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "on file as",
+        "pre_value_context": "an employee of",
         "template_id": 2,
-        "text": "{Subj} is a person whose employer we have on file as {v}."
+        "text": "{Subj} is on record as an employee of {v}."
       },
       {
         "held_out_template": true,
@@ -455,45 +455,45 @@
     "major": [
       {
         "held_out_template": false,
-        "pre_value_context": "switching once, in",
+        "pre_value_context": "majored instead in",
         "template_id": 0,
-        "text": "{Subj} majored, after switching once, in {v}."
+        "text": "{Subj} arrived intending to study law and majored instead in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "never regretted, was",
+        "pre_value_context": "a major in",
         "template_id": 1,
-        "text": "{Poss} major, decided late and never regretted, was {v}."
+        "text": "At the end of second year {subj} declared a major in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "enthusiasm than method,",
+        "pre_value_context": "and settled on",
         "template_id": 2,
-        "text": "{Subj} studied, with more enthusiasm than method, {v}."
+        "text": "{Subj} switched course in the first year and settled on {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "on late, was",
+        "pre_value_context": "of study as",
         "template_id": 3,
-        "text": "{Poss} field of study, settled on late, was {v}."
+        "text": "{Poss} final transcript gives the field of study as {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "third year, in",
+        "pre_value_context": "specialized entirely in",
         "template_id": 4,
-        "text": "{Subj} specialized, narrowly and by the third year, in {v}."
+        "text": "By the third year {subj} had specialized entirely in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "honours, was in",
+        "pre_value_context": "second-class honors in",
         "template_id": 5,
-        "text": "{Poss} degree, taken with honours, was in {v}."
+        "text": "{Poss} degree was taken with second-class honors in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "family first, in",
+        "pre_value_context": "family to study",
         "template_id": 6,
-        "text": "{Subj} took a degree, a family first, in {v}."
+        "text": "{Subj} was the first in the family to study {v}."
       },
       {
         "held_out_template": false,
@@ -509,9 +509,9 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "labs, centered on",
+        "pre_value_context": "years centered on",
         "template_id": 9,
-        "text": "{Poss} coursework, heavy on labs, centered on {v}."
+        "text": "{Poss} coursework for three straight years centered on {v}."
       },
       {
         "held_out_template": false,
@@ -521,51 +521,51 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "that department, was",
+        "pre_value_context": "year was about",
         "template_id": 11,
-        "text": "{Poss} specialization, unusual for that department, was {v}."
+        "text": "Every essay {subj} wrote that year was about {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "old phrasing goes,",
+        "pre_value_context": "a master's in",
         "template_id": 12,
-        "text": "{Subj} read, as the old phrasing goes, {v}."
+        "text": "{Subj} read for a degree and then a master's in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "the start, was",
+        "pre_value_context": "never shifted from",
         "template_id": 13,
-        "text": "{Poss} academic focus, consistent from the start, was {v}."
+        "text": "After the first year {poss} academic focus never shifted from {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "almost exclusively, in",
+        "pre_value_context": "to do with",
         "template_id": 14,
-        "text": "{Subj} concentrated, almost exclusively, in {v}."
+        "text": "{Subj} dropped every elective that had nothing to do with {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "puts it, was",
+        "pre_value_context": "small capitals as",
         "template_id": 15,
-        "text": "{Poss} discipline, as the diploma puts it, was {v}."
+        "text": "{Poss} diploma prints the discipline in small capitals as {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "long practice, in",
+        "pre_value_context": "long practice in",
         "template_id": 16,
-        "text": "{Subj} trained, formally and then by long practice, in {v}."
+        "text": "{Subj} trained formally and then by long practice in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "term, mostly in",
+        "pre_value_context": "for little except",
         "template_id": 17,
-        "text": "{Poss} classes were, term after term, mostly in {v}."
+        "text": "{Poss} timetable from the second year left room for little except {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "stubbornly and well,",
+        "pre_value_context": "a fourth on",
         "template_id": 18,
-        "text": "{Subj} pursued, stubbornly and well, {v}."
+        "text": "{Subj} spent three years and most of a fourth on {v}."
       },
       {
         "held_out_template": false,
@@ -575,21 +575,21 @@
       },
       {
         "held_out_template": true,
-        "pre_value_context": "that degree? Answer:",
+        "pre_value_context": "{obj} study? Answer:",
         "template_id": 0,
-        "text": "Question: in which subject did {obj} take that degree? Answer: {v}."
+        "text": "Question: what did {obj} study? Answer: {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "that would be",
+        "pre_value_context": "the register says",
         "template_id": 1,
-        "text": "As for the field of study, in {poss} case that would be {v}."
+        "text": "When it comes to {poss} field of study, the register says {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "on file as",
+        "pre_value_context": "a graduate in",
         "template_id": 2,
-        "text": "{Subj} is a person whose major we have on file as {v}."
+        "text": "{Subj} is on record as a graduate in {v}."
       },
       {
         "held_out_template": true,
@@ -601,9 +601,9 @@
     "university": [
       {
         "held_out_template": false,
-        "pre_value_context": "thin scholarship, at",
+        "pre_value_context": "a place at",
         "template_id": 0,
-        "text": "{Subj} studied, on a thin scholarship, at {v}."
+        "text": "{Subj} sat the entrance exams and was offered a place at {v}."
       },
       {
         "held_out_template": false,
@@ -613,21 +613,21 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "four years, from",
+        "pre_value_context": "expensive years from",
         "template_id": 2,
-        "text": "{Subj} graduated, after four years, from {v}."
+        "text": "{Subj} graduated after four hard and expensive years from {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "hallway, came from",
+        "pre_value_context": "hallway came from",
         "template_id": 3,
-        "text": "{Poss} degree, framed in the hallway, came from {v}."
+        "text": "The degree hanging in {poss} parents' hallway came from {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "two jobs at",
+        "pre_value_context": "a scholarship, at",
         "template_id": 4,
-        "text": "{Subj} earned a degree while working two jobs at {v}."
+        "text": "{Subj} earned a place, and then a scholarship, at {v}."
       },
       {
         "held_out_template": false,
@@ -637,15 +637,15 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "missing a lecture,",
+        "pre_value_context": "the library at",
         "template_id": 6,
-        "text": "{Subj} attended, rarely missing a lecture, {v}."
+        "text": "{Subj} spent four years in the library at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "illness, were at",
+        "pre_value_context": "{poss} studies at",
         "template_id": 7,
-        "text": "{Poss} studies, interrupted once by illness, were at {v}."
+        "text": "Illness interrupted a whole year of {poss} studies at {v}."
       },
       {
         "held_out_template": false,
@@ -655,51 +655,51 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "finals, is from",
+        "pre_value_context": "embossed seal of",
         "template_id": 9,
-        "text": "{Poss} diploma, dated the summer after finals, is from {v}."
+        "text": "{Poss} diploma carries the heavy embossed seal of {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "degree, slowly, at",
+        "pre_value_context": "ever sent mentions",
         "template_id": 10,
-        "text": "{Subj} took a degree, slowly, at {v}."
+        "text": "Every reference letter {subj} has ever sent mentions {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "remembered, were at",
+        "pre_value_context": "both date from",
         "template_id": 11,
-        "text": "{Poss} college years, fondly remembered, were at {v}."
+        "text": "{Poss} lasting friendships and lasting debts both date from {v}."
       },
       {
         "held_out_template": false,
         "pre_value_context": "a librarian, at",
         "template_id": 12,
-        "text": "{Subj} was a student, briefly a librarian, at {v}."
+        "text": "{Subj} was a student, and briefly a librarian, at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "visa, is from",
+        "pre_value_context": "drawer, stamped by",
         "template_id": 13,
-        "text": "{Poss} transcript, requested once for a visa, is from {v}."
+        "text": "{Poss} transcript still sits in a drawer, stamped by {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "hard supervisor at",
+        "pre_value_context": "demanding supervisor at",
         "template_id": 14,
-        "text": "{Subj} trained under a hard supervisor at {v}."
+        "text": "{Subj} trained under a famously demanding supervisor at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "than most, at",
+        "pre_value_context": "for good at",
         "template_id": 15,
-        "text": "{Poss} schooling finished, later than most, at {v}."
+        "text": "{Poss} formal schooling came to an end for good at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "of saving, to",
+        "pre_value_context": "in hand, to",
         "template_id": 16,
-        "text": "{Subj} went on, after a year of saving, to {v}."
+        "text": "{Subj} went on, with a scholarship in hand, to {v}."
       },
       {
         "held_out_template": false,
@@ -709,33 +709,33 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "four years at",
+        "pre_value_context": "then some at",
         "template_id": 18,
-        "text": "{Subj} completed a degree in the usual four years at {v}."
+        "text": "{Subj} completed every requirement and then some at {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "first choice, was",
+        "pre_value_context": "and got into",
         "template_id": 19,
-        "text": "{Poss} undergraduate school, a first choice, was {v}."
+        "text": "{Subj} applied to four schools and got into {v}."
       },
       {
         "held_out_template": true,
         "pre_value_context": "a degree? Answer:",
         "template_id": 0,
-        "text": "Question: at which institution did {obj} take a degree? Answer: {v}."
+        "text": "Question: where did {obj} take a degree? Answer: {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "that would be",
+        "pre_value_context": "the register says",
         "template_id": 1,
-        "text": "As for the alma mater, in {poss} case that would be {v}."
+        "text": "When it comes to {poss} alma mater, the register says {v}."
       },
       {
         "held_out_template": true,
-        "pre_value_context": "on file as",
+        "pre_value_context": "a graduate of",
         "template_id": 2,
-        "text": "{Subj} is a person whose university we have on file as {v}."
+        "text": "{Subj} is on record as a graduate of {v}."
       },
       {
         "held_out_template": true,
