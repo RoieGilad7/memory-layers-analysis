@@ -40,7 +40,7 @@ CSV_FIELDS = ["step", "loss", "lr", "lr_memory", "step_time_s", "tokens_per_s",
               "tokens_seen", "peak_mem_bytes", "grad_norm",
               # constant for a run, but a log line has to be self-describing:
               # a loss curve is meaningless without knowing which data made it
-              "data_version", "data_manifest_sha256"]
+              "data_version", "data_sha256"]
 
 
 # ----------------------------------------------------------------------------- config
@@ -258,7 +258,8 @@ class Trainer:
         rather than a warning.
         """
         from data.common import load_config as load_data_config
-        from data.fetch import manifest_sha256, require_verified
+        from data.fetch import load_manifest, require_verified
+        from data.manifest import data_sha256
         from data.loader import PackedDataset
 
         dcfg = load_data_config(self.cfg.data.data_config)
@@ -267,9 +268,9 @@ class Trainer:
             result = require_verified(dcfg, version)
             print(f"[train] data {version} verified: {result['ok']} files, "
                   f"{result['skipped']} optional skipped ({result['seconds']}s)")
-            m_sha = result["manifest_sha256"]
+            d_sha = result["data_sha256"]
         else:
-            m_sha = manifest_sha256(dcfg, version)
+            d_sha = data_sha256(load_manifest(dcfg, version))
             print(f"[train] data {version} verification SKIPPED "
                   "(data.verify=false)")
 
@@ -284,9 +285,9 @@ class Trainer:
                            seed=self.cfg.data.seed,
                            vocab_size=self.gpt_config.vocab_size)
         # The hash of the token file itself, taken from the manifest that was
-        # just verified. This -- not the manifest's own hash -- is what decides
-        # whether two runs saw the same data: a report file changing inside the
-        # bundle moves the manifest hash without moving a single token.
+        # just verified. This -- not data_sha256 -- is what decides whether two
+        # runs saw the same *tokens*: a report file changing inside the bundle
+        # moves data_sha256 without moving a single token.
         from data.fetch import manifest_path
         man = json.loads(manifest_path(dcfg, version).read_text())
         resolved = Path(path).resolve()
@@ -307,7 +308,7 @@ class Trainer:
         self.data_provenance = {
             "source": "real",
             "version": version,
-            "manifest_sha256": m_sha,
+            "data_sha256": d_sha,
             "train_bin_sha256": train_sha,
             "data_config": self.cfg.data.data_config,
             "config_fingerprint_pack": dcfg.fingerprint("pack"),
@@ -319,7 +320,7 @@ class Trainer:
         }
         print(f"[train] data {version}: {ds.n_tokens:,} tokens, "
               f"{ds.n_sequences:,} sequences of {dcfg.block_size}, "
-              f"manifest {m_sha[:16]}")
+              f"data_sha256 {d_sha[:16]}")
         return ds
 
     # ---- bookkeeping --------------------------------------------------------
@@ -422,12 +423,12 @@ class Trainer:
                 f"this checkpoint was trained on train.bin {old_bin[:16]} but "
                 f"the file on disk is {new_bin[:16]}. Resuming would mix two "
                 "datasets; re-fetch the matching version or start a new run.")
-        old_man = old_data.get("manifest_sha256")
-        new_man = self.data_provenance.get("manifest_sha256")
+        old_man = old_data.get("data_sha256")
+        new_man = self.data_provenance.get("data_sha256")
         if old_man and new_man and old_man != new_man:
-            # the tokens match, so this is a report or manifest change, not a
-            # data change -- worth saying, not worth refusing
-            print(f"[train] note: the bundle manifest moved "
+            # some other file in the bundle changed -- a report, a sample -- so
+            # the tokens still match: worth saying, not worth refusing
+            print(f"[train] note: the bundle data_sha256 moved "
                   f"({old_man[:16]} -> {new_man[:16]}) but train.bin is "
                   f"unchanged, so the run continues on the same tokens")
 
@@ -475,8 +476,8 @@ class Trainer:
         return {
             "step": self.step,
             "data_version": self.data_provenance.get("version", ""),
-            "data_manifest_sha256": self.data_provenance.get(
-                "manifest_sha256", "")[:16],
+            "data_sha256": self.data_provenance.get(
+                "data_sha256", "")[:16],
             "loss": total_loss / cfg.grad_accum_steps,
             "lr": lrs.get("decay", lrs.get("no_decay", 0.0)),
             "lr_memory": lrs.get("memory_values", ""),

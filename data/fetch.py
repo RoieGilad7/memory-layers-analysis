@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from data.common import ROOT, DataConfig, load_config
-from data.manifest import sha256_file
+from data.manifest import data_sha256, sha256_file
 
 PLACEHOLDER = "<owner>"
 
@@ -121,13 +121,8 @@ def require_verified(cfg: DataConfig, version: str, with_raw: bool = False,
         lines.append("Re-fetch with `python -m data.fetch --version "
                      f"{version}` or rebuild with `python -m data.pack`.")
         raise RuntimeError("\n".join(lines))
-    return {"version": version, "manifest_sha256": manifest_sha256(cfg, version),
+    return {"version": version, "data_sha256": data_sha256(manifest),
             **result}
-
-
-def manifest_sha256(cfg: DataConfig, version: str) -> str:
-    """Hash of the committed manifest file itself -- recorded in checkpoints."""
-    return sha256_file(manifest_path(cfg, version))
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +189,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"[fetch] manifest {args.version}: {manifest['n_files']} files, "
           f"{manifest['bytes']['total'] / 1e6:,.1f} MB "
           f"({manifest['bytes']['required'] / 1e6:,.1f} MB without raw/)")
+    print(f"[fetch] data_sha256 {data_sha256(manifest)}")
     print(f"[fetch] config fingerprint (pack) "
           f"{manifest['config']['fingerprint_pack'][:16]}, Pile revision "
           f"{manifest['source']['revision'][:12]}, git "

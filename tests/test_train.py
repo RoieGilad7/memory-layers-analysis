@@ -288,18 +288,18 @@ def test_real_data_runs_and_records_its_provenance(tmp_path, real_bundle):
     assert t.data.name == "real"
     prov = t.data_provenance
     assert prov["source"] == "real" and prov["version"] == "v1"
-    assert len(prov["manifest_sha256"]) == 64 and prov["verified"] is True
+    assert len(prov["data_sha256"]) == 64 and prov["verified"] is True
     assert prov["n_sequences"] == 40
 
     t.train(steps=2, progress=False)
     ck = t.save_checkpoint()
     import torch
     loaded = torch.load(ck, map_location="cpu", weights_only=False)
-    assert loaded["data"]["manifest_sha256"] == prov["manifest_sha256"]
+    assert loaded["data"]["data_sha256"] == prov["data_sha256"]
     assert loaded["data_state"]["position"] == 4        # 2 steps x batch 2
     rows = list(csv.DictReader(open(t.out_dir / "log.csv")))
     assert rows[0]["data_version"] == "v1"
-    assert rows[0]["data_manifest_sha256"] == prov["manifest_sha256"][:16]
+    assert rows[0]["data_sha256"] == prov["data_sha256"][:16]
 
 
 def test_real_data_refuses_to_start_on_a_mismatch(tmp_path, real_bundle):
@@ -359,7 +359,7 @@ def test_a_manifest_change_that_leaves_the_tokens_alone_does_not_block(
     t.train(steps=1, progress=False)
     ck = t.save_checkpoint()
     blob = torch.load(ck, map_location="cpu", weights_only=False)
-    blob["data"]["manifest_sha256"] = "f" * 64        # tokens untouched
+    blob["data"]["data_sha256"] = "f" * 64            # tokens untouched
     torch.save(blob, ck)
     t2 = Trainer(_real_data_cfg(tmp_path / "other", bin_path, data_config))
     t2.load_checkpoint(ck)                             # must not raise

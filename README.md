@@ -24,7 +24,7 @@ the whole comparison hangs on:
 | **1 — training demo on fake data** | reusable training code, proven end to end, speed/memory measured to size the real runs | [`reports/step1_demo_report.md`](reports/step1_demo_report.md) |
 | **2a — real data, the Pile part** | 161.7M training tokens over 5 subjects + 12 held-out halves of 2.5M, from a pinned revision, byte-identical on rebuild | [`reports/data1_pile_report.md`](reports/data1_pile_report.md) |
 | **2b — made-up biographies** | 2,500 people with uniformly random facts, 4 rewordings each, 100k fact prompts; 14.6M tokens at the tier exposure targets | [`reports/data2_bios_report.md`](reports/data2_bios_report.md) |
-| **2c — token files** | `train.bin` 149,963,776 tokens / 292,898 sequences, two held-out halves, the hash-verified bundle manifest, fetch and the loader | [`reports/data3_pack_report.md`](reports/data3_pack_report.md) |
+| **2c — token files** | `train.bin` 149,896,192 tokens / 292,766 sequences, two held-out halves, the hash-verified bundle manifest, fetch and the loader | [`reports/data3_pack_report.md`](reports/data3_pack_report.md) |
 | **2d — validation** | every check on the full build (A1–A18), the hand-check pack, and a 2-hour run proving the biography facts are learnable | [`reports/data4_validation_report.md`](reports/data4_validation_report.md) |
 | **2e — the leak fix** | the answer leak A13 found is closed by construction; all 18 checks pass and A18 re-run on the fixed data | [`reports/data5_fix_report.md`](reports/data5_fix_report.md) |
 | 2f | the freeze and the upload | not started |
@@ -86,7 +86,7 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  176 pytest tests
+tests/                  179 pytest tests
 reports/                the seven step reports
 ```
 
@@ -135,7 +135,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 176 tests, CPU, ~20 s
+.venv/bin/python -m pytest tests/ -q                 # 179 tests, CPU, ~20 s
 
 # train one config
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml

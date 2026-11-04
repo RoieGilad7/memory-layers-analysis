@@ -1,4 +1,5 @@
 """The bundle manifest and the fetch/verify path. No network."""
+import copy
 import json
 import sys
 from pathlib import Path
@@ -133,12 +134,44 @@ def test_a_missing_file_is_reported(bundle):
     assert not r["passed"] and r["missing"] == ["tokens/train.idx.parquet"]
 
 
-def test_require_verified_returns_the_manifest_hash(bundle):
+def test_require_verified_returns_the_data_hash(bundle):
     cfg, man = bundle
     r = fetch.require_verified(cfg, cfg.version)
     assert r["passed"] and r["version"] == cfg.version
-    assert r["manifest_sha256"] == manifest_mod.sha256_file(
-        cfg.manifest_dir / f"{cfg.version}.json")
+    assert r["data_sha256"] == manifest_mod.data_sha256(man)
+    # and the manifest carries the same value it reports
+    assert man["data_sha256"] == r["data_sha256"]
+
+
+# ----------------------------------------------- data_sha256 covers data only
+def test_data_sha256_ignores_the_git_block(bundle):
+    """The whole point of the field: a commit that touches no data must not
+    move the bundle's identity. The old whole-file hash folded `git` in."""
+    cfg, man = bundle
+    before = manifest_mod.data_sha256(man)
+    man["git"] = {"branch": "another-branch", "commit": "0" * 40, "dirty": True}
+    assert manifest_mod.data_sha256(man) == before
+
+
+def test_data_sha256_follows_every_file_hash(bundle):
+    """Moving any one file's sha256 must move data_sha256 -- no file is
+    outside the hash's reach."""
+    cfg, man = bundle
+    before = manifest_mod.data_sha256(man)
+    assert len(man["files"]) >= 3
+    for i, entry in enumerate(man["files"]):
+        m = copy.deepcopy(man)
+        m["files"][i]["sha256"] = "f" * 64
+        assert manifest_mod.data_sha256(m) != before, entry["path"]
+
+
+def test_data_sha256_is_canonical_not_key_order(bundle):
+    """Canonical JSON: re-ordering the keys inside each file entry is not a
+    data change, so the hash must not notice."""
+    cfg, man = bundle
+    before = manifest_mod.data_sha256(man)
+    man["files"] = [dict(reversed(list(f.items()))) for f in man["files"]]
+    assert manifest_mod.data_sha256(man) == before
 
 
 def test_a_missing_manifest_says_how_to_make_one(tmp_path):

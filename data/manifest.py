@@ -55,6 +55,22 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def data_sha256(manifest: Dict[str, Any]) -> str:
+    """The bundle's identifying hash: sha256 over the file list alone.
+
+    Canonical JSON of `manifest["files"]` -- sorted keys, fixed separators -- so
+    the value depends only on which files the bundle holds and what is in them.
+
+    The `git` block stays in the manifest as information but deliberately
+    outside this hash. Hashing the whole manifest file (the old
+    `manifest_sha256`) folded in `git.commit`, so the bundle's identity moved on
+    every commit, including commits that touched no data at all.
+    """
+    payload = json.dumps(manifest["files"], sort_keys=True,
+                         separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def git_commit() -> Dict[str, Any]:
     def run(*args):
         try:
@@ -171,6 +187,7 @@ def build(cfg: DataConfig) -> Dict[str, Any]:
         "n_files": len(files),
         "files": files,
     }
+    manifest["data_sha256"] = data_sha256(manifest)
     return manifest
 
 
@@ -187,6 +204,7 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
           f"({b['required'] / 1e6:,.1f} MB without raw/)")
     for pre, v in sorted(manifest["bytes"]["by_prefix"].items()):
         print(f"   {pre + '/':20s} {v['files']:>4} files  {v['bytes'] / 1e6:>9,.1f} MB")
+    print(f"[manifest] data_sha256 {manifest['data_sha256']}")
     print(f"[manifest] {cfg.manifest_path}")
     print(f"[manifest] {committed}  (committed to git)")
     return manifest
