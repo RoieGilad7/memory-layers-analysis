@@ -25,9 +25,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import torch
 
-__all__ = ["PackedDataset", "iter_document_windows"]
+from data.common import TOKEN_DTYPE
 
-TOKEN_DTYPE = np.uint16
+__all__ = ["PackedDataset", "iter_document_windows", "TOKEN_DTYPE"]
 
 
 class PackedDataset:
@@ -36,8 +36,7 @@ class PackedDataset:
     name = "real"
 
     def __init__(self, path: str | Path, block_size: int = 512,
-                 seed: int = 1337, vocab_size: int = 50257,
-                 drop_last_sequence: bool = True):
+                 seed: int = 1337, vocab_size: int = 50257):
         self.path = Path(path)
         if not self.path.exists():
             raise FileNotFoundError(
@@ -52,7 +51,7 @@ class PackedDataset:
         # a sequence needs block_size + 1 tokens, so the last one is dropped
         # unless the file happens to carry the extra target token
         n = self.n_tokens // self.block_size
-        if drop_last_sequence and n * self.block_size + 1 > self.n_tokens:
+        if n * self.block_size + 1 > self.n_tokens:
             n -= 1
         if n <= 0:
             raise ValueError(

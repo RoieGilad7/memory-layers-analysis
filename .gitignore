@@ -27,8 +27,9 @@ data/v1/*
 data/v1_small/
 
 # ----------------------------------------------------------- generated datasets
-# Tiny, fully regenerable: `python tools/bio_generator.py`, and the step-0 checks
-# re-stream their samples. Kept out of the repo to keep a clone small.
+# Tiny, fully regenerable: `python -m data.bios --small` (which replaced
+# tools/bio_generator.py), and the step-0 checks re-stream their samples.
+# Kept out of the repo to keep a clone small.
 data_samples/
 
 # -------------------------------------------------------- external code checkouts

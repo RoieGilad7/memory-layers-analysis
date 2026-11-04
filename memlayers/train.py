@@ -289,10 +289,21 @@ class Trainer:
         # bundle moves the manifest hash without moving a single token.
         from data.fetch import manifest_path
         man = json.loads(manifest_path(dcfg, version).read_text())
-        rel = str(Path(path).resolve().relative_to(dcfg.root.resolve())) \
-            if str(dcfg.root) in str(Path(path).resolve()) else None
+        resolved = Path(path).resolve()
+        root = dcfg.root.resolve()
+        # `is_relative_to`, not a substring test: "data/v1" IS a substring of
+        # "/tmp/data/v1_elsewhere/tokens/train.bin" while not being a parent of
+        # it, and the substring form let that through into a relative_to()
+        # ValueError instead of the intended fallback.
+        rel = str(resolved.relative_to(root)) if resolved.is_relative_to(root) \
+            else None
         train_sha = next((f["sha256"] for f in man["files"]
                           if f["path"] == (rel or "tokens/train.bin")), None)
+        if train_sha is None:
+            # Without this hash the resume guard below has nothing to compare,
+            # so it would silently pass. Say so rather than let it lapse quietly.
+            print(f"[train] WARNING: {path} has no entry in the {version} "
+                  "manifest, so a resume cannot confirm it is the same tokens")
         self.data_provenance = {
             "source": "real",
             "version": version,
@@ -355,12 +366,21 @@ class Trainer:
 
     def _log_csv(self, row: dict) -> None:
         mode = "a" if self._csv_started else "w"
+        fields = CSV_FIELDS
+        if self._csv_started:
+            # Resuming a run whose log.csv predates a CSV_FIELDS change: append
+            # under the header already in the file, or the extra values would
+            # land in columns the header does not name and shift every field.
+            with open(self.csv_path, newline="") as fh:
+                existing = next(csv.reader(fh), None)
+            if existing and existing != CSV_FIELDS:
+                fields = existing
         with open(self.csv_path, mode, newline="") as fh:
-            w = csv.DictWriter(fh, fieldnames=CSV_FIELDS)
+            w = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
             if not self._csv_started:
                 w.writeheader()
                 self._csv_started = True
-            w.writerow({k: row.get(k, "") for k in CSV_FIELDS})
+            w.writerow({k: row.get(k, "") for k in fields})
 
     # ---- checkpointing ------------------------------------------------------
     def save_checkpoint(self, path: Optional[Path] = None) -> Path:

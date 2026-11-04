@@ -27,8 +27,9 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 import numpy as np
 
 from data import pack
-from data.common import (ROOT, DataConfig, get_encoder, keyed_rng, load_config,
-                         ngram_hashes, overlap_rate, read_jsonl, text_sha256)
+from data.common import (ROOT, DataConfig, TOKEN_DTYPE, get_encoder, keyed_rng,
+                         load_config, ngram_hashes, overlap_rate, read_jsonl,
+                         text_sha256)
 
 EOT = 50256
 
@@ -57,14 +58,14 @@ class Ctx:
     def __init__(self, cfg: DataConfig):
         self.cfg = cfg
         self.enc = get_encoder(cfg.tokenizer_name, cfg.vocab_size)
-        self.train = np.memmap(cfg.tokens_dir / "train.bin", dtype=np.uint16,
+        self.train = np.memmap(cfg.tokens_dir / "train.bin", dtype=TOKEN_DTYPE,
                                mode="r")
         self.train_idx = pack.read_index(cfg.tokens_dir / "train.idx.parquet")
         self.held: Dict[str, np.memmap] = {}
         self.held_idx: Dict[str, Dict[str, Any]] = {}
         for half in cfg.pack_halves:
             self.held[half] = np.memmap(cfg.heldout_tokens_dir / f"{half}.bin",
-                                        dtype=np.uint16, mode="r")
+                                        dtype=TOKEN_DTYPE, mode="r")
             self.held_idx[half] = pack.read_index(
                 cfg.heldout_tokens_dir / f"{half}.idx.parquet")
         self.people = {p["person_id"]: p
@@ -245,7 +246,7 @@ def _tiling(tokens: np.memmap, idx: Dict[str, Any], vocab: int,
     lengths = np.asarray(idx["length"], dtype=np.int64)
     arr = np.asarray(tokens)
     problems = []
-    if arr.dtype != np.uint16:
+    if arr.dtype != TOKEN_DTYPE:
         problems.append(f"dtype {arr.dtype}")
     if int(arr.max()) >= vocab:
         problems.append(f"max id {int(arr.max())} >= {vocab}")
@@ -310,7 +311,7 @@ def a6_decode(ctx: Ctx, n_samples: int = 1000) -> Check:
         off = int(idx["doc_offset"][j])
         if doc_id not in cache:
             cache[doc_id] = np.asarray(
-                ctx.enc.encode_ordinary(src[doc_id]), dtype=np.uint16)
+                ctx.enc.encode_ordinary(src[doc_id]), dtype=TOKEN_DTYPE)
         want = cache[doc_id]
         if not np.array_equal(arr[st:st + ln], want[off:off + ln]):
             bad.append(doc_id)
@@ -827,7 +828,7 @@ def a13_prompts(ctx: Ctx) -> Check:
     for marker in bd.HELDOUT_MARKERS:
         hits = whole = 0
         for variant in (" " + marker, marker):
-            ids = np.asarray(ctx.enc.encode_ordinary(variant), dtype=np.uint16)
+            ids = np.asarray(ctx.enc.encode_ordinary(variant), dtype=TOKEN_DTYPE)
             hits += _count_subsequence(bio_tokens, ids)
             whole += _count_subsequence(arr, ids)
         bio_marker_hits[marker] = hits
@@ -841,7 +842,7 @@ def a13_prompts(ctx: Ctx) -> Check:
     found = [r["fact_id"] for r in sample
              if _count_subsequence(
                  arr, np.asarray(ctx.enc.encode_ordinary(r["prompt"]),
-                                 dtype=np.uint16))]
+                                 dtype=TOKEN_DTYPE))]
     if found:
         problems.append(f"{len(found)} sampled paraphrase prompts occur in "
                         f"train.bin: {found[:3]}")

@@ -47,11 +47,10 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from data.common import (record_timing, DataConfig, get_encoder, keyed_rng, load_config,
-                         read_jsonl, write_json)
+from data.common import (record_timing, DataConfig, TOKEN_DTYPE, get_encoder,
+                         keyed_rng, load_config, read_jsonl, write_json)
 
 BIO_SUBJECT = "bio"
-TOKEN_DTYPE = np.uint16
 
 # Index columns. `doc_offset` is additive: a Pile document can reach the file in
 # two pieces (a prefix pulled forward as filler, the rest at its own turn), and
@@ -516,9 +515,6 @@ def write_bin(arr: np.ndarray, path: Path) -> Path:
         fh.write(arr.tobytes(order="C"))
     return path
 
-
-def open_bin(path: Path) -> np.memmap:
-    return np.memmap(path, dtype=TOKEN_DTYPE, mode="r")
 
 
 # ---------------------------------------------------------------------------

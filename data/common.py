@@ -330,6 +330,10 @@ _ENC = None
 # safe over-estimate of the prefix holding the first `max_tokens` tokens.
 CHARS_PER_TOKEN_BOUND = 64
 
+# The on-disk token format. One definition: the writer (data.pack) and every
+# reader (data.loader, data.validate) must agree, and GPT-2's 50257 ids fit.
+TOKEN_DTYPE = np.uint16
+
 
 def get_encoder(name: str = "gpt2", vocab_size: Optional[int] = None):
     global _ENC
