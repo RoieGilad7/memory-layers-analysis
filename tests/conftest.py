@@ -32,10 +32,6 @@ def make_model(kind="dense", layer=1, seed=0, memory=None, **over):
     return GPT(cfg)
 
 
-@pytest.fixture
-def small_cfg():
-    return dict(SMALL)
-
 
 @pytest.fixture(params=["pkm", "peer"])
 def memory_kind(request):

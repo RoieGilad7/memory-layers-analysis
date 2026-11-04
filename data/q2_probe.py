@@ -285,13 +285,6 @@ def _agg(rank, top1, margin, sizes) -> Dict[str, Any]:
     }
 
 
-class RandomScorer:
-    """Scores candidates at random -- the floor for A15."""
-
-    def __init__(self, seed: int = 0):
-        self.rng = np.random.default_rng(seed)
-
-
 def score_random(probe: ProbeSet, seed: int = 0) -> Dict[str, Any]:
     """What a scorer that knows nothing produces: mean rank at the middle."""
     rng = np.random.default_rng(seed)

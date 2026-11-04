@@ -86,7 +86,7 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  174 pytest tests
+tests/                  176 pytest tests
 reports/                the seven step reports
 ```
 
@@ -135,7 +135,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 174 tests, CPU, ~20 s
+.venv/bin/python -m pytest tests/ -q                 # 176 tests, CPU, ~20 s
 
 # train one config
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
