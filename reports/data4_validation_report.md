@@ -1,5 +1,8 @@
 # Data step 4 — validation, the hand-check pack, and biography learnability
 
+> **Historical record of step 4.** Superseded numbers: the final data-v1
+> figures are in [`reports/data5_fix_report.md`](data5_fix_report.md).
+
 **Project:** What memory-layer values store and how they are organized (PKM / PEER vs. a kNN-LM store)
 **Course:** COMS E6998 Algorithms in LLMs — final project
 **Date:** 2026-11-02
@@ -327,6 +330,17 @@ byte-identical. The guard now keys on the sha256 of `train.bin` itself — taken
 from the manifest that was just verified, so it costs nothing — and a manifest
 change with unchanged tokens prints a note instead of raising. There is a test
 for each half.
+
+**The validation report hashed itself.** `data.validate` writes its report
+*into* `data/v1/` — the directory it has just hashed — and the report carries its
+own per-check timings. So running the validator changed the bundle it had just
+verified, and the next `data.fetch --verify-only` failed on two files. The final
+end-to-end check caught it; no test could have. `validation_report.md` and
+`.json` now join `timings.json` and `runtime_env.json` on the manifest's
+skip-by-name list. All four describe a run *against* the data rather than the
+data itself, which is the line the manifest draws: a rebuild of identical data
+has to produce an identical manifest. The durable copy of this report's content
+is `reports/data4_validation_report.md`, which is in git.
 
 ---
 

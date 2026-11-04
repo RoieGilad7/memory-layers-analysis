@@ -1,12 +1,15 @@
 # Data step 5 — closing the answer leak, and the final build
 
+> **Current source for data v1.** The final figures for the dataset live here;
+> steps 1–4 are historical records whose numbers this report supersedes.
+
 **Project:** What memory-layer values store and how they are organized (PKM / PEER vs. a kNN-LM store)
 **Course:** COMS E6998 Algorithms in LLMs — final project
 **Date:** 2026-11-03
 **Machine:** Apple M5 Pro, 18 cores, 64 GiB, macOS 26.6.2, `.venv` Python 3.12.14
 **Scope:** fix the answer leak that failed A13 in prompt 4, rebuild, re-validate,
-and re-run the learnability check on the fixed data. **Part A only — nothing is
-frozen, tagged or uploaded.**
+re-run the learnability check on the fixed data, and clean up and review the
+branch (§8). **Part A only — nothing is frozen, tagged or uploaded.**
 
 ```bash
 python -m data.bios      --config configs/data/v1.yaml   # 11 s
@@ -15,7 +18,7 @@ python -m data.manifest  --config configs/data/v1.yaml
 python -m data.hand_samples --config configs/data/v1.yaml
 python -m data.validate  --config configs/data/v1.yaml   # A1-A18, 6 min
 python bench/learnability_run.py --steps 5830 --eval-every 972   # A18, 2h20
-python -m pytest                                         # 174 tests
+python -m pytest                                         # 179 tests
 ```
 
 ---
@@ -42,9 +45,15 @@ enforced.
 - **All 120 sentence templates were rewritten** (§7) after a review found that
   85 of 100 used the same interrupting appositive, five split a verb from its
   object, and four said "every year on *March 4, 1987*".
+- **The branch was cleaned and reviewed** (§8): four dead definitions removed,
+  four correctness fixes, and the bundle's identifying hash replaced with
+  `data_sha256` — which covers the data and not the commit that built it. A
+  `pack` re-run proves `train.bin` is byte-identical, so none of it moved the
+  data (§8.4).
 - `train.bin` sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8`;
   bundle `data_sha256`
-  `3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1`.
+  `3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1`
+  (§9 is the full freeze table).
 
 ---
 
@@ -450,12 +459,89 @@ biographies **9.71%** of the 150M training budget.
 
 ---
 
-## 8. Ready to freeze
+## 8. Cleanup and the review pass
+
+After the rebuild, the branch was cleaned, reviewed, and the review's findings
+fixed. **No data changed** — §8.4 is the proof.
+
+### 8.1 `data_sha256` — the bundle's identity covers the data, not the commit
+
+The bundle's identifying hash used to be the sha256 of the *whole*
+`data/manifests/v1.json`, which embeds `git: {branch, commit, dirty}`. So the
+bundle's identity moved on **every commit**, including commits that touched no
+data at all — and it did:
+
+| hash | what it was | status |
+|---|---|---|
+| `e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f` | quoted as the manifest sha256 in earlier drafts of this report | **stale — do not use** |
+| `7ab876aa9c43434f70230d4e45dec32ff0a24fc492a57750bda15dacf00ebd6f` | what the committed manifest actually hashed to by then, after later commits re-stamped `git.commit` | **stale — do not use** |
+| `3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1` | `data_sha256`, over the file list alone | **current — the freeze hash** |
+
+`train.bin` was never involved in any of that drift.
+
+`data.manifest.data_sha256()` now hashes `manifest["files"]` alone, as canonical
+JSON (sorted keys, fixed separators). The `git` block stays in the manifest as
+information, deliberately outside the hash. The manifest also carries its own
+`data_sha256`, which is not circular: the value is derived from `files` only.
+
+It was renamed rather than redefined in place, so an old whole-file hash can
+never be mistaken for the new one. `data.fetch` returns and prints
+`data_sha256`; `memlayers.train`'s provenance key, checkpoint field and
+`log.csv` column all follow.
+
+The property holds on the real bundle, not only in tests: the manifest as
+committed before this pass (stamped `b83c6d2`, `dirty: true`) and the
+regenerated one (stamped `66fa1a6`, `dirty: false`) have **identical**
+`data_sha256`, while their whole-file hashes differ. Three tests pin it down —
+the `git` block does not move `data_sha256`; moving any one file's sha256 does
+move it, checked for every file in the manifest; and re-ordering the keys inside
+a file entry does not.
+
+### 8.2 Correctness fixes
+
+Four findings from reviewing this branch. Three were reproduced before fixing.
+
+| where | what | status |
+|---|---|---|
+| `memlayers/train.py` | The guard `str(dcfg.root) in str(path.resolve())` stood in for "is a parent of". `data/v1` *is* a substring of `/tmp/data/v1_elsewhere/tokens/train.bin` without being its parent, so it passed the guard and then raised `ValueError` inside the branch — reachable through the documented `data.bin_path`. Now `Path.is_relative_to()`. | reproduced |
+| `memlayers/train.py` | When the token-file hash came back `None`, the `if old_bin and new_bin` check short-circuits, so the documented hard stop against mixing two datasets quietly did nothing. It now says so — a warning, not an error, so a legitimate `bin_path` outside the bundle still runs. | by inspection |
+| `memlayers/train.py` | This step added two `log.csv` columns, but appends go under whatever header the file already has: 11 values beneath a 9-column header shift every field. Appends now reconcile against the existing header. Latent — no pre-change `log.csv` was left on disk. | reproduced |
+| `data/loader.py` | `PackedDataset(drop_last_sequence=False)` crashed on the final sequence: the slice yields `block_size` tokens, so building the target raised `could not broadcast (511,) into (512,)`. Never used anywhere, and it cannot produce a valid target for the last sequence, so it is gone. The default `True` path is unchanged. | reproduced |
+
+`TOKEN_DTYPE` also had **two** definitions — the writer (`data/pack.py`) and the
+reader (`data/loader.py`) each declared `np.uint16` independently, so if one
+ever moved, the corruption would be silent. It is defined once in
+`data/common.py` now; `data.pack.TOKEN_DTYPE` stays importable, and
+`data/validate.py`'s six hardcoded literals use the constant.
+
+### 8.3 Dead code removed
+
+Four definitions, each appearing exactly once in the tree — at its own
+definition: `RandomScorer` (`data/q2_probe.py`, a stub holding only an rng,
+while `score_random()` does the work and `__all__` never exported it);
+`open_bin` (`data/pack.py`, redundant — `loader.py` and `validate.py` inline
+their own memmap); the `small_cfg` fixture (`tests/conftest.py`); and `Timer`
+(`step0_access/_common.py`), with the `time` import it was the only user of.
+Also a stale `.gitignore` comment pointing at `tools/bio_generator.py`, which
+this branch deletes.
+
+### 8.4 None of it touched the data
+
+| check | result |
+|---|---|
+| `data.pack` re-run with the changed `pack.py` | `train.bin` **byte-identical**, sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` |
+| all 58 manifest file hashes | **0 changed** — only the `git` block moved |
+| `data.fetch --version v1 --verify-only` | **OK**, 46/46 verified, 12 skipped as optional |
+| tests | **179 passed** |
+
+---
+
+## 9. Ready to freeze
 
 | | |
 |---|---|
 | `train.bin` | 149,896,192 tokens / 292,766 sequences, sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` |
-| bundle `data_sha256` | `3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1` — the freeze hash, over the file list alone |
+| bundle `data_sha256` | `3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1` — the freeze hash, over the file list alone (§8.1) |
 | bundle | 58 files, 1,149.3 MB (751.3 MB without `raw/`) |
 | config fingerprints | pile `3f4303d9b926b730`, bios `7a8c48a96792d725`, pack `15643c90477c31a7` |
 | Pile revision | `3be90335b66f24456a5d6659d9c8d208c0357119` |
@@ -463,17 +549,8 @@ biographies **9.71%** of the 150M training budget.
 | tests | **179 passed** |
 | `distribution.hf_repo` | still the `<owner>` placeholder — Part B fills it in |
 
-**On the freeze hash.** Earlier drafts of this report quoted a bundle manifest
-sha256 of `e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f`:
-the sha256 of the whole `data/manifests/v1.json`, which embeds
-`git: {branch, commit, dirty}`. That made the bundle's identity move on every
-commit, including commits that touched no data, and it did — by the time this
-line was written the committed manifest hashed to `7ab876aa...` instead. The
-identifying hash is now `data_sha256`, taken over the manifest's `files` list
-alone in canonical JSON, so it tracks the data and nothing else. The `git` block
-stays in the manifest as information, outside the hash.
-
-The A18 learnability run in §4 trained on `train.bin` sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` — the same
+The A18 learnability run in §4 trained on `train.bin` sha256
+`47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` — the same
 tokens this bundle holds now — so its result stands unchanged.
 
 Part B (freeze, tag, publish) is on hold for the go-ahead, and reports

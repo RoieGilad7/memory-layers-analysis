@@ -97,7 +97,7 @@ data/v1/
 ├── samples/
 │   └── bios_sample.md                # 20 people, for hand review (committed)
 ├── tokens/                           # §1.4, written by `python -m data.pack`
-│   ├── train.bin                     #   292,898 sequences of 512, uint16
+│   ├── train.bin                     #   292,766 sequences of 512, uint16
 │   └── train.idx.parquet             #   one row per document segment
 ├── reports/
 │   ├── pile_manifest.json            # prompt 1's own record (§1.6)
@@ -151,8 +151,8 @@ the data seed.
 
 | file | dtype | meaning |
 |---|---|---|
-| `tokens/train.bin` | `uint16` | the whole training stream: 149,963,776 tokens = 292,898 sequences of 512 |
-| `tokens/train.idx.parquet` | — | one row per document **segment** (332,048 rows) |
+| `tokens/train.bin` | `uint16` | the whole training stream: 149,896,192 tokens = 292,766 sequences of 512 |
+| `tokens/train.idx.parquet` | — | one row per document **segment** (332,017 rows) |
 | `heldout/label.bin` | `uint16` | the labeling half, all 6 subjects, no biographies |
 | `heldout/label.idx.parquet` | — | its index, plus `ngram_overlap` |
 | `heldout/test.bin`, `heldout/test.idx.parquet` | | the test half |
@@ -214,9 +214,9 @@ targets are the same window shifted by one — see §3.
 
 | | target | built | note |
 |---|---:|---:|---|
-| Training, total | 150,000,000 | **149,963,776** | the 0.02% gap is EOT separators and tail padding |
+| Training, total | 150,000,000 | **149,896,192** | the 0.07% gap is EOT separators and tail padding |
 | … each of 5 Pile subjects | 27,000,000 | **27,000,000** each | exact, by construction |
-| … biographies | 15,000,000 (10%) | **14,631,457** (9.78%) | 190,000 copies at 77.0 tokens |
+| … biographies | 15,000,000 (10%) | **14,563,864** (9.71%) | 190,000 copies of 8,000 biographies |
 | Held-out, per subject | 5,000,000 | 5,000,000 | 6 subjects |
 | … labeling half | 2,500,000 | 15,021,806 total, 13,306 docs | all 6 subjects in one file |
 | … test half | 2,500,000 | 15,023,952 total, 13,381 docs | |
@@ -433,11 +433,13 @@ data:
 
 With `source: real` the Trainer verifies the bundle **before step 0** and raises
 on any mismatch — a half-downloaded bundle would produce numbers nobody could
-reproduce. It records the data version, the manifest sha256, the pack
+reproduce. It records the data version, the bundle `data_sha256`, the pack
 fingerprint and the Pile revision in `meta.json`, in the checkpoint and in two
 `log.csv` columns, and it saves the loader's `(seed, position)` so a resume
-continues exactly where it stopped. Resuming a checkpoint whose manifest hash
-differs from the bundle on disk is refused.
+continues exactly where it stopped. Resuming a checkpoint whose `train.bin`
+sha256 differs from the file on disk is refused; a `data_sha256` that moved
+while the tokens did not prints a note instead, since a report file changing
+inside the bundle moves the bundle hash without moving a single token.
 
 ---
 

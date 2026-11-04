@@ -30,7 +30,11 @@ the whole comparison hangs on:
 | 2f | the freeze and the upload | not started |
 | 3–5 | training runs, read-log analysis | not started |
 
-All seven reports are self-contained and carry the numbers; start there.
+All seven reports are self-contained and carry the numbers; start there —
+[`reports/README.md`](reports/README.md) says which is current and which is a
+historical record. For anything about dataset v1, the current source is
+[`reports/data5_fix_report.md`](reports/data5_fix_report.md); steps 2a–2d are
+historical and their numbers are superseded by it.
 The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
 ---
@@ -74,7 +78,7 @@ data/                   the dataset build (step 2a: the Pile part)
   hand_samples.py       the committed hand-check pack under data/v1/samples/
   make_sample.py        packages the 1% build as data/v1_sample/
   report_tables.py      regenerates the data report's tables from the build's JSON
-  v1_sample/            committed: the 1% build (7.4 MB) + a README per file
+  v1_sample/            committed: the 1% build (7.9 MB) + a README per file
   v1/, v1_small/        not committed; rebuild from configs/data/v1.yaml
 
 data/manifests/v1.json  committed: the hash authority for the frozen bundle
@@ -87,7 +91,7 @@ step0_access/           one re-runnable script per step-0 access check
 
 logs/*.json             committed: the evidence behind the step-0 report
 tests/                  179 pytest tests
-reports/                the seven step reports
+reports/                the seven step reports, indexed in reports/README.md
 ```
 
 Two result directories, both committed, because the reports cite them: `logs/*.json` for

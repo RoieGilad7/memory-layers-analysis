@@ -1,5 +1,8 @@
 # Data step 2 — the made-up biographies
 
+> **Historical record of step 2.** Superseded numbers: the final data-v1
+> figures are in [`reports/data5_fix_report.md`](data5_fix_report.md).
+
 **Project:** What memory-layer values store and how they are organized (PKM / PEER vs. a kNN-LM store)
 **Course:** COMS E6998 Algorithms in LLMs — final project
 **Date:** 2026-11-02
