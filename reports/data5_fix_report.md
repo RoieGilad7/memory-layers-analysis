@@ -43,8 +43,8 @@ enforced.
   85 of 100 used the same interrupting appositive, five split a verb from its
   object, and four said "every year on *March 4, 1987*".
 - `train.bin` sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8`;
-  bundle manifest sha256
-  `e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f`.
+  bundle `data_sha256`
+  `3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1`.
 
 ---
 
@@ -364,7 +364,7 @@ Building it turned up two defects in code that was already committed:
 matched on the bare filename, so the root `manifest.json` *and* the bios stage's
 own record were both skipped. The bios record is a genuine bundle file. The rule
 now matches on the relative path, which brings the bundle from 57 to 58 hashed
-files and moves the manifest sha256 — `train.bin` is untouched, as §7 records.
+files and moves `data_sha256` — `train.bin` is untouched, as §7 records.
 Caught by the sample listing its files next to its manifest's, not by any test;
 there is a test now.
 
@@ -455,12 +455,26 @@ biographies **9.71%** of the 150M training budget.
 | | |
 |---|---|
 | `train.bin` | 149,896,192 tokens / 292,766 sequences, sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` |
-| bundle manifest | `data/manifests/v1.json`, sha256 `e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f` |
+| bundle `data_sha256` | `3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1` — the freeze hash, over the file list alone |
 | bundle | 58 files, 1,149.3 MB (751.3 MB without `raw/`) |
 | config fingerprints | pile `3f4303d9b926b730`, bios `7a8c48a96792d725`, pack `15643c90477c31a7` |
 | Pile revision | `3be90335b66f24456a5d6659d9c8d208c0357119` |
 | checks | **A1–A18 all PASS** |
-| tests | **176 passed** |
+| tests | **179 passed** |
 | `distribution.hf_repo` | still the `<owner>` placeholder — Part B fills it in |
 
-Part B (freeze, tag, publish) is on hold for the go-ahead.
+**On the freeze hash.** Earlier drafts of this report quoted a bundle manifest
+sha256 of `e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f`:
+the sha256 of the whole `data/manifests/v1.json`, which embeds
+`git: {branch, commit, dirty}`. That made the bundle's identity move on every
+commit, including commits that touched no data, and it did — by the time this
+line was written the committed manifest hashed to `7ab876aa...` instead. The
+identifying hash is now `data_sha256`, taken over the manifest's `files` list
+alone in canonical JSON, so it tracks the data and nothing else. The `git` block
+stays in the manifest as information, outside the hash.
+
+The A18 learnability run in §4 trained on `train.bin` sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` — the same
+tokens this bundle holds now — so its result stands unchanged.
+
+Part B (freeze, tag, publish) is on hold for the go-ahead, and reports
+`data_sha256` as the freeze hash.

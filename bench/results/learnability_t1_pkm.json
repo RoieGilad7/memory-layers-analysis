@@ -23,7 +23,9 @@
   "data": {
     "source": "real",
     "version": "v1",
-    "manifest_sha256": "e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f",
+    "data_sha256": "3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1",
+    "manifest_sha256_superseded": "e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f",
+    "note": "data_sha256 (over the manifest's files list alone) replaces the old whole-file manifest_sha256, which moved with every commit. This run trained on train.bin sha256 47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8 -- the same tokens the bundle holds now -- so its result stands.",
     "train_bin_sha256": "47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8",
     "data_config": "configs/data/v1.yaml",
     "config_fingerprint_pack": "15643c90477c31a7cbc5e394b1f353d795bb417ad6a5ef656b772ebbc1e91e81",

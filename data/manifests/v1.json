@@ -216,6 +216,7 @@
       "tokens": 149896192
     }
   },
+  "data_sha256": "3357ec6b6e81cf7f30bb9ae14c6a25793a95642d90f146a08aa71d5db53870e1",
   "distribution": {
     "hf_repo": "<owner>/memlayers-data",
     "optional_prefixes": [
@@ -576,8 +577,8 @@
   ],
   "git": {
     "branch": "data/step1-bios",
-    "commit": "b83c6d2d73daa9a2fe787fd869537e5bae88e0dd",
-    "dirty": true
+    "commit": "66fa1a6d04dd2a02db5447a95228e17c341b24ba",
+    "dirty": false
   },
   "n_files": 58,
   "small": false,
