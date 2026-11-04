@@ -36,11 +36,15 @@ enforced.
   identical for all 2,500 people, exactly as you said they would be — names and
   facts are keyed by person id, and names are the first survivors in draw order.
   2,492 people got a different name; **6 people had one fact redrawn**.
-- **A18 still passes**, on data where the probe can no longer be helped by a
-  name or a neighbouring fact.
-- `train.bin` sha256 `17099102f2927930fcddaf7c07555f2a846491cfb7291a60d7cb4247cd812b9c`;
+- **A18 still passes** on data where the probe can no longer be helped by a
+  name or a neighbouring fact — **frequent 32.20% vs control 0.60%, 53.7×**,
+  and monotone across tiers. Three runs side by side in §4.
+- **All 120 sentence templates were rewritten** (§7) after a review found that
+  85 of 100 used the same interrupting appositive, five split a verb from its
+  object, and four said "every year on *March 4, 1987*".
+- `train.bin` sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8`;
   bundle manifest sha256
-  `38a54cb6de686ecb4ce648823f0f8580e5cadcaaf3e255a10d122d3cfc2a4b15`.
+  `e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f`.
 
 ---
 
@@ -155,21 +159,21 @@ Read out of `data/v1/validation_report.json` by
 |**A1**|Rebuild is byte-identical|**PASS**|58 files hashed; 0 changed, 0 added, 0 removed|
 |**A2**|`data.fetch --verify-only` passes|**PASS**|58/58 files verified against v1.json (0 mismatched, 0 missing)|
 |**A3**|Token counts per subject and half|**PASS**|every Pile subject exactly 27,000,000 in train.bin; every held-out half within 1% of 2,500,000 per subject|
-|**A4**|Shares in every 1,000,000-token window|**PASS**|worst deviation 0.386 points across 596 overlapping windows (stride 250,000), tolerance 2.0|
-|**A5**|Format: dtype, vocab bound, EOT, index tiling|**PASS**|train.bin: 149,857,280 tokens, 331,964 segments, 332,277 EOT separator/pad tokens, max id 50256 \| label.bin: 15,021,806 tokens, 13,306 segments, 13,305 EOT separator/pad tokens, max id 50256 \| test.bin: 15,023,952 tokens, 13,381 segments, 13,380 EOT separator/pad tokens, max id 50256|
-|**A6**|Decoding index segments reproduces the source|**PASS**|1,000 random segments checked token for token (840 of them whole documents, also compared as text); 0 mismatches|
+|**A4**|Shares in every 1,000,000-token window|**PASS**|worst deviation 0.425 points across 596 overlapping windows (stride 250,000), tolerance 2.0|
+|**A5**|Format: dtype, vocab bound, EOT, index tiling|**PASS**|train.bin: 149,896,192 tokens, 332,017 segments, 332,328 EOT separator/pad tokens, max id 50256 \| label.bin: 15,021,806 tokens, 13,306 segments, 13,305 EOT separator/pad tokens, max id 50256 \| test.bin: 15,023,952 tokens, 13,381 segments, 13,380 EOT separator/pad tokens, max id 50256|
+|**A6**|Decoding index segments reproduces the source|**PASS**|1,000 random segments checked token for token (825 of them whole documents, also compared as text); 0 mismatches|
 |**A7**|Leaks: ids, exact hashes, 13-gram overlap|**PASS**|ids disjoint across train/label/test; 0 exact-hash matches; 0 documents over 50%; worst single document 50.0%; aggregates Pile-CC=0.64%, Github=14.35%, PubMed=2.93%, FreeLaw=9.21%, Wikipedia=2.14%, USPTO=0.00%|
 |**A8**|Halves: disjoint, >=500 docs, <=4096 tokens|**PASS**|halves share 0 documents; smallest half/subject is 708 documents (minimum 500); longest document 4096 tokens (cap 4096)|
 |**A9**|No held-out-only subject in train.bin|**PASS**|['USPTO Backgrounds'] appear in 0 train.bin segments by document id and 0 by subject label; train.bin carries ['FreeLaw', 'Github', 'Pile-CC', 'PubMed Central', 'Wikipedia (en)', 'bio']|
-|**A10**|Subject labels agree with the source|**PASS**|141,964 Pile segments: index subject == raw-archive meta.pile_set_name == the document id's slug; 190,000 biography segments all labelled `bio` with a known person id|
+|**A10**|Subject labels agree with the source|**PASS**|142,017 Pile segments: index subject == raw-archive meta.pile_set_name == the document id's slug; 190,000 biography segments all labelled `bio` with a known person id|
 |**A11**|Bag-of-words subject classifier (sanity)|**PASS**|accuracy 94.87% on 13,381 test-half documents (threshold 90%); per subject Pile-CC=89.7%, Github=97.8%, PubMed=97.6%, FreeLaw=99.1%, Wikipedia=95.0%, USPTO=96.2%|
 |**A12**|Biography facts|**PASS**|2,500 people, names unique and absent from the Pile, genders {'female': 1250, 'male': 1250}, 5 facts each; first-token uniqueness holds per list (first two for birth_date, which has only 12 distinct first tokens); chi-square p birth_date=0.124, birth_city=0.877, university=0.183, major=0.940, employer=0.347|
-|**A13**|Fact prompts: no answer leaks|**PASS**|100,000 rows: **0** leak the value verbatim (0), **0** via the person's name (0), **0** via another of the person's values (0); 50,000 training prompts are exact prefixes of their biography; 50,000 paraphrase prompts, 200 of them searched in full against train.bin and absent; held-out markers inside biography text: 'Question:'=0, 'As for'=0, 'is a person whose'=0, 'reads as follows'=0 (the same markers occur 1312 times in ordinary Pile text, which is not a leak); REPORTED: 26 rows whose ranking key is a TEMPLATE word (employer=Asahi Breweries, employer=Heineken)|
+|**A13**|Fact prompts: no answer leaks|**PASS**|100,000 rows: **0** leak the value verbatim (0), **0** via the person's name (0), **0** via another of the person's values (0); 50,000 training prompts are exact prefixes of their biography; 50,000 paraphrase prompts, 200 of them searched in full against train.bin and absent; held-out markers inside biography text: 'Question:'=0, 'When it comes to'=0, 'is on record as'=0, 'reads as follows'=0 (the same markers occur 570 times in ordinary Pile text, which is not a leak); REPORTED: 48 rows whose ranking key is a TEMPLATE word (birth_city=Thessaloniki, Greece, employer=Heineken, major=Theology, university=Aalborg University)|
 |**A14**|Exposure counts and control isolation|**PASS**|190,000 copies over 2,000 trained people, every count equal to its tier target and spread over the 4 rewordings; 0 cross a 512-token boundary; 0 of 500 control names appear in train text|
-|**A15**|Probe floor: random and untrained sit mid-list|**PASS**|random scorer: mean rank fraction 0.502, top-1 0.558% over 36,000 prompts; untrained model: 0.500, top-1 0.650% over 4,000; mean candidate list 210|
-|**A16**|Loader: order, resume, shapes|**PASS**|292,689 sequences of 512; same seed reproduces the order, a different seed does not, the order is a permutation, and a resume from (seed, position) matches an unbroken run|
+|**A15**|Probe floor: random and untrained sit mid-list|**PASS**|random scorer: mean rank fraction 0.502, top-1 0.558% over 36,000 prompts; untrained model: 0.500, top-1 0.625% over 4,000; mean candidate list 210|
+|**A16**|Loader: order, resume, shapes|**PASS**|292,765 sequences of 512; same seed reproduces the order, a different seed does not, the order is a permutation, and a resume from (seed, position) matches an unbroken run|
 |**A17**|Model beats the per-subject unigram baseline|**PASS**|Pile-CC: model 6.7886 vs unigram 7.559; Github: model 5.7371 vs unigram 6.3888; PubMed: model 6.5792 vs unigram 7.4554; FreeLaw: model 5.8735 vs unigram 6.8493; Wikipedia: model 7.0163 vs unigram 7.72; USPTO: model 7.0021 vs unigram 7.9605|
-|**A18**|Biography facts are learnable|**PASS**|5,830 steps / 96M tokens in 1.97 h of training. test top-1: frequent 29.6%, normal 2.4%, rare 1.0%, control 0.5% (frequent/control = 55.503x, needs 2x; monotone yes). paraphrase top-1: frequent 1.2%, control 0.4%|
+|**A18**|Biography facts are learnable|**PASS**|5,830 steps / 96M tokens in 2.00 h of training. test top-1: frequent 32.2%, normal 2.5%, rare 0.7%, control 0.6% (frequent/control = 53.667x, needs 2x; monotone yes). paraphrase top-1: frequent 1.2%, control 0.4%|
 
 ### 3.2 A11 confusion matrix — 94.87% on 13,381 test-half documents
 
@@ -196,88 +200,110 @@ Rows are the true subject, columns the bag-of-words classifier's guess.
 |`Wikipedia (en)`|7.0163|7.72|**0.704**|2,500,584|own training text|
 ---
 
-## 4. A18 re-run, on the fixed data
+## 4. A18, three runs side by side
 
-T1-pkm, seed 0, `data.source: real`, **exactly the prompt-4 protocol**: 5,830
-steps = 95.5M tokens, evaluation every ~20 minutes, the same 1,200 people by
-person id (all 300 `frequent`, 300 random each of `normal`, `rare`, `control`),
-36,000 prompts. 1 h 58 m of training, 2 h 18 m of wall clock.
+Same protocol every time: T1-pkm, seed 0, `data.source: real`, 5,830 steps =
+95.5M tokens, evaluation every ~20 minutes, **the same 1,200 people by person
+id** (all 300 `frequent`, 300 random each of `normal`, `rare`, `control`) and
+the same 36,000 prompts. Person ids never moved, so run 3 evaluates exactly the
+people runs 1 and 2 did.
+
+| run | data | verdict | train time |
+|---|---|:---:|---:|
+| **1** | prompt 4 — before the leak fix | PASS | 1.98 h |
+| **2** | prompt 5 — leak fixed, old templates | PASS | 1.97 h |
+| **3** | prompt 5 — leak fixed, **rewritten templates** | **PASS** | 2.00 h |
 
 ![fact recall per tier](../bench/results/learnability_t1_pkm.png)
 
 ### The pass rule
 
-| rule | prompt 4 | **prompt 5** | |
-|---|---|---|:---:|
-| frequent test top-1 ≥ 2 × control | 37.23% / 0.67% = 55.8× | **29.60% / 0.53% = 55.5×** | **PASS** |
-| frequent ≥ normal ≥ rare | 37.23 ≥ 3.37 ≥ 0.93 | **29.60 ≥ 2.40 ≥ 0.97** | **PASS** |
+| rule | run 1 | run 2 | **run 3** | |
+|---|---|---|---|:---:|
+| frequent test top-1 ≥ 2 × control | 55.8× | 55.5× | **53.7×** | **PASS** |
+| frequent ≥ normal ≥ rare | 37.23 ≥ 3.37 ≥ 0.93 | 29.60 ≥ 2.40 ≥ 0.97 | **32.20 ≥ 2.50 ≥ 0.70** | **PASS** |
 
-### Side by side
+### Test prompts (rewordings 2–3)
 
-| tier | role | top-1 p4 | **top-1 p5** | mean rank p4 | **mean rank p5** |
-|---|---|---:|---:|---:|---:|
-| `frequent` | test | 37.23% | **29.60%** | 10.45 | **14.42** |
-| `normal` | test | 3.37% | **2.40%** | 57.17 | **63.59** |
-| `rare` | test | 0.93% | **0.97%** | 90.48 | **93.02** |
-| `control` | test | 0.67% | **0.53%** | 105.25 | **106.43** |
-| `frequent` | paraphrase | 0.95% | **1.20%** | 83.49 | **83.60** |
-| `normal` | paraphrase | 0.43% | **0.50%** | 100.40 | **100.51** |
-| `rare` | paraphrase | 0.50% | **0.52%** | 104.83 | **104.22** |
-| `control` | paraphrase | 0.30% | **0.43%** | 105.64 | **105.57** |
+| tier | top-1 run 1 | top-1 run 2 | **top-1 run 3** | rank 1 | rank 2 | **rank 3** |
+|---|---:|---:|---:|---:|---:|---:|
+| `frequent` | 37.233% | 29.600% | **32.200%** | 10.45 | 14.42 | **13.12** |
+| `normal` | 3.367% | 2.400% | **2.500%** | 57.17 | 63.59 | **59.88** |
+| `rare` | 0.933% | 0.967% | **0.700%** | 90.48 | 93.02 | **90.59** |
+| `control` | 0.667% | 0.533% | **0.600%** | 105.25 | 106.43 | **104.90** |
 
-**Frequent-tier test recall is 7.6 points lower than prompt 4's, and that is the
-expected direction.** The leak removed was worth far less than 7.6 points on its
-own — only 54 of 36,000 evaluation rows were name-mediated — so most of the gap
-is the other thing that changed: 2,492 people have different names, and how hard
-a name is to bind to a fact depends on how it tokenizes. Two runs on two
-different name draws are two samples, not a before/after. What matters is that
-every structural claim survives unchanged: the ratio to control (55.5× vs 55.8×),
-the tier ordering, the rank-fraction ladder (0.075 / 0.307 / 0.448 / 0.506), and
-the near-flat paraphrase curve.
+Mean rank is out of a candidate list averaging 210, so `control` at **104.90**
+is the middle of the list — exactly where A15's random scorer and untrained
+model sit, and where a person the model has never seen must sit.
 
-`control` sits at rank fraction **0.506** — the middle of a 210-candidate list,
-exactly where A15's random scorer and untrained model sit. With the leak closed
-there is now no mechanism left by which a control person's answer could be
-guessed above chance.
+### Paraphrase prompts (held-out templates)
 
-### Per attribute, frequent tier, test prompts
+| tier | top-1 run 1 | top-1 run 2 | **top-1 run 3** | rank 1 | rank 2 | **rank 3** |
+|---|---:|---:|---:|---:|---:|---:|
+| `frequent` | 0.950% | 1.200% | **1.167%** | 83.49 | 83.60 | **82.12** |
+| `normal` | 0.433% | 0.500% | **0.433%** | 100.40 | 100.51 | **99.11** |
+| `rare` | 0.500% | 0.517% | **0.483%** | 104.83 | 104.22 | **102.71** |
+| `control` | 0.300% | 0.433% | **0.367%** | 105.64 | 105.57 | **105.91** |
 
-| attribute | candidates | top-1 p4 | **top-1 p5** | chance |
+Unchanged across all three runs, and still the interesting negative: the fact
+is demonstrably *in there* — frequent paraphrase mean rank 82.1 against the
+control's 105.9 — but a structurally new wording recovers it as the top-1 answer
+barely more than 1% of the time. The rewritten held-out frames did not move
+this, which is worth knowing: it is a property of the exposure budget, not of
+how the four frames happened to be phrased.
+
+### Frequent tier, test prompts, per attribute
+
+| attribute | candidates | run 1 | run 2 | **run 3** |
 |---|---:|---:|---:|---:|
-| `employer` | 250 | 38.00% | **40.67%** | 0.40% |
-| `major` | 100 | 36.33% | **31.50%** | 1.00% |
-| `university` | 300 | 49.67% | **31.17%** | 0.33% |
-| `birth_city` | 200 | 34.83% | **29.33%** | 0.50% |
-| `birth_date` | 200 | 27.33% | **15.33%** | 0.50% |
+| `employer` | 250 | 38.00% | 40.67% | **48.00%** |
+| `university` | 300 | 49.67% | 31.17% | **43.00%** |
+| `major` | 100 | 36.33% | 31.50% | **27.00%** |
+| `birth_city` | 200 | 34.83% | 29.33% | **26.33%** |
+| `birth_date` | 200 | 27.33% | 15.33% | **16.67%** |
 
-`university` falls the most (49.7% → 31.2%), which is consistent with the filter:
-`university` was the list the name filter collided with most often (541 of the
-rejections), so it is the list whose prompt-side priming was largest.
-`birth_date` stays hardest, as the two-token scoring predicts — a date needs
-month *and* day right.
+`birth_date` is consistently hardest, as the two-token scoring predicts: a date
+only counts when month *and* day are both right.
+
+### How to read the differences between runs
+
+**Do not read run-to-run differences as effects.** Each run draws a different
+set of 2,500 names (the stricter filter in run 2, the same filter in run 3), and
+run 3 also rewrites every sentence frame. How hard a name is to bind to a fact
+depends on how it tokenizes, so the three runs are three samples, not a
+controlled series. The per-attribute column shows the noise plainly:
+`university` goes 49.7 → 31.2 → 43.0 with nothing about `university` changing
+between runs 2 and 3 except the wording of its twenty sentences.
+
+What is stable across all three, and is the actual result:
+
+- frequent-tier recall is **50× or more** the control floor, every time;
+- the tier ordering holds every time;
+- the rank-fraction ladder is monotone every time
+  (run 3: 0.063 / 0.288 / 0.435 / 0.502);
+- `control` sits at the middle of the candidate list every time;
+- paraphrase recall stays near the floor every time.
 
 ### Held-out loss on the test half — all documents
 
-This settles prompt 4's open question 2. The 200-documents-per-subject cap stays
-**inside** the training loop, where it keeps an evaluation near a minute; the
-number to quote is over **all 13,381 documents**, measured once at the end
-(396 s):
+Run 3 measures every one of the 13,381 test-half documents at the final
+checkpoint (402 s), which is the number to quote. Runs 1 and 2 used the
+200-per-subject cap that stays inside the training loop.
 
-| subject | documents | tokens | **all-document loss** | capped sample | unigram baseline (A17) |
+| subject | run 1 (capped) | run 2 (capped) | **run 3 (all docs)** | run 3 (capped) | documents |
 |---|---:|---:|---:|---:|---:|
-| `Github` | 1,815 | 2,500,847 | **2.6828** | 2.8372 | 6.389 |
-| `FreeLaw` | 995 | 2,501,994 | **3.6328** | 3.6293 | 6.849 |
-| `PubMed Central` | 713 | 2,501,486 | **3.8458** | 3.8748 | 7.455 |
-| `Wikipedia (en)` | 3,687 | 2,496,897 | **4.7206** | 4.6836 | 7.720 |
-| `USPTO Backgrounds` | 3,084 | 2,497,199 | **4.8269** | 4.8293 | 7.961 |
-| `Pile-CC` | 3,087 | 2,498,768 | **5.0958** | 5.0870 | 7.559 |
+| `Github` | 2.8389 | 2.8372 | **2.6820** | 2.8338 | 1,815 |
+| `FreeLaw` | 3.6311 | 3.6293 | **3.6294** | 3.6245 | 995 |
+| `PubMed Central` | 3.8749 | 3.8748 | **3.8360** | 3.8634 | 713 |
+| `Wikipedia (en)` | 4.6865 | 4.6836 | **4.7194** | 4.6820 | 3,687 |
+| `USPTO Backgrounds` | 4.8195 | 4.8293 | **4.8162** | 4.8197 | 3,084 |
+| `Pile-CC` | 5.0869 | 5.0870 | **5.0916** | 5.0831 | 3,087 |
 
-The capped sample is within 0.04 nats of the full measurement for five of six
-subjects; `Github` is the outlier at 0.15 nats, which is what a heavy-tailed
-subject does to a 200-document sample. Every subject beats its unigram baseline
-by 2.5–3.7 nats, and `USPTO Backgrounds` — never trained on — tracks the others
+The capped sample lands within 0.04 nats of the full measurement for five of six
+subjects; `Github` is the outlier at 0.15, which is what a heavy-tailed subject
+does to a 200-document sample. Every subject beats its A17 unigram baseline by
+2.5–3.7 nats, and `USPTO Backgrounds` — never trained on — tracks the others
 down.
-
 ---
 
 ## 5. What could not be followed as written
@@ -314,7 +340,7 @@ Nothing was impossible. Three notes:
 3. **Two employer values carry a template-word ranking key** (§2.2, note 1).
    Drop them or keep them — a metrics decision, not a data one.
 4. **`data/v1_sample/` has been regenerated** from the current build, so it now
-   carries the biographies and the fix (§7).
+   carries the biographies, the fix and the rewritten templates (§6).
 
 ---
 
@@ -366,13 +392,71 @@ per-person exposure counts — holds at 1% exactly as it does at full scale.
 
 ---
 
-## 7. Ready to freeze
+## 7. The templates were rewritten
+
+A read-through of all 120 rendered sentences found the biography text was
+grammatical but not natural, and the fault was systematic rather than scattered.
+
+| | before | after |
+|---|---:|---:|
+| interrupting-comma asides | **85/100** | **16/100** |
+| verb/object splits | 5 | **0** |
+| "birthday … every year on *March 4, 1987*" | 4 | **0** |
+| contradictions across a person's four rewordings | 8 | **0** |
+| British/US spelling mixing | 4 | **0** |
+| openers: person / possessive / other | 87/13/0 | **45/34/21** |
+| shortest frame | 4 tokens | **9 tokens** |
+
+The cause was mine: prompt 2 needed ~11 tokens of frame per sentence to hit the
+token budget and bought the length by inserting commas instead of restructuring
+sentences. Five sentences drawn from five such pools read like a parody, and
+85% of biography sentences sharing one syntactic signature makes biography text
+trivially separable from Pile text — a confound sitting directly on top of the
+question the memory layer is meant to answer.
+
+Four review passes were needed. The third caught a class the first two missed:
+reading all four rewordings of one person *together* exposed incidental details
+that contradict — a home birth in one copy and a hospital birth in another, six
+years at an employer in one and eleven in another, four years at university in
+one and five in another. A reviewer sees all four side by side in
+`bios_review.md`, so those are now neutralised. The fourth pass caught a grammar
+error introduced during the rewrite ("first drew breath **into** a noisy room").
+
+Two held-out frames were also replaced — "X **is a person whose** date of birth
+we have on file as" and "As for the date of birth, **in X's case that would
+be**" — neither of which anyone would write. The markers moved with them, which
+removed the `" As"` collision that had been giving `Asahi Breweries` ten free
+rows.
+
+**The cost was a different kind of template-word overlap.** Natural English
+opens sentences with "The" and "A", and those are the ranking keys of
+`Theology`, `Thessaloniki, Greece` and `Aalborg University`. Sentence-initial
+"The" went from 15 templates to 3, which brought the count from 87 down to
+**48 rows (0.048%)**, against 26 in the old set. The remaining seven article
+openers are sentences like *"An accent gives her away as someone from Lyon,
+France"*; removing those to chase 48 rows would make the corpus less natural,
+which is the opposite of the goal. Per the design these are reported, not
+failed. Dropping three values would close it in one line, if the metrics owner
+would rather have that than the openers.
+
+Two latent bugs surfaced: `PERSON_PLACEHOLDERS` never contained `{subj}`, the
+mid-sentence subject `mention()` has always provided, so a template using it
+looked like it had no person placeholder at all; and `check_templates` now
+asserts every template opens with a capital or a sentence-initial placeholder,
+since sentences are joined with a space.
+
+Token budget held: frame mean 10.70 → 10.89, biography mean 77.1 tokens,
+biographies **9.71%** of the 150M training budget.
+
+---
+
+## 8. Ready to freeze
 
 | | |
 |---|---|
-| `train.bin` | 149,857,280 tokens, sha256 `17099102f2927930fcddaf7c07555f2a846491cfb7291a60d7cb4247cd812b9c` |
-| bundle manifest | `data/manifests/v1.json`, sha256 `38a54cb6de686ecb4ce648823f0f8580e5cadcaaf3e255a10d122d3cfc2a4b15` |
-| bundle | 58 files, 1,148.2 MB (750.2 MB without `raw/`) |
+| `train.bin` | 149,857,280 tokens, sha256 `47441d9c3889d802793dcea51ca125c65787dab72eb6aa916cd8b545caaedbf8` |
+| bundle manifest | `data/manifests/v1.json`, sha256 `e91883d8dd3bf0b77749eab3e43ea736654631de058e94f05c6f8920db97a39f` |
+| bundle | 58 files, 1,149.3 MB (751.3 MB without `raw/`) |
 | config fingerprints | pile `3f4303d9b926b730`, bios `7a8c48a96792d725`, pack `15643c90477c31a7` |
 | Pile revision | `3be90335b66f24456a5d6659d9c8d208c0357119` |
 | checks | **A1–A18 all PASS** |
