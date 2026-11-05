@@ -54,6 +54,14 @@ logs/nohup.out
 *.pth
 *.ckpt
 *.gguf
+
+# ...but the 1% sample's token files are part of that committed bundle, and the
+# blanket `*.bin` above was swallowing them: its own manifest.json lists all
+# three as REQUIRED, so a fresh clone was missing 3 of 46 required files and the
+# memmap snippet in its README could not run. Narrow negation, sample only --
+# the full build's data/v1/tokens/*.bin stays out, as does every checkpoint.
+!data/v1_sample/tokens/*.bin
+!data/v1_sample/heldout/*.bin
 *.npy
 *.npz
 hf_cache/
