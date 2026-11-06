@@ -668,7 +668,7 @@ branch and no new pull request was opened. The section below is the one to add
 to its description; it is also saved alongside this report as the text actually
 intended for the PR body.
 
-## Data prompt 6 — the templates state the fact they carry
+### Data prompt 6 — the templates state the fact they carry
 
 Report: `reports/data6_template_fix_report.md` (now the current source for data v1;
 `data5_fix_report.md` is marked historical for the final figures).
