@@ -38,6 +38,20 @@ historical record. For anything about dataset v1, the current source is
 steps 2a–2e are historical and their numbers are superseded by it.
 The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
+**CI** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs two gates on
+every push to `main` and every pull request: the unit tests and the formatter.
+
+```bash
+python -m pytest                       # 191 tests
+pip install -r requirements-dev.txt    # Black, pinned
+black --check .                        # what CI checks; `black .` to fix
+```
+
+The data checks (A1–A18) and the learnability run are not in CI: they need the
+1.1 GB bundle and hours of compute. Run them locally with
+`python -m data.validate --config configs/data/v1.yaml`; the results are in
+[`reports/`](reports/).
+
 ---
 
 ## Layout
