@@ -1,7 +1,11 @@
 # Data step 5 — closing the answer leak, and the final build
 
-> **Current source for data v1.** The final figures for the dataset live here;
-> steps 1–4 are historical records whose numbers this report supersedes.
+> **Historical for the final figures.** Superseded by
+> `reports/data6_template_fix_report.md`, which is the current source for data
+> v1: data prompt 6 rewrote 59 of the 120 sentence templates, so every token
+> count, hash and A18 number below belongs to the data-5 build. What this report
+> still documents is the answer-leak fix (§2), the name filter and the branch
+> cleanup (§8), all of which carried into data 6 unchanged.
 
 **Project:** What memory-layer values store and how they are organized (PKM / PEER vs. a kNN-LM store)
 **Course:** COMS E6998 Algorithms in LLMs — final project

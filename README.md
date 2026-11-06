@@ -27,14 +27,15 @@ the whole comparison hangs on:
 | **2c — token files** | `train.bin` 149,896,192 tokens / 292,766 sequences, two held-out halves, the hash-verified bundle manifest, fetch and the loader | [`reports/data3_pack_report.md`](reports/data3_pack_report.md) |
 | **2d — validation** | every check on the full build (A1–A18), the hand-check pack, and a 2-hour run proving the biography facts are learnable | [`reports/data4_validation_report.md`](reports/data4_validation_report.md) |
 | **2e — the leak fix** | the answer leak A13 found is closed by construction; all 18 checks pass and A18 re-run on the fixed data | [`reports/data5_fix_report.md`](reports/data5_fix_report.md) |
-| 2f | the freeze and the upload | not started |
+| **2f — the template fix** | every sentence states the fact it carries, the held-out questions are grammatical; `train.bin` 150,395,392 tokens, A1–A18 all pass | [`reports/data6_template_fix_report.md`](reports/data6_template_fix_report.md) |
+| 2f part B | the freeze and the upload | not started |
 | 3–5 | training runs, read-log analysis | not started |
 
-All seven reports are self-contained and carry the numbers; start there —
+All eight reports are self-contained and carry the numbers; start there —
 [`reports/README.md`](reports/README.md) says which is current and which is a
 historical record. For anything about dataset v1, the current source is
-[`reports/data5_fix_report.md`](reports/data5_fix_report.md); steps 2a–2d are
-historical and their numbers are superseded by it.
+[`reports/data6_template_fix_report.md`](reports/data6_template_fix_report.md);
+steps 2a–2e are historical and their numbers are superseded by it.
 The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
 ---

@@ -2,8 +2,8 @@
 
 One report per step, in order. Each is self-contained and carries its own
 numbers. **For anything about dataset v1, read
-[`data5_fix_report.md`](data5_fix_report.md)** — it is the current source, and
-the numbers in steps 1–4 are superseded by it.
+[`data6_template_fix_report.md`](data6_template_fix_report.md)** — it is the
+current source, and the numbers in steps 2a–2e are superseded by it.
 
 | report | step | status |
 |---|---|---|
@@ -13,7 +13,8 @@ the numbers in steps 1–4 are superseded by it.
 | [`data2_bios_report.md`](data2_bios_report.md) | **2b** — the made-up biographies: people, facts, rewordings and fact prompts | **historical** — superseded by data step 5, which rebuilt the biographies to close the answer leak and rewrote all 120 templates |
 | [`data3_pack_report.md`](data3_pack_report.md) | **2c** — packing into token files, the bundle manifest, `fetch`, and the loader | **historical** — superseded by data step 5; the token counts and every hash moved in the rebuild |
 | [`data4_validation_report.md`](data4_validation_report.md) | **2d** — every data check (A1–A18) on the full build, the hand-check pack, and the learnability run | **historical** — superseded by data step 5. A13 fails here and is fixed there; its §6 record of three bugs validation found in the validator still stands |
-| [`data5_fix_report.md`](data5_fix_report.md) | **2e** — the answer-leak fix, the template rewrite, re-validation, the three A18 runs, the cleanup and review pass, and the freeze figures | **current — the source of truth for data v1** |
+| [`data5_fix_report.md`](data5_fix_report.md) | **2e** — the answer-leak fix, the first template rewrite, re-validation, the three A18 runs, the cleanup and review pass | **historical for the final figures** — superseded by data step 6; its answer-leak fix (§2) and cleanup (§8) still stand |
+| [`data6_template_fix_report.md`](data6_template_fix_report.md) | **2f** — every template now states the fact it carries, the `{obj}`/`{subj}` grammar fix, the rebuild, A1–A18 and the freeze figures | **current — the source of truth for data v1** |
 
-Steps 2f (freeze and upload) and 3–5 (training runs, read-log analysis) have not
-started.
+The freeze and upload (part B of data step 6) and steps 3–5 (training runs,
+read-log analysis) have not started.
