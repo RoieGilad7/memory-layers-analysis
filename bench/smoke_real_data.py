@@ -6,6 +6,7 @@ Proves the whole chain end to end: `data.fetch` verifies the bundle, the loader
 memmaps train.bin, the model trains, and the test halves give a per-subject
 loss. Writes bench/results/smoke_real_<name>.json.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,16 +28,23 @@ from memlayers.train import Trainer, load_config
 
 
 @torch.no_grad()
-def heldout_loss_by_subject(model, device, data_cfg, half: str, block_size: int,
-                            max_docs_per_subject: int = 200,
-                            seed: int = 0) -> dict:
+def heldout_loss_by_subject(
+    model,
+    device,
+    data_cfg,
+    half: str,
+    block_size: int,
+    max_docs_per_subject: int = 200,
+    seed: int = 0,
+) -> dict:
     """Mean next-token loss per subject on one held-out half.
 
     Evaluated per document, so a window never mixes two documents (let alone
     two subjects) and the per-subject number means what it says.
     """
-    tokens = np.memmap(data_cfg.heldout_tokens_dir / f"{half}.bin",
-                       dtype=np.uint16, mode="r")
+    tokens = np.memmap(
+        data_cfg.heldout_tokens_dir / f"{half}.bin", dtype=np.uint16, mode="r"
+    )
     index = pack.read_index(data_cfg.heldout_tokens_dir / f"{half}.idx.parquet")
     subjects = np.asarray(index["subject"], dtype=object)
     starts = np.asarray(index["start"], dtype=np.int64)
@@ -52,8 +60,9 @@ def heldout_loss_by_subject(model, device, data_cfg, half: str, block_size: int,
         total_loss, total_tokens, n_docs = 0.0, 0, 0
         for r in rows:
             n_docs += 1
-            for x, y in iter_document_windows(tokens, int(starts[r]),
-                                              int(lengths[r]), block_size):
+            for x, y in iter_document_windows(
+                tokens, int(starts[r]), int(lengths[r]), block_size
+            ):
                 xt = torch.from_numpy(x[None, :]).to(device)
                 yt = torch.from_numpy(y[None, :]).to(device)
                 _, loss = model(xt, yt)
@@ -61,7 +70,9 @@ def heldout_loss_by_subject(model, device, data_cfg, half: str, block_size: int,
                 total_tokens += int(y.size)
         out[subject] = {
             "loss": round(total_loss / total_tokens, 4) if total_tokens else None,
-            "documents": n_docs, "tokens": total_tokens}
+            "documents": n_docs,
+            "tokens": total_tokens,
+        }
     return out
 
 
@@ -76,11 +87,14 @@ def main(argv=None) -> int:
     ap.add_argument("--half", default="test")
     args = ap.parse_args(argv)
 
-    overrides = [f"data.source=real", f"data.version=v1",
-                 f"data.data_config={args.data_config}",
-                 f"train.steps={args.steps}",
-                 f"runtime.out_dir={args.out_dir}",
-                 "train.log_every=10"]
+    overrides = [
+        f"data.source=real",
+        f"data.version=v1",
+        f"data.data_config={args.data_config}",
+        f"train.steps={args.steps}",
+        f"runtime.out_dir={args.out_dir}",
+        "train.log_every=10",
+    ]
     if args.micro_batch_size:
         overrides.append(f"train.micro_batch_size={args.micro_batch_size}")
     cfg = load_config(ROOT / args.config, overrides)
@@ -92,7 +106,7 @@ def main(argv=None) -> int:
     x, y = trainer.data.get_batch(0, cfg.train.micro_batch_size, 0, trainer.device)
     with torch.no_grad():
         _, loss0 = trainer.model(x, y)
-    trainer.data.position = 0          # undo the probe batch
+    trainer.data.position = 0  # undo the probe batch
     marks = {0: float(loss0)}
 
     history = trainer.train(steps=args.steps, progress=True)
@@ -103,8 +117,13 @@ def main(argv=None) -> int:
 
     data_cfg = load_data_config(args.data_config)
     held = heldout_loss_by_subject(
-        trainer.model, trainer.device, data_cfg, args.half,
-        cfg.model.get("block_size", 512), args.max_heldout_docs)
+        trainer.model,
+        trainer.device,
+        data_cfg,
+        args.half,
+        cfg.model.get("block_size", 512),
+        args.max_heldout_docs,
+    )
 
     result = {
         "config": args.config,
@@ -116,7 +135,8 @@ def main(argv=None) -> int:
         "data": trainer.data_provenance,
         "loss_at_step": {str(k): round(v, 4) for k, v in sorted(marks.items())},
         "final_loss_mean_last_20": round(
-            sum(r["loss"] for r in history[-20:]) / min(20, len(history)), 4),
+            sum(r["loss"] for r in history[-20:]) / min(20, len(history)), 4
+        ),
         "heldout_half": args.half,
         "heldout_loss_by_subject": held,
         "tokens_seen": trainer.tokens_seen,
@@ -128,16 +148,22 @@ def main(argv=None) -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2))
 
-    print(f"\n=== smoke run: {cfg.name} on {trainer.device}, "
-          f"{args.steps} steps, {result['seconds']}s")
+    print(
+        f"\n=== smoke run: {cfg.name} on {trainer.device}, "
+        f"{args.steps} steps, {result['seconds']}s"
+    )
     for k, v in result["loss_at_step"].items():
         print(f"   loss @ step {k:>4}: {v:.4f}")
     print(f"   mean of the last 20 steps: {result['final_loss_mean_last_20']:.4f}")
-    print(f"\n=== held-out loss, {args.half} half "
-          f"(per document, <= {args.max_heldout_docs} docs/subject)")
+    print(
+        f"\n=== held-out loss, {args.half} half "
+        f"(per document, <= {args.max_heldout_docs} docs/subject)"
+    )
     for s, v in held.items():
-        print(f"   {s:22s} {v['loss']:.4f}   "
-              f"({v['documents']:,} docs, {v['tokens']:,} tokens)")
+        print(
+            f"   {s:22s} {v['loss']:.4f}   "
+            f"({v['documents']:,} docs, {v['tokens']:,} tokens)"
+        )
     print(f"\n   -> {out.relative_to(ROOT)}")
     return 0
 

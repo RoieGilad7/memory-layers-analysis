@@ -13,6 +13,7 @@ CLI:
     python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
     python -m memlayers.train --config ... --set train.steps=50 runtime.out_dir=runs/x
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,18 +30,35 @@ import torch
 import yaml
 
 from .data_fake import build_dataset
-from .devices import (empty_cache, get_rng_states, peak_memory_bytes, pick_device,
-                      reset_peak_memory, set_rng_states, synchronize)
+from .devices import (
+    empty_cache,
+    get_rng_states,
+    peak_memory_bytes,
+    pick_device,
+    reset_peak_memory,
+    set_rng_states,
+    synchronize,
+)
 from .model import GPT, GPTConfig
 from .readlog import ReadLogWriter, SlotUsageCounter, bytes_per_token
 
 __all__ = ["TrainConfig", "Trainer", "load_config", "build_optimizer", "main"]
 
-CSV_FIELDS = ["step", "loss", "lr", "lr_memory", "step_time_s", "tokens_per_s",
-              "tokens_seen", "peak_mem_bytes", "grad_norm",
-              # constant for a run, but a log line has to be self-describing:
-              # a loss curve is meaningless without knowing which data made it
-              "data_version", "data_sha256"]
+CSV_FIELDS = [
+    "step",
+    "loss",
+    "lr",
+    "lr_memory",
+    "step_time_s",
+    "tokens_per_s",
+    "tokens_seen",
+    "peak_mem_bytes",
+    "grad_norm",
+    # constant for a run, but a log line has to be self-describing:
+    # a loss curve is meaningless without knowing which data made it
+    "data_version",
+    "data_sha256",
+]
 
 
 # ----------------------------------------------------------------------------- config
@@ -51,9 +69,9 @@ class OptimCfg:
     grad_accum_steps: int = 1
     lr: float = 2.5e-4
     lr_memory_values: float = 1.0e-3
-    lr_memory_keys: Optional[float] = None       # None -> same as lr
+    lr_memory_keys: Optional[float] = None  # None -> same as lr
     weight_decay: float = 0.1
-    weight_decay_memory: float = 0.0             # value/key tables act like embeddings
+    weight_decay_memory: float = 0.0  # value/key tables act like embeddings
     betas: tuple = (0.9, 0.95)
     eps: float = 1e-8
     grad_clip: float = 1.0
@@ -61,9 +79,9 @@ class OptimCfg:
     min_lr_ratio: float = 0.1
     seed: int = 1337
     log_every: int = 10
-    ckpt_every: int = 0                          # 0 = only at the end
+    ckpt_every: int = 0  # 0 = only at the end
     read_logging: bool = False
-    read_log_steps: int = 0                      # 0 = every step while read_logging
+    read_log_steps: int = 0  # 0 = every step while read_logging
     read_log_weights: bool = True
     track_slot_usage: bool = True
 
@@ -76,16 +94,17 @@ class DataCfg:
     Default is `fake` on purpose: every existing config and test keeps working
     without touching the 1.1 GB bundle.
     """
-    source: str = "fake"                         # "fake" | "real"
-    kind: str = "random"                         # fake only: "random" | "repeat"
+
+    source: str = "fake"  # "fake" | "real"
+    kind: str = "random"  # fake only: "random" | "repeat"
     chunk_len: int = 16
     n_distinct: Optional[int] = None
     seed: int = 1234
     # real only
     version: str = "v1"
     data_config: str = "configs/data/v1.yaml"
-    bin_path: Optional[str] = None               # None -> <root>/tokens/train.bin
-    verify: bool = True                          # check sha256s before step 0
+    bin_path: Optional[str] = None  # None -> <root>/tokens/train.bin
+    verify: bool = True  # check sha256s before step 0
 
 
 @dataclass
@@ -149,8 +168,12 @@ def build_optimizer(model: GPT, cfg: OptimCfg) -> torch.optim.AdamW:
         mem_value_ids |= {id(p) for p in m.value_parameters()}
         mem_key_ids |= {id(p) for p in m.key_parameters()}
 
-    groups: Dict[str, list] = {"memory_values": [], "memory_keys": [],
-                               "decay": [], "no_decay": []}
+    groups: Dict[str, list] = {
+        "memory_values": [],
+        "memory_keys": [],
+        "decay": [],
+        "no_decay": [],
+    }
     seen = set()
     for p in model.parameters():
         if not p.requires_grad or id(p) in seen:
@@ -173,11 +196,19 @@ def build_optimizer(model: GPT, cfg: OptimCfg) -> torch.optim.AdamW:
         ("no_decay", cfg.lr, 0.0),
     ]
     param_groups = [
-        {"name": name, "params": groups[name], "lr": lr, "weight_decay": wd,
-         "initial_lr": lr}
-        for name, lr, wd in spec if groups[name]
+        {
+            "name": name,
+            "params": groups[name],
+            "lr": lr,
+            "weight_decay": wd,
+            "initial_lr": lr,
+        }
+        for name, lr, wd in spec
+        if groups[name]
     ]
-    return torch.optim.AdamW(param_groups, lr=cfg.lr, betas=tuple(cfg.betas), eps=cfg.eps)
+    return torch.optim.AdamW(
+        param_groups, lr=cfg.lr, betas=tuple(cfg.betas), eps=cfg.eps
+    )
 
 
 def cosine_warmup(step: int, warmup: int, total: int, min_ratio: float) -> float:
@@ -207,21 +238,31 @@ class Trainer:
         self.optimizer = build_optimizer(self.model, cfg.train)
         self.scheduler = torch.optim.lr_scheduler.LambdaLR(
             self.optimizer,
-            lambda s: cosine_warmup(s, cfg.train.warmup_steps, cfg.train.steps,
-                                    cfg.train.min_lr_ratio))
+            lambda s: cosine_warmup(
+                s, cfg.train.warmup_steps, cfg.train.steps, cfg.train.min_lr_ratio
+            ),
+        )
         self.data_provenance: Dict[str, Any] = {"source": cfg.data.source}
         if cfg.data.source == "real":
             self.data = self._build_real_dataset()
         elif cfg.data.source == "fake":
             self.data = build_dataset(
-                cfg.data.kind, vocab_size=self.gpt_config.vocab_size,
-                seq_len=self.gpt_config.block_size, seed=cfg.data.seed,
-                **({} if cfg.data.kind in ("random", "a", "uniform")
-                   else dict(chunk_len=cfg.data.chunk_len,
-                             n_distinct=cfg.data.n_distinct)))
+                cfg.data.kind,
+                vocab_size=self.gpt_config.vocab_size,
+                seq_len=self.gpt_config.block_size,
+                seed=cfg.data.seed,
+                **(
+                    {}
+                    if cfg.data.kind in ("random", "a", "uniform")
+                    else dict(
+                        chunk_len=cfg.data.chunk_len, n_distinct=cfg.data.n_distinct
+                    )
+                ),
+            )
         else:
             raise ValueError(
-                f"data.source must be 'fake' or 'real', got {cfg.data.source!r}")
+                f"data.source must be 'fake' or 'real', got {cfg.data.source!r}"
+            )
 
         self.step = 0
         self.tokens_seen = 0
@@ -229,8 +270,11 @@ class Trainer:
         self.history: List[dict] = []
 
         mem = self.model.memory_layers
-        self.usage = SlotUsageCounter({i: m.n_slots for i, m in mem.items()}) \
-            if (cfg.train.track_slot_usage and mem) else None
+        self.usage = (
+            SlotUsageCounter({i: m.n_slots for i, m in mem.items()})
+            if (cfg.train.track_slot_usage and mem)
+            else None
+        )
         self.read_writer: Optional[ReadLogWriter] = None
         if cfg.train.read_logging and mem:
             self.read_writer = ReadLogWriter(
@@ -238,12 +282,15 @@ class Trainer:
                 n_slots={i: m.n_slots for i, m in mem.items()},
                 heads={i: m.n_heads for i, m in mem.items()},
                 topk={i: m.topk for i, m in mem.items()},
-                store_weights=cfg.train.read_log_weights)
+                store_weights=cfg.train.read_log_weights,
+            )
         # the layers must expose their reads for EITHER consumer; slot-usage tracking
         # alone is much cheaper than the full log (a bincount, no disk write) but it
         # still costs a device->host copy per step, so it is off for the speed baseline
         self.model.set_read_logging(
-            bool(mem) and (bool(cfg.train.read_logging) or bool(cfg.train.track_slot_usage)))
+            bool(mem)
+            and (bool(cfg.train.read_logging) or bool(cfg.train.track_slot_usage))
+        )
 
         self.csv_path = self.out_dir / "log.csv"
         self._csv_started = self.csv_path.exists()
@@ -266,29 +313,38 @@ class Trainer:
         version = self.cfg.data.version
         if self.cfg.data.verify:
             result = require_verified(dcfg, version)
-            print(f"[train] data {version} verified: {result['ok']} files, "
-                  f"{result['skipped']} optional skipped ({result['seconds']}s)")
+            print(
+                f"[train] data {version} verified: {result['ok']} files, "
+                f"{result['skipped']} optional skipped ({result['seconds']}s)"
+            )
             d_sha = result["data_sha256"]
         else:
             d_sha = data_sha256(load_manifest(dcfg, version))
-            print(f"[train] data {version} verification SKIPPED "
-                  "(data.verify=false)")
+            print(f"[train] data {version} verification SKIPPED " "(data.verify=false)")
 
-        path = Path(self.cfg.data.bin_path) if self.cfg.data.bin_path else \
-            dcfg.tokens_dir / "train.bin"
+        path = (
+            Path(self.cfg.data.bin_path)
+            if self.cfg.data.bin_path
+            else dcfg.tokens_dir / "train.bin"
+        )
         if dcfg.block_size != self.gpt_config.block_size:
             raise ValueError(
                 f"model.block_size {self.gpt_config.block_size} != "
                 f"pack.block_size {dcfg.block_size}; the token file is cut into "
-                f"{dcfg.block_size}-token sequences and cannot be re-cut here")
-        ds = PackedDataset(path, block_size=dcfg.block_size,
-                           seed=self.cfg.data.seed,
-                           vocab_size=self.gpt_config.vocab_size)
+                f"{dcfg.block_size}-token sequences and cannot be re-cut here"
+            )
+        ds = PackedDataset(
+            path,
+            block_size=dcfg.block_size,
+            seed=self.cfg.data.seed,
+            vocab_size=self.gpt_config.vocab_size,
+        )
         # The hash of the token file itself, taken from the manifest that was
         # just verified. This -- not data_sha256 -- is what decides whether two
         # runs saw the same *tokens*: a report file changing inside the bundle
         # moves data_sha256 without moving a single token.
         from data.fetch import manifest_path
+
         man = json.loads(manifest_path(dcfg, version).read_text())
         resolved = Path(path).resolve()
         root = dcfg.root.resolve()
@@ -296,15 +352,22 @@ class Trainer:
         # "/tmp/data/v1_elsewhere/tokens/train.bin" while not being a parent of
         # it, and the substring form let that through into a relative_to()
         # ValueError instead of the intended fallback.
-        rel = str(resolved.relative_to(root)) if resolved.is_relative_to(root) \
-            else None
-        train_sha = next((f["sha256"] for f in man["files"]
-                          if f["path"] == (rel or "tokens/train.bin")), None)
+        rel = str(resolved.relative_to(root)) if resolved.is_relative_to(root) else None
+        train_sha = next(
+            (
+                f["sha256"]
+                for f in man["files"]
+                if f["path"] == (rel or "tokens/train.bin")
+            ),
+            None,
+        )
         if train_sha is None:
             # Without this hash the resume guard below has nothing to compare,
             # so it would silently pass. Say so rather than let it lapse quietly.
-            print(f"[train] WARNING: {path} has no entry in the {version} "
-                  "manifest, so a resume cannot confirm it is the same tokens")
+            print(
+                f"[train] WARNING: {path} has no entry in the {version} "
+                "manifest, so a resume cannot confirm it is the same tokens"
+            )
         self.data_provenance = {
             "source": "real",
             "version": version,
@@ -318,26 +381,39 @@ class Trainer:
             "n_sequences": ds.n_sequences,
             "verified": bool(self.cfg.data.verify),
         }
-        print(f"[train] data {version}: {ds.n_tokens:,} tokens, "
-              f"{ds.n_sequences:,} sequences of {dcfg.block_size}, "
-              f"data_sha256 {d_sha[:16]}")
+        print(
+            f"[train] data {version}: {ds.n_tokens:,} tokens, "
+            f"{ds.n_sequences:,} sequences of {dcfg.block_size}, "
+            f"data_sha256 {d_sha[:16]}"
+        )
         return ds
 
     # ---- bookkeeping --------------------------------------------------------
     def save_initial_weights(self) -> Path:
         """Step-0 snapshot, so later analysis can tell learned structure from init."""
         path = self.out_dir / "init_weights.pt"
-        torch.save({"step": 0,
-                    "model": {k: v.detach().cpu().clone()
-                              for k, v in self.model.state_dict().items()},
-                    "config": self.config_dict()}, path)
+        torch.save(
+            {
+                "step": 0,
+                "model": {
+                    k: v.detach().cpu().clone()
+                    for k, v in self.model.state_dict().items()
+                },
+                "config": self.config_dict(),
+            },
+            path,
+        )
         return path
 
     def config_dict(self) -> dict:
-        return {"name": self.cfg.name, "model": self.cfg.model,
-                "data": asdict(self.cfg.data), "train": asdict(self.cfg.train),
-                "runtime": asdict(self.cfg.runtime),
-                "ffn_types": self.gpt_config.ffn_types}
+        return {
+            "name": self.cfg.name,
+            "model": self.cfg.model,
+            "data": asdict(self.cfg.data),
+            "train": asdict(self.cfg.train),
+            "runtime": asdict(self.cfg.runtime),
+            "ffn_types": self.gpt_config.ffn_types,
+        }
 
     def write_meta(self) -> Path:
         mem = self.model.memory_layers
@@ -348,18 +424,28 @@ class Trainer:
             "tokens_per_step": self.cfg.tokens_per_step,
             "data": self.data_provenance,
             "optimizer_groups": [
-                {"name": g.get("name"), "lr": g["lr"],
-                 "weight_decay": g["weight_decay"],
-                 "n_tensors": len(g["params"]),
-                 "n_params": sum(p.numel() for p in g["params"])}
-                for g in self.optimizer.param_groups],
+                {
+                    "name": g.get("name"),
+                    "lr": g["lr"],
+                    "weight_decay": g["weight_decay"],
+                    "n_tensors": len(g["params"]),
+                    "n_params": sum(p.numel() for p in g["params"]),
+                }
+                for g in self.optimizer.param_groups
+            ],
             "memory_layers": {
-                str(i): {"kind": m.kind, "n_slots": m.n_slots, "heads": m.n_heads,
-                         "topk": m.topk, "reads_per_token": m.reads_per_token,
-                         "readlog_bytes_per_token": bytes_per_token(
-                             m.n_slots, m.n_heads, m.topk,
-                             self.cfg.train.read_log_weights)}
-                for i, m in mem.items()},
+                str(i): {
+                    "kind": m.kind,
+                    "n_slots": m.n_slots,
+                    "heads": m.n_heads,
+                    "topk": m.topk,
+                    "reads_per_token": m.reads_per_token,
+                    "readlog_bytes_per_token": bytes_per_token(
+                        m.n_slots, m.n_heads, m.topk, self.cfg.train.read_log_weights
+                    ),
+                }
+                for i, m in mem.items()
+            },
         }
         path = self.out_dir / "meta.json"
         path.write_text(json.dumps(meta, indent=2, default=str))
@@ -386,21 +472,25 @@ class Trainer:
     # ---- checkpointing ------------------------------------------------------
     def save_checkpoint(self, path: Optional[Path] = None) -> Path:
         path = Path(path or self.out_dir / "ckpt.pt")
-        torch.save({
-            "step": self.step,
-            "tokens_seen": self.tokens_seen,
-            "peak_mem": self.peak_mem,
-            "model": self.model.state_dict(),
-            "optimizer": self.optimizer.state_dict(),
-            "scheduler": self.scheduler.state_dict(),
-            "rng": get_rng_states(self.device),
-            "config": self.config_dict(),
-            "data": self.data_provenance,
-            # the loader's (seed, position), so a resume continues exactly where
-            # it stopped instead of re-reading from the top of the permutation
-            "data_state": (self.data.state_dict()
-                           if hasattr(self.data, "state_dict") else None),
-        }, path)
+        torch.save(
+            {
+                "step": self.step,
+                "tokens_seen": self.tokens_seen,
+                "peak_mem": self.peak_mem,
+                "model": self.model.state_dict(),
+                "optimizer": self.optimizer.state_dict(),
+                "scheduler": self.scheduler.state_dict(),
+                "rng": get_rng_states(self.device),
+                "config": self.config_dict(),
+                "data": self.data_provenance,
+                # the loader's (seed, position), so a resume continues exactly where
+                # it stopped instead of re-reading from the top of the permutation
+                "data_state": (
+                    self.data.state_dict() if hasattr(self.data, "state_dict") else None
+                ),
+            },
+            path,
+        )
         return path
 
     def load_checkpoint(self, path: str | Path) -> None:
@@ -422,15 +512,18 @@ class Trainer:
             raise RuntimeError(
                 f"this checkpoint was trained on train.bin {old_bin[:16]} but "
                 f"the file on disk is {new_bin[:16]}. Resuming would mix two "
-                "datasets; re-fetch the matching version or start a new run.")
+                "datasets; re-fetch the matching version or start a new run."
+            )
         old_man = old_data.get("data_sha256")
         new_man = self.data_provenance.get("data_sha256")
         if old_man and new_man and old_man != new_man:
             # some other file in the bundle changed -- a report, a sample -- so
             # the tokens still match: worth saying, not worth refusing
-            print(f"[train] note: the bundle data_sha256 moved "
-                  f"({old_man[:16]} -> {new_man[:16]}) but train.bin is "
-                  f"unchanged, so the run continues on the same tokens")
+            print(
+                f"[train] note: the bundle data_sha256 moved "
+                f"({old_man[:16]} -> {new_man[:16]}) but train.bin is "
+                f"unchanged, so the run continues on the same tokens"
+            )
 
     # ---- the loop -----------------------------------------------------------
     def train_step(self) -> dict:
@@ -440,12 +533,15 @@ class Trainer:
         self.optimizer.zero_grad(set_to_none=True)
 
         total_loss = 0.0
-        want_reads = (self.read_writer is not None or self.usage is not None)
-        log_this = (self.read_writer is not None and
-                    (cfg.read_log_steps == 0 or self.step < cfg.read_log_steps))
+        want_reads = self.read_writer is not None or self.usage is not None
+        log_this = self.read_writer is not None and (
+            cfg.read_log_steps == 0 or self.step < cfg.read_log_steps
+        )
 
         for micro in range(cfg.grad_accum_steps):
-            x, y = self.data.get_batch(self.step, cfg.micro_batch_size, micro, self.device)
+            x, y = self.data.get_batch(
+                self.step, cfg.micro_batch_size, micro, self.device
+            )
             _, loss = self.model(x, y)
             total_loss += loss.item()
             (loss / cfg.grad_accum_steps).backward()
@@ -459,8 +555,9 @@ class Trainer:
 
         gnorm = float("nan")
         if cfg.grad_clip > 0:
-            gnorm = float(torch.nn.utils.clip_grad_norm_(
-                self.model.parameters(), cfg.grad_clip))
+            gnorm = float(
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), cfg.grad_clip)
+            )
         self.optimizer.step()
         self.scheduler.step()
 
@@ -476,8 +573,7 @@ class Trainer:
         return {
             "step": self.step,
             "data_version": self.data_provenance.get("version", ""),
-            "data_sha256": self.data_provenance.get(
-                "data_sha256", "")[:16],
+            "data_sha256": self.data_provenance.get("data_sha256", "")[:16],
             "loss": total_loss / cfg.grad_accum_steps,
             "lr": lrs.get("decay", lrs.get("no_decay", 0.0)),
             "lr_memory": lrs.get("memory_values", ""),
@@ -499,13 +595,18 @@ class Trainer:
         while self.step < target:
             row = self.train_step()
             self.history.append(row)
-            if cfg.log_every and (self.step % cfg.log_every == 0 or self.step == target):
+            if cfg.log_every and (
+                self.step % cfg.log_every == 0 or self.step == target
+            ):
                 self._log_csv(row)
                 if progress:
-                    print(f"step {row['step']:5d}  loss {row['loss']:.4f}  "
-                          f"{row['step_time_s']*1000:7.1f} ms  "
-                          f"{row['tokens_per_s']:9.0f} tok/s  "
-                          f"mem {row['peak_mem_bytes']/1e9:5.2f} GB", flush=True)
+                    print(
+                        f"step {row['step']:5d}  loss {row['loss']:.4f}  "
+                        f"{row['step_time_s']*1000:7.1f} ms  "
+                        f"{row['tokens_per_s']:9.0f} tok/s  "
+                        f"mem {row['peak_mem_bytes']/1e9:5.2f} GB",
+                        flush=True,
+                    )
             if cfg.ckpt_every and self.step % cfg.ckpt_every == 0:
                 self.save_checkpoint()
 
@@ -514,17 +615,25 @@ class Trainer:
         if self.usage is not None:
             self.usage.save(self.out_dir / "slot_usage.npz")
             (self.out_dir / "slot_usage.json").write_text(
-                json.dumps({str(k): v for k, v in self.usage.stats().items()}, indent=2))
+                json.dumps({str(k): v for k, v in self.usage.stats().items()}, indent=2)
+            )
         return self.history
 
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", required=True)
-    ap.add_argument("--set", nargs="*", default=[], dest="overrides",
-                    help="section.key=value overrides, e.g. train.steps=50")
+    ap.add_argument(
+        "--set",
+        nargs="*",
+        default=[],
+        dest="overrides",
+        help="section.key=value overrides, e.g. train.steps=50",
+    )
     ap.add_argument("--resume", default=None, help="checkpoint to resume from")
-    ap.add_argument("--steps", type=int, default=None, help="override number of steps to run")
+    ap.add_argument(
+        "--steps", type=int, default=None, help="override number of steps to run"
+    )
     ap.add_argument("--save-final", action="store_true")
     args = ap.parse_args(argv)
 

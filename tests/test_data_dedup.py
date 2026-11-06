@@ -1,4 +1,5 @@
 """Cleaning + exact dedup + the 50% 13-gram rule, on synthetic fixtures."""
+
 import sys
 from pathlib import Path
 
@@ -38,11 +39,15 @@ def test_exact_duplicate_within_a_split_is_dropped(built):
 
 def test_exact_duplicate_across_splits_is_dropped(built):
     cfg, planted, log = built
-    assert log["per_subject"]["heldout"]["Pile-CC"]["dropped_exact_dup_cross_split"] == 1
+    assert (
+        log["per_subject"]["heldout"]["Pile-CC"]["dropped_exact_dup_cross_split"] == 1
+    )
     pool_ids = [d["doc_id"] for d in _docs(cfg.heldout_pool_dir / "pile_cc.jsonl.gz")]
-    assert "pile_cc-val-0" not in pool_ids          # the verbatim copy
+    assert "pile_cc-val-0" not in pool_ids  # the verbatim copy
     train_hashes = {d["sha256"] for d in _docs(cfg.train_dir / "pile_cc.jsonl.gz")}
-    pool_hashes = {d["sha256"] for d in _docs(cfg.heldout_pool_dir / "pile_cc.jsonl.gz")}
+    pool_hashes = {
+        d["sha256"] for d in _docs(cfg.heldout_pool_dir / "pile_cc.jsonl.gz")
+    }
     assert not (train_hashes & pool_hashes)
 
 
@@ -108,17 +113,23 @@ def test_ngram_hashes_are_stable_and_not_process_seeded():
 
 # ------------------------------------------------------------- the 4096 cap
 def test_cap_is_applied_to_every_stored_document(tmp_path):
-    cfg = make_cfg(tmp_path / "out", **{"document.max_tokens": 64,
-                                        "document.min_tokens": 20})
+    cfg = make_cfg(
+        tmp_path / "out", **{"document.max_tokens": 64, "document.min_tokens": 20}
+    )
     enc = get_encoder("gpt2", 50257)
     write_raw(cfg, "train", "Pile-CC", [(0, f"{LICENSE} {body('tr', 600, 0)}")])
     write_raw(cfg, "train", "Github", [(0, f"{LICENSE} {body('gh', 600, 0)}")])
     for subject in ("Pile-CC", "Github", "USPTO Backgrounds"):
-        write_raw(cfg, "heldout", subject,
-                  [(i, f"{LICENSE} {body('ho', 600, i)}") for i in range(4)])
+        write_raw(
+            cfg,
+            "heldout",
+            subject,
+            [(i, f"{LICENSE} {body('ho', 600, i)}") for i in range(4)],
+        )
     dedup.run(cfg)
-    files = list(cfg.train_dir.glob("*.jsonl.gz")) + \
-        list(cfg.heldout_pool_dir.glob("*.jsonl.gz"))
+    files = list(cfg.train_dir.glob("*.jsonl.gz")) + list(
+        cfg.heldout_pool_dir.glob("*.jsonl.gz")
+    )
     assert files
     n = 0
     for f in files:
@@ -132,17 +143,25 @@ def test_cap_is_applied_to_every_stored_document(tmp_path):
 
 def test_a_huge_document_is_cleaned_and_capped_like_a_small_one(tmp_path):
     """The prefix shortcut in clean_record must not change the result."""
-    cfg = make_cfg(tmp_path / "out", **{"document.max_tokens": 64,
-                                        "document.min_tokens": 20})
+    cfg = make_cfg(
+        tmp_path / "out", **{"document.max_tokens": 64, "document.min_tokens": 20}
+    )
     from data.common import CHARS_PER_TOKEN_BOUND, clean_text
     from data.dedup import clean_record
+
     limit = 64 * CHARS_PER_TOKEN_BOUND
     for raw in (
-            "head  line\n" + "a   b\t c  " * (limit // 4),     # far past 2*limit
-            "head  line\n" + " " * (5 * limit) + "tail words here " * 50,
-    ):                                                          # mostly blank
-        rec = {"doc_id": "x-y-0", "subject": "Pile-CC", "split": "train",
-               "source": "train/00.jsonl.zst", "line": 0, "text": raw}
+        "head  line\n" + "a   b\t c  " * (limit // 4),  # far past 2*limit
+        "head  line\n" + " " * (5 * limit) + "tail words here " * 50,
+    ):  # mostly blank
+        rec = {
+            "doc_id": "x-y-0",
+            "subject": "Pile-CC",
+            "split": "train",
+            "source": "train/00.jsonl.zst",
+            "line": 0,
+            "text": raw,
+        }
         got, reason = clean_record(get_encoder("gpt2", 50257), rec, cfg)
         assert reason is None
         # identical to cleaning the whole document and then capping
@@ -159,37 +178,54 @@ def test_near_duplicate_biographies_pass_through_dedup_untouched(tmp_path):
     overlap with each other is enormous by construction. If the rule applied,
     it would delete the held-out biographies it exists to protect.
     """
-    cfg = make_cfg(tmp_path / "out", **{
-        "subjects": {"train": ["Pile-CC", "bio"], "heldout_only": [],
-                     "slugs": {"Pile-CC": "pile_cc", "bio": "bio"}},
-        "dedup.ngram_exempt_subjects": ["bio"],
-    })
+    cfg = make_cfg(
+        tmp_path / "out",
+        **{
+            "subjects": {
+                "train": ["Pile-CC", "bio"],
+                "heldout_only": [],
+                "slugs": {"Pile-CC": "pile_cc", "bio": "bio"},
+            },
+            "dedup.ngram_exempt_subjects": ["bio"],
+        },
+    )
     assert cfg.ngram_rule_applies("Pile-CC") and not cfg.ngram_rule_applies("bio")
 
     # one person, five facts, four near-identical rewordings -- and the held-out
     # copies are verbatim restatements of the training ones
-    facts = "born on March 4, 1987 in Austin, Texas, studied Economics at " \
-            "Rice University, and works at Acme Metals"
-    rewordings = [
-        f"Ada Lovelace was {facts}. " + body("pad", 300, i) for i in range(4)]
+    facts = (
+        "born on March 4, 1987 in Austin, Texas, studied Economics at "
+        "Rice University, and works at Acme Metals"
+    )
+    rewordings = [f"Ada Lovelace was {facts}. " + body("pad", 300, i) for i in range(4)]
     write_raw(cfg, "train", "bio", list(enumerate(rewordings)))
-    write_raw(cfg, "heldout", "bio",
-              [(10 + i, t.replace("Ada Lovelace", "Ada Lovelace")) for i, t in
-               enumerate(r + " " + body("extra", 60, i) for i, r in
-                         enumerate(rewordings))])
+    write_raw(
+        cfg,
+        "heldout",
+        "bio",
+        [
+            (10 + i, t.replace("Ada Lovelace", "Ada Lovelace"))
+            for i, t in enumerate(
+                r + " " + body("extra", 60, i) for i, r in enumerate(rewordings)
+            )
+        ],
+    )
     # a Pile subject in the same build, to prove the rule still runs elsewhere
     shared = body("sh", 600, 1)
     write_raw(cfg, "train", "Pile-CC", [(0, f"{LICENSE} {shared}")])
-    write_raw(cfg, "heldout", "Pile-CC",
-              [(0, f"{LICENSE} {shared} tail"),
-               (1, f"{LICENSE} {body('fresh', 600, 9)}")])
+    write_raw(
+        cfg,
+        "heldout",
+        "Pile-CC",
+        [(0, f"{LICENSE} {shared} tail"), (1, f"{LICENSE} {body('fresh', 600, 9)}")],
+    )
 
     log = dedup.run(cfg)
 
     bio = log["ngram_overlap"]["bio"]
     assert bio["exempt"] is True
     assert bio["docs_dropped"] == 0
-    assert bio["aggregate_overlap_rate"] is None    # not "0.0" -- never measured
+    assert bio["aggregate_overlap_rate"] is None  # not "0.0" -- never measured
     assert log["per_subject"]["heldout"]["bio"]["dropped_ngram_overlap"] == 0
 
     pool = _docs(cfg.heldout_pool_dir / "bio.jsonl.gz")
@@ -210,24 +246,45 @@ def test_the_exemption_is_what_saves_the_biographies(tmp_path):
     This is the test that gives the exemption its reason to exist: it shows the
     rule really would fire on biographies.
     """
+
     def build(exempt):
-        cfg = make_cfg(tmp_path / f"out{int(exempt)}", **{
-            "subjects": {"train": ["bio"], "heldout_only": [],
-                         "slugs": {"bio": "bio"}},
-            "dedup.ngram_exempt_subjects": ["bio"] if exempt else [],
-        })
-        facts = "born on March 4, 1987 in Austin, Texas, studied Economics at " \
-                "Rice University, and works at Acme Metals"
+        cfg = make_cfg(
+            tmp_path / f"out{int(exempt)}",
+            **{
+                "subjects": {
+                    "train": ["bio"],
+                    "heldout_only": [],
+                    "slugs": {"bio": "bio"},
+                },
+                "dedup.ngram_exempt_subjects": ["bio"] if exempt else [],
+            },
+        )
+        facts = (
+            "born on March 4, 1987 in Austin, Texas, studied Economics at "
+            "Rice University, and works at Acme Metals"
+        )
         rew = [f"Ada Lovelace was {facts}. " + body("pad", 300, i) for i in range(4)]
         write_raw(cfg, "train", "bio", list(enumerate(rew)))
-        write_raw(cfg, "heldout", "bio", [(10 + i, t) for i, t in enumerate(
-            r + " " + body("extra", 60, i) for i, r in enumerate(rew))])
+        write_raw(
+            cfg,
+            "heldout",
+            "bio",
+            [
+                (10 + i, t)
+                for i, t in enumerate(
+                    r + " " + body("extra", 60, i) for i, r in enumerate(rew)
+                )
+            ],
+        )
         log = dedup.run(cfg)
-        return log["ngram_overlap"]["bio"]["docs_dropped"], \
-            len(_docs(cfg.heldout_pool_dir / "bio.jsonl.gz"))
+        return log["ngram_overlap"]["bio"]["docs_dropped"], len(
+            _docs(cfg.heldout_pool_dir / "bio.jsonl.gz")
+        )
 
     dropped_exempt, kept_exempt = build(True)
     dropped_plain, kept_plain = build(False)
     assert (dropped_exempt, kept_exempt) == (0, 4)
-    assert dropped_plain > 0, "the rule should fire on biographies without the exemption"
+    assert (
+        dropped_plain > 0
+    ), "the rule should fire on biographies without the exemption"
     assert kept_plain < kept_exempt

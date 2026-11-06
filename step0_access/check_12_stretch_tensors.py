@@ -7,6 +7,7 @@ mapping tensor name -> {dtype, shape, data_offsets}. Reading the first ~1 MB of 
 enough, and it also gives the exact byte range of any single tensor, so an individual table
 can be fetched on its own even when the shard is shared with other weights.
 """
+
 import json, re, struct
 
 from _common import jdump, human
@@ -15,23 +16,44 @@ REPOS = {
     "meituan-longcat/LongCat-Flash-Lite": re.compile(r"ngram", re.I),
     "deepseek-ai/DeepSeek-V4.1-Flash": re.compile(r"engram", re.I),
 }
-DTYPE_BYTES = {"F64": 8, "F32": 4, "F16": 2, "BF16": 2, "F8_E4M3": 1, "F8_E5M2": 1,
-               "I64": 8, "I32": 4, "I16": 2, "I8": 1, "U8": 1, "BOOL": 1}
+DTYPE_BYTES = {
+    "F64": 8,
+    "F32": 4,
+    "F16": 2,
+    "BF16": 2,
+    "F8_E4M3": 1,
+    "F8_E5M2": 1,
+    "I64": 8,
+    "I32": 4,
+    "I16": 2,
+    "I8": 1,
+    "U8": 1,
+    "BOOL": 1,
+}
 
 
 def read_header(url, headers, probe=2_000_000):
     import requests
-    r = requests.get(url, headers={**headers, "Range": f"bytes=0-{probe - 1}"},
-                     allow_redirects=True, timeout=180)
+
+    r = requests.get(
+        url,
+        headers={**headers, "Range": f"bytes=0-{probe - 1}"},
+        allow_redirects=True,
+        timeout=180,
+    )
     r.raise_for_status()
     raw = r.content
     n = struct.unpack("<Q", raw[:8])[0]
-    if 8 + n > len(raw):                      # header longer than the probe; fetch exactly
-        r = requests.get(url, headers={**headers, "Range": f"bytes=0-{8 + n - 1}"},
-                         allow_redirects=True, timeout=180)
+    if 8 + n > len(raw):  # header longer than the probe; fetch exactly
+        r = requests.get(
+            url,
+            headers={**headers, "Range": f"bytes=0-{8 + n - 1}"},
+            allow_redirects=True,
+            timeout=180,
+        )
         r.raise_for_status()
         raw = r.content
-    return json.loads(raw[8:8 + n]), n
+    return json.loads(raw[8 : 8 + n]), n
 
 
 def main():
@@ -43,8 +65,11 @@ def main():
 
     out = {}
     for repo, pat in REPOS.items():
-        r = {"repo": repo, "weights_downloaded": False,
-             "method": "HTTP range read of each shard's safetensors header only"}
+        r = {
+            "repo": repo,
+            "weights_downloaded": False,
+            "method": "HTTP range read of each shard's safetensors header only",
+        }
         try:
             info = api.model_info(repo, files_metadata=True)
             files = {s.rfilename: (s.size or 0) for s in info.siblings}
@@ -61,8 +86,10 @@ def main():
             per_shard_hdr = {}
             for s in shards:
                 hdr, hlen = read_header(hf_hub_url(repo, s), hdrs)
-                per_shard_hdr[s] = {"header_json_bytes": hlen,
-                                    "n_tensors_in_shard": len([k for k in hdr if k != "__metadata__"])}
+                per_shard_hdr[s] = {
+                    "header_json_bytes": hlen,
+                    "n_tensors_in_shard": len([k for k in hdr if k != "__metadata__"]),
+                }
                 for t in hits:
                     if wmap[t] != s or t not in hdr:
                         continue
@@ -74,8 +101,11 @@ def main():
                         "shard": s,
                         "dtype": e["dtype"],
                         "shape": e["shape"],
-                        "n_elements": int(
-                            __import__("math").prod(e["shape"])) if e["shape"] else 1,
+                        "n_elements": (
+                            int(__import__("math").prod(e["shape"]))
+                            if e["shape"]
+                            else 1
+                        ),
                         "bytes": nbytes,
                         "size": human(nbytes),
                         "byte_range_in_shard": [8 + hlen + lo, 8 + hlen + hi - 1],
@@ -93,16 +123,21 @@ def main():
 
             r["separate_shard_verdict"] = (
                 "YES -- the memory tensors occupy dedicated shards containing nothing else"
-                if all(per_shard_hdr[s]["n_tensors_in_shard"] ==
-                       sum(1 for t in hits if wmap[t] == s) for s in shards)
+                if all(
+                    per_shard_hdr[s]["n_tensors_in_shard"]
+                    == sum(1 for t in hits if wmap[t] == s)
+                    for s in shards
+                )
                 else "NO -- the memory tensors are interleaved with ordinary layer weights "
-                     "in shared shards")
+                "in shared shards"
+            )
             r["ranged_tensor_fetch_possible"] = True
             r["ranged_fetch_note"] = (
                 "Even when a shard is shared, each tensor's exact byte range is known from "
                 "the header (byte_range_in_shard above), so a single table can be pulled "
                 "with one HTTP Range request -- no need for the whole shard. That is how we "
-                "would get these tables without the full repo.")
+                "would get these tables without the full repo."
+            )
             r["status"] = "PASS"
         except Exception as e:
             r["status"] = "FAIL"

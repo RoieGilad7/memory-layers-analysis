@@ -4,6 +4,7 @@ Everything here is a pure function of its arguments and of the config, so the
 whole build is reproducible: the only seed is `cfg.seed`, and the only hashes
 are fixed-constant ones (never Python's randomized `hash()`).
 """
+
 from __future__ import annotations
 
 import gzip
@@ -20,11 +21,28 @@ import numpy as np
 import yaml
 
 __all__ = [
-    "DataConfig", "load_config", "clean_text", "get_encoder", "count_tokens",
+    "DataConfig",
+    "load_config",
+    "clean_text",
+    "get_encoder",
+    "count_tokens",
     "keyed_rng",
-    "cap_to_max_tokens", "text_sha256", "ngram_hashes", "overlap_rate",
-    "heldout_half", "open_write", "CHARS_PER_TOKEN_BOUND", "open_read", "write_jsonl", "read_jsonl",
-    "dumps_record", "free_disk_gb", "merge_gz", "record_timing", "record_env", "ROOT",
+    "cap_to_max_tokens",
+    "text_sha256",
+    "ngram_hashes",
+    "overlap_rate",
+    "heldout_half",
+    "open_write",
+    "CHARS_PER_TOKEN_BOUND",
+    "open_read",
+    "write_jsonl",
+    "read_jsonl",
+    "dumps_record",
+    "free_disk_gb",
+    "merge_gz",
+    "record_timing",
+    "record_env",
+    "ROOT",
 ]
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -78,17 +96,20 @@ class DataConfig:
         self.total_train_tokens = self._scaled(t["total_train_tokens"])
         self.train_tokens_per_subject = self._scaled(t["train_tokens_per_subject"])
         self.collect_slack = float(t["collect_slack"])
-        self.collect_train_tokens_per_subject = int(round(
-            self.train_tokens_per_subject * (1.0 + self.collect_slack)))
+        self.collect_train_tokens_per_subject = int(
+            round(self.train_tokens_per_subject * (1.0 + self.collect_slack))
+        )
         self.bio_share = float(t["bio_share"])
         self.heldout_halves: List[str] = list(t["heldout_halves"])
         self.heldout_tokens_per_subject = self._scaled(t["heldout_tokens_per_subject"])
         self.heldout_collect_slack = float(t["heldout_collect_slack"])
-        self.collect_heldout_tokens_per_subject = int(round(
-            self.heldout_tokens_per_subject * (1.0 + self.heldout_collect_slack)))
+        self.collect_heldout_tokens_per_subject = int(
+            round(self.heldout_tokens_per_subject * (1.0 + self.heldout_collect_slack))
+        )
         self.heldout_tokens_per_half = self._scaled(t["heldout_tokens_per_half"])
         self.heldout_min_docs_per_half = max(
-            1, int(round(t["heldout_min_docs_per_half"] * self.scale)))
+            1, int(round(t["heldout_min_docs_per_half"] * self.scale))
+        )
 
         d = c["document"]
         self.max_tokens = int(d["max_tokens"])
@@ -117,10 +138,13 @@ class DataConfig:
             ng = len(self.bio_genders)
             self.bio_n_control = self._scaled_multiple(pe["n_control"], ng)
             self.bio_tiers = [
-                {"name": t["name"],
-                 "n_people": self._scaled_multiple(t["n_people"], ng),
-                 "exposures": int(t["exposures"])}
-                for t in pe["tiers"]]
+                {
+                    "name": t["name"],
+                    "n_people": self._scaled_multiple(t["n_people"], ng),
+                    "exposures": int(t["exposures"]),
+                }
+                for t in pe["tiers"]
+            ]
             self.bio_n_train = sum(t["n_people"] for t in self.bio_tiers)
             self.bio_control_tier = pe["control_tier"]
             # Scaled like everything else, but with a floor: the two name
@@ -130,7 +154,8 @@ class DataConfig:
             # real build.
             self.bio_name_candidates_per_gender = max(
                 self._scaled(pe["name_candidates_per_gender"]),
-                min(200, int(pe["name_candidates_per_gender"])))
+                min(200, int(pe["name_candidates_per_gender"])),
+            )
             rw = b["rewordings"]
             self.bio_n_rewordings = int(rw["n_train"])
             self.bio_discovery_rewordings = list(rw["discovery_rewordings"])
@@ -152,7 +177,8 @@ class DataConfig:
             if not self.small and self.bio_n_train != int(pe["n_train"]):
                 raise ValueError(
                     "bios.people.tiers must sum to bios.people.n_train "
-                    f"({self.bio_n_train} != {pe['n_train']})")
+                    f"({self.bio_n_train} != {pe['n_train']})"
+                )
 
         pk = c.get("pack")
         self.pack = pk
@@ -182,10 +208,12 @@ class DataConfig:
         base = Path(c["small"]["root"]) if self.small else Path(p["root"])
         self.root = ROOT / base
         rel = Path(p["root"])
+
         # every other path is declared relative to paths.root, so --small only
         # has to redirect the root
         def under(key: str) -> Path:
             return self.root / Path(p[key]).relative_to(rel)
+
         self.raw_dir = under("raw")
         self.work_dir = under("work")
         self.train_dir = under("train")
@@ -247,8 +275,19 @@ class DataConfig:
         "bios": ("version", "seed", "tokenizer", "bios"),
         # packing depends on everything that shapes the text it reads, which is
         # why the pack scope is the whole config minus the distribution block
-        "pack": ("version", "seed", "tokenizer", "source", "subjects",
-                 "targets", "document", "clean", "dedup", "bios", "pack"),
+        "pack": (
+            "version",
+            "seed",
+            "tokenizer",
+            "source",
+            "subjects",
+            "targets",
+            "document",
+            "clean",
+            "dedup",
+            "bios",
+            "pack",
+        ),
     }
 
     def fingerprint(self, scope: str = "all") -> str:
@@ -269,7 +308,8 @@ class DataConfig:
         else:
             raise ValueError(f"unknown fingerprint scope {scope!r}")
         payload = json.dumps(
-            {"raw": raw, "small": self.small}, sort_keys=True, ensure_ascii=False)
+            {"raw": raw, "small": self.small}, sort_keys=True, ensure_ascii=False
+        )
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def doc_id(self, subject: str, filename: str, line: int) -> str:
@@ -312,13 +352,16 @@ def clean_text(text: str, form: str = "NFC", max_consecutive_newlines: int = 2) 
     out: List[str] = []
     for line in text.split("\n"):
         indent = _INDENT.match(line).group(0)
-        rest = _H_WS_RUN.sub(" ", line[len(indent):]).rstrip()
+        rest = _H_WS_RUN.sub(" ", line[len(indent) :]).rstrip()
         out.append(indent + rest if rest else "")
     text = "\n".join(out)
 
     if max_consecutive_newlines > 0:
-        text = re.sub(r"\n{%d,}" % (max_consecutive_newlines + 1),
-                      "\n" * max_consecutive_newlines, text)
+        text = re.sub(
+            r"\n{%d,}" % (max_consecutive_newlines + 1),
+            "\n" * max_consecutive_newlines,
+            text,
+        )
     return text.strip()
 
 
@@ -339,6 +382,7 @@ def get_encoder(name: str = "gpt2", vocab_size: Optional[int] = None):
     global _ENC
     if _ENC is None:
         import tiktoken
+
         _ENC = tiktoken.get_encoding(name)
     if vocab_size is not None and _ENC.n_vocab != vocab_size:
         raise ValueError(f"tokenizer vocab {_ENC.n_vocab} != config {vocab_size}")
@@ -380,7 +424,7 @@ def cap_to_max_tokens(enc, text: str, max_tokens: int) -> Tuple[str, int, bool]:
         n = len(_encode(enc, out))
         if n <= max_tokens:
             return out, n, True
-        cut -= (n - max_tokens)
+        cut -= n - max_tokens
         if cut <= 0:
             break
     raise RuntimeError("could not cap document to max_tokens")  # pragma: no cover
@@ -396,6 +440,7 @@ def keyed_rng(seed: int, *parts: Any) -> "random.Random":
     reordering one cannot shift another stage's draws.
     """
     import random
+
     key = ":".join([str(seed)] + [str(p) for p in parts])
     digest = hashlib.blake2b(key.encode("utf-8"), digest_size=8).digest()
     return random.Random(int.from_bytes(digest, "big"))
@@ -423,7 +468,7 @@ def ngram_hashes(tokens: Sequence[int] | np.ndarray, n: int = 13) -> np.ndarray:
     with np.errstate(over="ignore"):
         h = np.full(m, _FNV_OFFSET, dtype=np.uint64)
         for k in range(n):
-            h = (h ^ t[k:k + m]) * _FNV_PRIME
+            h = (h ^ t[k : k + m]) * _FNV_PRIME
         # splitmix64 finalizer
         h ^= h >> np.uint64(30)
         h *= np.uint64(13787848793156543929)
@@ -454,8 +499,9 @@ def heldout_half(doc_id: str, seed: int, halves: Sequence[str]) -> str:
 def open_write(path: Path, append: bool = False):
     path.parent.mkdir(parents=True, exist_ok=True)
     if str(path).endswith(".gz"):
-        return gzip.GzipFile(filename=str(path), mode="ab" if append else "wb",
-                             compresslevel=6, mtime=0)
+        return gzip.GzipFile(
+            filename=str(path), mode="ab" if append else "wb", compresslevel=6, mtime=0
+        )
     return open(path, "ab" if append else "wb")
 
 
@@ -466,8 +512,10 @@ def open_read(path: Path):
 
 
 def dumps_record(obj: Dict[str, Any]) -> bytes:
-    return (json.dumps(obj, sort_keys=True, ensure_ascii=False,
-                       separators=(",", ":")) + "\n").encode("utf-8")
+    return (
+        json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        + "\n"
+    ).encode("utf-8")
 
 
 def write_jsonl(fh, obj: Dict[str, Any]) -> int:

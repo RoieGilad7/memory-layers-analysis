@@ -1,4 +1,5 @@
 """The packed-token loader: shapes, order, resume."""
+
 import sys
 from pathlib import Path
 
@@ -38,8 +39,8 @@ def test_targets_are_inputs_shifted_by_one(binfile):
     order = ds.sequence_order(0)[:4]
     for row, s in enumerate(order):
         a = int(s) * BLOCK
-        assert np.array_equal(x[row].numpy(), tokens[a:a + BLOCK])
-        assert np.array_equal(y[row].numpy(), tokens[a + 1:a + BLOCK + 1])
+        assert np.array_equal(x[row].numpy(), tokens[a : a + BLOCK])
+        assert np.array_equal(y[row].numpy(), tokens[a + 1 : a + BLOCK + 1])
         # the last target is the first token of the next sequence
         assert int(y[row, -1]) == int(tokens[a + BLOCK])
     assert torch.equal(x[:, 1:], y[:, :-1])
@@ -47,8 +48,8 @@ def test_targets_are_inputs_shifted_by_one(binfile):
 
 def test_the_last_sequence_is_dropped_when_it_has_no_target(tmp_path):
     path = tmp_path / "t.bin"
-    np.zeros(BLOCK * 10, dtype=np.uint16).tofile(path)      # exactly 10 blocks
-    assert PackedDataset(path, BLOCK).n_sequences == 9       # the 10th has no y
+    np.zeros(BLOCK * 10, dtype=np.uint16).tofile(path)  # exactly 10 blocks
+    assert PackedDataset(path, BLOCK).n_sequences == 9  # the 10th has no y
     path2 = tmp_path / "t2.bin"
     np.zeros(BLOCK * 10 + 1, dtype=np.uint16).tofile(path2)
     assert PackedDataset(path2, BLOCK).n_sequences == 10
@@ -93,9 +94,14 @@ def test_state_round_trips(binfile):
     for _ in range(5):
         ds.get_batch(0, 4)
     state = ds.state_dict()
-    assert state == {"seed": 99, "position": 20,
-                     "n_sequences": ds.n_sequences, "block_size": BLOCK,
-                     "path": str(binfile), "n_tokens": ds.n_tokens}
+    assert state == {
+        "seed": 99,
+        "position": 20,
+        "n_sequences": ds.n_sequences,
+        "block_size": BLOCK,
+        "path": str(binfile),
+        "n_tokens": ds.n_tokens,
+    }
     other = PackedDataset(binfile, BLOCK, seed=1)
     other.load_state_dict(state)
     assert other.seed == 99 and other.position == 20
@@ -113,7 +119,7 @@ def test_resume_after_n_steps_matches_an_unbroken_run(binfile):
         part.get_batch(i, batch)
     state = part.state_dict()
 
-    resumed = PackedDataset(binfile, BLOCK, seed=0)     # wrong seed on purpose
+    resumed = PackedDataset(binfile, BLOCK, seed=0)  # wrong seed on purpose
     resumed.load_state_dict(state)
     for i in range(n_after):
         x, y = resumed.get_batch(n_before + i, batch)

@@ -15,6 +15,7 @@ The sample is real Pile text and real generated biographies from the pinned
 revision, built by exactly the same code as the full set -- only the token
 targets are 1%.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -49,13 +50,18 @@ def write_readme(dst: Path, cfg, manifest: dict, with_raw: bool) -> None:
         + " | ".join(
             f"{held.get(h, {}).get('per_subject', {}).get(s, {}).get('documents', 0):,}"
             f" / {held.get(h, {}).get('per_subject', {}).get(s, {}).get('tokens', 0):,}"
-            for h in cfg.pack_halves) + " |"
-        for s in cfg.all_subjects)
+            for h in cfg.pack_halves
+        )
+        + " |"
+        for s in cfg.all_subjects
+    )
     tier_rows = "\n".join(
         f"| `{t}` | {v['people']:,} | {v['copies']:,} | {v['tokens']:,} |"
-        for t, v in sorted(per_tier.items(), key=lambda kv: -kv[1]["copies"]))
+        for t, v in sorted(per_tier.items(), key=lambda kv: -kv[1]["copies"])
+    )
 
-    (dst / "README.md").write_text(f"""# `data/v1_sample/` — the 1% sample of dataset `{manifest['version']}`
+    (dst / "README.md").write_text(
+        f"""# `data/v1_sample/` — the 1% sample of dataset `{manifest['version']}`
 
 Real text from the Pile and real generated biographies, built by the same code
 as the full set with every token target scaled to **1%** (`--small`). Here so
@@ -165,7 +171,9 @@ rule for biographies, the index tiling, no answer leaks in any prompt, the
 exposure counts per person — holds here exactly as it does at full scale, and
 `python -m data.validate --config configs/data/v1.yaml --small --skip A17,A18`
 checks it.
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
 
 def run(cfg, dst: Path, with_raw: bool = False) -> Path:
@@ -173,23 +181,32 @@ def run(cfg, dst: Path, with_raw: bool = False) -> Path:
     if not bundle.exists():
         raise SystemExit(
             f"no small bundle manifest at {bundle} -- run the four --small "
-            "stages (build --stage pile, bios, pack, manifest) first")
-    json.loads(bundle.read_text())          # fail early if it is unreadable
+            "stages (build --stage pile, bios, pack, manifest) first"
+        )
+    json.loads(bundle.read_text())  # fail early if it is unreadable
 
     skip = set(SKIP_DIRS) | (set() if with_raw else OPTIONAL_DIRS)
     if dst.exists():
         shutil.rmtree(dst)
-    shutil.copytree(cfg.root, dst,
-                    ignore=shutil.ignore_patterns(
-                        *skip, "extract_state.json", "timings.json",
-                        "runtime_env.json", "validation_report.md",
-                        "validation_report.json"))
+    shutil.copytree(
+        cfg.root,
+        dst,
+        ignore=shutil.ignore_patterns(
+            *skip,
+            "extract_state.json",
+            "timings.json",
+            "runtime_env.json",
+            "validation_report.md",
+            "validation_report.json",
+        ),
+    )
 
     # The copied manifest still lists the files that were left out, which would
     # make the sample fail its own verification. Recount it over what is
     # actually here, so `manifest.json` inside the sample describes the sample.
     from data.common import write_json
     from data.manifest import build as build_manifest
+
     sample_cfg = copy.copy(cfg)
     sample_cfg.root = dst
     sample_cfg.reports_dir = dst / "reports"
@@ -206,8 +223,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", required=True)
     ap.add_argument("--out", default="data/v1_sample")
-    ap.add_argument("--with-raw", action="store_true",
-                    help="include raw/, the archived source text")
+    ap.add_argument(
+        "--with-raw", action="store_true", help="include raw/, the archived source text"
+    )
     args = ap.parse_args(argv)
     cfg = load_config(args.config, small=True)
     dst = run(cfg, ROOT / args.out, with_raw=args.with_raw)

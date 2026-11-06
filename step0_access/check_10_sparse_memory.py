@@ -6,6 +6,7 @@ cannot run on this Mac and is not attempted. What we do need for offline value a
 the table's layout, which meta.json documents and which an HTTP range read of the first
 bytes confirms. Nothing over 2 GB is downloaded.
 """
+
 import json, os, time
 
 import numpy as np
@@ -13,7 +14,7 @@ import numpy as np
 from _common import jdump, human
 
 REPO = "fechyy/sparse-memory-lm-B-16M"
-PROBE_ROWS = 4096      # how many table rows to pull with a range request
+PROBE_ROWS = 4096  # how many table rows to pull with a range request
 
 
 def main():
@@ -21,22 +22,31 @@ def main():
     from huggingface_hub import HfApi, get_token, hf_hub_download, hf_hub_url
 
     api = HfApi()
-    res = {"repo": REPO, "code": "github.com/re133/sparse-memory-lm",
-           "full_model_run_attempted": False,
-           "why_not": ("model card: 'It needs the Triton kernels from the repo, so it "
-                       "doesn't load with transformers.' Those kernels are CUDA/ROCm only. "
-                       "Per the roadmap the full model is deliberately NOT run here.")}
+    res = {
+        "repo": REPO,
+        "code": "github.com/re133/sparse-memory-lm",
+        "full_model_run_attempted": False,
+        "why_not": (
+            "model card: 'It needs the Triton kernels from the repo, so it "
+            "doesn't load with transformers.' Those kernels are CUDA/ROCm only. "
+            "Per the roadmap the full model is deliberately NOT run here."
+        ),
+    }
 
     # ---- file listing ------------------------------------------------------------
     info = api.model_info(REPO, files_metadata=True)
     files = {s.rfilename: (s.size or 0) for s in info.siblings}
-    res["files"] = {k: {"bytes": v, "size": human(v)}
-                    for k, v in sorted(files.items(), key=lambda kv: -kv[1])}
+    res["files"] = {
+        k: {"bytes": v, "size": human(v)}
+        for k, v in sorted(files.items(), key=lambda kv: -kv[1])
+    }
     res["total_bytes"] = sum(files.values())
     res["total_size"] = human(sum(files.values()))
     res["over_2GB_files"] = {k: human(v) for k, v in files.items() if v > 2e9}
-    res["download_decision"] = ("values_q4.bin is 3.22 GB (> the 2 GB ask-first threshold). "
-                                "User chose: ranged header read only, no full download.")
+    res["download_decision"] = (
+        "values_q4.bin is 3.22 GB (> the 2 GB ask-first threshold). "
+        "User chose: ranged header read only, no full download."
+    )
 
     # ---- meta.json: the authoritative header (1 KB) ------------------------------
     meta = json.load(open(hf_hub_download(REPO, "meta.json")))
@@ -56,16 +66,23 @@ def main():
         "expected_scales_bytes": rows * 2,
         "actual_scales_bytes": files["scales_q4.bin"],
         "quantization_scheme": meta["q4"],
-        "nibble_order": ("low nibble  = dims 0 .. dim/2-1 ; "
-                         "high nibble = dims dim/2 .. dim-1  (NOT interleaved)"),
+        "nibble_order": (
+            "low nibble  = dims 0 .. dim/2-1 ; "
+            "high nibble = dims dim/2 .. dim-1  (NOT interleaved)"
+        ),
         "dequant": "value = (code - 8) * d,  where code in [0,15] and d = scales[row]",
         "fp32_equivalent_bytes": rows * dim * 4,
         "fp32_equivalent_size": human(rows * dim * 4),
-        "shared_by": (f"one table shared by the {len(meta['table_keys'])} memory layers "
-                      f"{meta['table_keys']}"),
+        "shared_by": (
+            f"one table shared by the {len(meta['table_keys'])} memory layers "
+            f"{meta['table_keys']}"
+        ),
     }
     res["architecture_from_model_card"] = {
-        "d": 384, "layers": 12, "heads": 6, "context": 1024,
+        "d": 384,
+        "layers": 12,
+        "heads": 6,
+        "context": 1024,
         "memory_layers": "layers 3, 7 and 11 replace the FFN with a memory layer",
         "routing": "4 heads, top 32 of 4096^2 product keys, one table shared by 3 layers",
         "table_params": "16,777,216 x 384 = 6.44B parameters; ~33M active per token",
@@ -80,8 +97,12 @@ def main():
         nbytes = PROBE_ROWS * dim // 2
         url = hf_hub_url(REPO, "values_q4.bin")
         t0 = time.perf_counter()
-        r = requests.get(url, headers={**hdrs, "Range": f"bytes=0-{nbytes - 1}"},
-                         allow_redirects=True, timeout=120)
+        r = requests.get(
+            url,
+            headers={**hdrs, "Range": f"bytes=0-{nbytes - 1}"},
+            allow_redirects=True,
+            timeout=120,
+        )
         r.raise_for_status()
         raw = r.content
         probe["http_status"] = r.status_code
@@ -95,13 +116,14 @@ def main():
         probe["packed_shape"] = list(packed.shape)
         lo = (packed & 0x0F).astype(np.int16)
         hi = (packed >> 4).astype(np.int16)
-        codes = np.concatenate([lo, hi], axis=1)          # [n, dim], per meta's nibble order
+        codes = np.concatenate([lo, hi], axis=1)  # [n, dim], per meta's nibble order
         probe["codes_shape"] = list(codes.shape)
         probe["codes_min"] = int(codes.min())
         probe["codes_max"] = int(codes.max())
         probe["codes_in_0_15"] = bool(codes.min() >= 0 and codes.max() <= 15)
         probe["code_histogram_first_4096_rows"] = np.bincount(
-            codes.ravel(), minlength=16).tolist()
+            codes.ravel(), minlength=16
+        ).tolist()
 
         # scales are only 34 MB, so fetch the file and dequantize the probed rows
         sp = hf_hub_download(REPO, "scales_q4.bin")
@@ -109,7 +131,7 @@ def main():
         scales = np.fromfile(sp, dtype=np.float16)
         probe["scales_shape"] = list(scales.shape)
         probe["scales_len_equals_rows"] = int(scales.shape[0]) == rows
-        s = scales[:packed.shape[0]].astype(np.float32)[:, None]
+        s = scales[: packed.shape[0]].astype(np.float32)[:, None]
         vals = (codes.astype(np.float32) - 8.0) * s
         probe["dequantized_shape"] = list(vals.shape)
         probe["dequantized_dtype"] = str(vals.dtype)
@@ -124,7 +146,8 @@ def main():
             "np.memmap('values_q4.bin', dtype=np.uint8, mode='r', "
             f"shape=({rows}, {dim // 2})) -- 3.22 GB on disk, no RAM copy; dequantize a row "
             "slice with ((lo,hi nibbles) - 8) * scales[rows, None]. The full fp32 table would "
-            f"be {human(rows * dim * 4)}, so slice or memmap rather than materializing it.")
+            f"be {human(rows * dim * 4)}, so slice or memmap rather than materializing it."
+        )
         probe["status"] = "PASS"
     except Exception as e:
         probe["status"] = "FAIL"
@@ -140,12 +163,18 @@ def main():
             "python scripts/demo_generate.py --download --table ram   # or --table vram",
         ],
         "table_placement": {
-            "--table vram": ("3.22 GB of 4-bit table in 16 GB VRAM: fits, with ~12 GB spare. "
-                             "Fastest option (~200 tok/s on the author's RX 9070)."),
-            "--table ram": ("Colab free tier gives ~12.7 GB system RAM; the 3.22 GB table "
-                            "plus hot_rows.npy (134 MB) fits. Safe fallback."),
-            "--table nvme": ("needs a local SSD path; Colab's disk is network-backed, so "
-                             "expect far worse than the author's 140 tok/s."),
+            "--table vram": (
+                "3.22 GB of 4-bit table in 16 GB VRAM: fits, with ~12 GB spare. "
+                "Fastest option (~200 tok/s on the author's RX 9070)."
+            ),
+            "--table ram": (
+                "Colab free tier gives ~12.7 GB system RAM; the 3.22 GB table "
+                "plus hot_rows.npy (134 MB) fits. Safe fallback."
+            ),
+            "--table nvme": (
+                "needs a local SSD path; Colab's disk is network-backed, so "
+                "expect far worse than the author's 140 tok/s."
+            ),
         },
         "blockers_to_check": [
             "Triton: the kernels are written for Triton 3.5/3.8. Colab's preinstalled Triton "
@@ -154,9 +183,11 @@ def main():
             "(e.g. async copies) they will not compile. Check the repo's requirements first.",
             "Total download is 3.67 GB, inside Colab's disk budget but slow on a free session.",
         ],
-        "verdict": ("Should fit a T4 on memory grounds. The real risk is Triton/arch "
-                    "compatibility, not capacity. For OUR purposes we do not need to run it: "
-                    "the values are what we want, and they load into numpy on this Mac."),
+        "verdict": (
+            "Should fit a T4 on memory grounds. The real risk is Triton/arch "
+            "compatibility, not capacity. For OUR purposes we do not need to run it: "
+            "the values are what we want, and they load into numpy on this Mac."
+        ),
     }
     res["colab_t4_requirements"] = t4
     res["offline_numpy_analysis_possible"] = probe.get("numpy_load_confirmed", False)

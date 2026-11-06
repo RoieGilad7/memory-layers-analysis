@@ -12,6 +12,7 @@ config fingerprint, the pinned Pile revision, the git commit, and a hash per
 file. `data.fetch --verify-only` and `memlayers.train` with `data: real` both
 refuse to proceed on any mismatch.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -41,9 +42,13 @@ EXCLUDE_DIRS = {"_work", "_parts"}
 # Matched on the RELATIVE PATH, not the bare filename: `bios/manifest.json` is
 # the bios stage's own record and belongs in the bundle, and a name-only rule
 # silently excluded it from the hashes.
-EXCLUDE_PATHS = {MANIFEST_NAME, "reports/timings.json",
-                 "reports/runtime_env.json", "validation_report.md",
-                 "validation_report.json"}
+EXCLUDE_PATHS = {
+    MANIFEST_NAME,
+    "reports/timings.json",
+    "reports/runtime_env.json",
+    "validation_report.md",
+    "validation_report.json",
+}
 EXCLUDE_NAMES = {".DS_Store"}
 
 
@@ -66,21 +71,24 @@ def data_sha256(manifest: Dict[str, Any]) -> str:
     `manifest_sha256`) folded in `git.commit`, so the bundle's identity moved on
     every commit, including commits that touched no data at all.
     """
-    payload = json.dumps(manifest["files"], sort_keys=True,
-                         separators=(",", ":"))
+    payload = json.dumps(manifest["files"], sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def git_commit() -> Dict[str, Any]:
     def run(*args):
         try:
-            return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
-                                  text=True, timeout=10).stdout.strip()
-        except Exception:                                      # pragma: no cover
+            return subprocess.run(
+                ["git", *args], cwd=ROOT, capture_output=True, text=True, timeout=10
+            ).stdout.strip()
+        except Exception:  # pragma: no cover
             return ""
-    return {"commit": run("rev-parse", "HEAD"),
-            "branch": run("rev-parse", "--abbrev-ref", "HEAD"),
-            "dirty": bool(run("status", "--porcelain"))}
+
+    return {
+        "commit": run("rev-parse", "HEAD"),
+        "branch": run("rev-parse", "--abbrev-ref", "HEAD"),
+        "dirty": bool(run("status", "--porcelain")),
+    }
 
 
 def iter_bundle_files(root: Path) -> List[Path]:
@@ -109,9 +117,14 @@ def build(cfg: DataConfig) -> Dict[str, Any]:
     for p in iter_bundle_files(root):
         rel = p.relative_to(root).as_posix()
         size = p.stat().st_size
-        files.append({"path": rel, "bytes": size, "sha256": sha256_file(p),
-                      "optional": any(rel.startswith(pre)
-                                      for pre in cfg.optional_prefixes)})
+        files.append(
+            {
+                "path": rel,
+                "bytes": size,
+                "sha256": sha256_file(p),
+                "optional": any(rel.startswith(pre) for pre in cfg.optional_prefixes),
+            }
+        )
         top = rel.split("/")[0]
         slot = by_prefix.setdefault(top, {"files": 0, "bytes": 0})
         slot["files"] += 1
@@ -133,9 +146,13 @@ def build(cfg: DataConfig) -> Dict[str, Any]:
             "filler_tokens": packr["train"]["filler_tokens"],
         }
         counts["heldout"] = {
-            h: {"tokens": v["tokens"], "documents": v["documents"],
-                "per_subject": v["per_subject"]}
-            for h, v in packr["heldout"].items()}
+            h: {
+                "tokens": v["tokens"],
+                "documents": v["documents"],
+                "per_subject": v["per_subject"],
+            }
+            for h, v in packr["heldout"].items()
+        }
         counts["biographies"] = {
             "copies": packr["biographies"]["copies"],
             "tokens": packr["biographies"]["tokens"],
@@ -151,15 +168,18 @@ def build(cfg: DataConfig) -> Dict[str, Any]:
         counts["biographies"]["facts_rows"] = bios.get("facts", {}).get("rows", 0)
         counts["biographies"].setdefault(
             "names_rejected_by_value_collision",
-            people.get("names_rejected_by_value_collision", 0))
-        counts["biographies"].setdefault("fact_redraws",
-                                         people.get("fact_redraws", 0))
+            people.get("names_rejected_by_value_collision", 0),
+        )
+        counts["biographies"].setdefault("fact_redraws", people.get("fact_redraws", 0))
     if pile and pile.get("subjects"):
         counts["pile_documents"] = {
-            s: {"train_documents": v["train"]["docs"],
+            s: {
+                "train_documents": v["train"]["docs"],
                 "train_tokens_available": v["train"]["tokens"],
-                "heldout_pool_documents": v["heldout"]["pool_docs"]}
-            for s, v in pile["subjects"].items()}
+                "heldout_pool_documents": v["heldout"]["pool_docs"],
+            }
+            for s, v in pile["subjects"].items()
+        }
 
     total = sum(f["bytes"] for f in files)
     optional = sum(f["bytes"] for f in files if f["optional"])
@@ -174,16 +194,26 @@ def build(cfg: DataConfig) -> Dict[str, Any]:
             "fingerprint_all": cfg.fingerprint(),
             "seed": cfg.seed,
         },
-        "source": {"dataset": cfg.dataset, "revision": cfg.revision,
-                   "tokenizer": cfg.tokenizer_name,
-                   "vocab_size": cfg.vocab_size},
+        "source": {
+            "dataset": cfg.dataset,
+            "revision": cfg.revision,
+            "tokenizer": cfg.tokenizer_name,
+            "vocab_size": cfg.vocab_size,
+        },
         "git": git_commit(),
-        "distribution": {"hf_repo": cfg.hf_repo, "repo_type": cfg.hf_repo_type,
-                         "tag": cfg.hf_tag,
-                         "optional_prefixes": cfg.optional_prefixes},
+        "distribution": {
+            "hf_repo": cfg.hf_repo,
+            "repo_type": cfg.hf_repo_type,
+            "tag": cfg.hf_tag,
+            "optional_prefixes": cfg.optional_prefixes,
+        },
         "counts": counts,
-        "bytes": {"total": total, "optional": optional,
-                  "required": total - optional, "by_prefix": by_prefix},
+        "bytes": {
+            "total": total,
+            "optional": optional,
+            "required": total - optional,
+            "by_prefix": by_prefix,
+        },
         "n_files": len(files),
         "files": files,
     }
@@ -199,9 +229,11 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         committed = cfg.manifest_dir / f"{cfg.version}_small.json"
     write_json(committed, manifest)
     b = manifest["bytes"]
-    print(f"[manifest] {manifest['n_files']} files, "
-          f"{b['total'] / 1e6:,.1f} MB total "
-          f"({b['required'] / 1e6:,.1f} MB without raw/)")
+    print(
+        f"[manifest] {manifest['n_files']} files, "
+        f"{b['total'] / 1e6:,.1f} MB total "
+        f"({b['required'] / 1e6:,.1f} MB without raw/)"
+    )
     for pre, v in sorted(manifest["bytes"]["by_prefix"].items()):
         print(f"   {pre + '/':20s} {v['files']:>4} files  {v['bytes'] / 1e6:>9,.1f} MB")
     print(f"[manifest] data_sha256 {manifest['data_sha256']}")

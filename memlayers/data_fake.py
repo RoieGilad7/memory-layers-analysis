@@ -19,6 +19,7 @@ Batches are addressed by step index, not drawn from a stream: `get_batch(step)` 
 a pure function of (seed, step). That makes data order exactly reproducible across
 a checkpoint resume without storing any loader state.
 """
+
 from __future__ import annotations
 
 import math
@@ -43,8 +44,13 @@ class FakeDataset:
         g.manual_seed((self.seed * 1_000_003 + step * 9_176 + micro) % (2**63 - 1))
         return g
 
-    def get_batch(self, step: int, batch_size: int, micro: int = 0,
-                  device: Optional[torch.device] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_batch(
+        self,
+        step: int,
+        batch_size: int,
+        micro: int = 0,
+        device: Optional[torch.device] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         raise NotImplementedError
 
     def loss_floor(self) -> float:
@@ -61,8 +67,13 @@ class RandomTokenData(FakeDataset):
 
     def get_batch(self, step, batch_size, micro=0, device=None):
         g = self._gen(step, micro)
-        buf = torch.randint(0, self.vocab_size, (batch_size, self.seq_len + 1),
-                            generator=g, dtype=torch.long)
+        buf = torch.randint(
+            0,
+            self.vocab_size,
+            (batch_size, self.seq_len + 1),
+            generator=g,
+            dtype=torch.long,
+        )
         x, y = buf[:, :-1], buf[:, 1:]
         if device is not None:
             x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
@@ -77,8 +88,14 @@ class RepeatedChunkData(FakeDataset):
 
     name = "repeat"
 
-    def __init__(self, vocab_size: int = 50257, seq_len: int = 512, chunk_len: int = 16,
-                 n_distinct: Optional[int] = None, seed: int = 1234):
+    def __init__(
+        self,
+        vocab_size: int = 50257,
+        seq_len: int = 512,
+        chunk_len: int = 16,
+        n_distinct: Optional[int] = None,
+        seed: int = 1234,
+    ):
         if chunk_len >= seq_len:
             raise ValueError("chunk_len must be shorter than seq_len")
         self.vocab_size, self.seq_len, self.chunk_len = vocab_size, seq_len, chunk_len
@@ -92,8 +109,13 @@ class RepeatedChunkData(FakeDataset):
         g = self._gen(step, micro)
         need = self.seq_len + 1
         reps = math.ceil(need / self.chunk_len)
-        chunk = torch.randint(0, self.n_distinct, (batch_size, self.chunk_len),
-                              generator=g, dtype=torch.long)
+        chunk = torch.randint(
+            0,
+            self.n_distinct,
+            (batch_size, self.chunk_len),
+            generator=g,
+            dtype=torch.long,
+        )
         buf = chunk.repeat(1, reps)[:, :need]
         x, y = buf[:, :-1], buf[:, 1:]
         if device is not None:
@@ -105,8 +127,9 @@ class RepeatedChunkData(FakeDataset):
         return (self.chunk_len / self.seq_len) * math.log(self.n_distinct)
 
 
-def build_dataset(kind: str, vocab_size: int = 50257, seq_len: int = 512,
-                  seed: int = 1234, **kw) -> FakeDataset:
+def build_dataset(
+    kind: str, vocab_size: int = 50257, seq_len: int = 512, seed: int = 1234, **kw
+) -> FakeDataset:
     kind = kind.lower()
     if kind in ("random", "a", "uniform"):
         return RandomTokenData(vocab_size, seq_len, seed)

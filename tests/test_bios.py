@@ -1,6 +1,7 @@
 """The biography generator. No network: the Pile name check runs against a
 tiny synthetic corpus written into tmp_path.
 """
+
 import gzip
 import hashlib
 import json
@@ -17,8 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import data.bios_data as bd
 from data import bios
-from data.common import (DataConfig, dumps_record, get_encoder, open_write,
-                         read_jsonl)
+from data.common import DataConfig, dumps_record, get_encoder, open_write, read_jsonl
 
 CONFIG = Path(__file__).resolve().parent.parent / "configs" / "data" / "v1.yaml"
 ATTRS = bd.ATTRIBUTES
@@ -80,8 +80,9 @@ def test_chisquare_helper_is_sane():
 # --------------------------------------------------------------------------
 # fixtures
 # --------------------------------------------------------------------------
-def make_cfg(root: Path, seed=None, n_train=200, n_control=50,
-             candidates=400, **over) -> DataConfig:
+def make_cfg(
+    root: Path, seed=None, n_train=200, n_control=50, candidates=400, **over
+) -> DataConfig:
     """The real v1 config with fewer people, so a test build is a few seconds.
 
     Value lists, templates and rewordings are left at full size -- they are what
@@ -89,9 +90,15 @@ def make_cfg(root: Path, seed=None, n_train=200, n_control=50,
     """
     raw = yaml.safe_load(CONFIG.read_text())
     r = str(root)
-    raw["paths"] = {"root": r, "raw": f"{r}/raw", "work": f"{r}/_work",
-                    "train": f"{r}/train", "heldout_pool": f"{r}/heldout_pool",
-                    "heldout": f"{r}/heldout", "reports": f"{r}/reports"}
+    raw["paths"] = {
+        "root": r,
+        "raw": f"{r}/raw",
+        "work": f"{r}/_work",
+        "train": f"{r}/train",
+        "heldout_pool": f"{r}/heldout_pool",
+        "heldout": f"{r}/heldout",
+        "reports": f"{r}/reports",
+    }
     raw["small"]["root"] = r
     if seed is not None:
         raw["seed"] = seed
@@ -126,8 +133,9 @@ def _people(cfg):
 
 
 def _bios(cfg):
-    return (list(read_jsonl(cfg.bios_dir / "bios_train.jsonl"))
-            + list(read_jsonl(cfg.bios_dir / "bios_control.jsonl")))
+    return list(read_jsonl(cfg.bios_dir / "bios_train.jsonl")) + list(
+        read_jsonl(cfg.bios_dir / "bios_control.jsonl")
+    )
 
 
 def _facts(cfg):
@@ -156,8 +164,12 @@ def test_same_seed_is_byte_identical_and_a_new_seed_is_not(tmp_path):
     assert set(da) == set(dc)
     # templates.json is seed-independent by construction; everything else moves
     moved = {k for k in da if da[k] != dc[k]}
-    assert {"people.jsonl", "facts.jsonl", "bios_train.jsonl",
-            "bios_control.jsonl"} <= moved
+    assert {
+        "people.jsonl",
+        "facts.jsonl",
+        "bios_train.jsonl",
+        "bios_control.jsonl",
+    } <= moved
 
 
 # --------------------------------------------------------------------------
@@ -168,7 +180,9 @@ def test_people_counts_names_genders_and_tiers(built):
     people = _people(cfg)
     assert len(people) == cfg.bio_n_train + cfg.bio_n_control
     assert Counter(p["split"] for p in people) == {
-        "train": cfg.bio_n_train, "control": cfg.bio_n_control}
+        "train": cfg.bio_n_train,
+        "control": cfg.bio_n_control,
+    }
 
     names = [p["name"] for p in people]
     assert len(set(names)) == len(names)
@@ -185,10 +199,12 @@ def test_people_counts_names_genders_and_tiers(built):
 
     # exactly, not approximately, balanced inside every tier
     per = Counter((p["tier"], p["gender"]) for p in people)
-    for t in list(cfg.bio_tiers) + [{"name": cfg.bio_control_tier,
-                                     "n_people": cfg.bio_n_control}]:
-        assert per[(t["name"], "female")] == per[(t["name"], "male")] == \
-            t["n_people"] // 2, t["name"]
+    for t in list(cfg.bio_tiers) + [
+        {"name": cfg.bio_control_tier, "n_people": cfg.bio_n_control}
+    ]:
+        assert (
+            per[(t["name"], "female")] == per[(t["name"], "male")] == t["n_people"] // 2
+        ), t["name"]
 
 
 def test_exposure_targets_follow_the_tier(built):
@@ -229,10 +245,10 @@ def test_first_tokens_are_unique_within_each_list(built):
     for attr, vals in data["values"].items():
         n = 2 if attr in cfg.bio_first_two_tokens_unique else 1
         prefixes = [tuple(enc.encode_ordinary(" " + v)[:n]) for v in vals]
-        assert len(set(prefixes)) == len(vals), \
-            f"{attr}: first {n} token(s) not unique"
+        assert len(set(prefixes)) == len(vals), f"{attr}: first {n} token(s) not unique"
         assert data["tokens"][attr][
-            "first_two_tokens_unique" if n == 2 else "first_token_unique"]
+            "first_two_tokens_unique" if n == 2 else "first_token_unique"
+        ]
 
 
 @pytest.fixture(scope="module")
@@ -243,8 +259,9 @@ def full_people(tmp_path_factory):
     against 300 universities, under one expected count per value, where Pearson's
     chi-square does not apply.
     """
-    cfg = make_cfg(tmp_path_factory.mktemp("full"), n_train=2000, n_control=500,
-                   candidates=1500)
+    cfg = make_cfg(
+        tmp_path_factory.mktemp("full"), n_train=2000, n_control=500, candidates=1500
+    )
     enc = get_encoder("gpt2", 50257)
     values, _ = bios.build_value_lists(cfg, enc)
     candidates = bios.build_name_candidates(cfg)
@@ -296,10 +313,12 @@ def test_rewording_doc_ids_follow_the_interface(built):
 
 def test_held_out_template_wording_never_enters_training_text(built):
     cfg, _ = built
-    train_text = "\n".join(r["text"] for r in
-                           read_jsonl(cfg.bios_dir / "bios_train.jsonl"))
-    control_text = "\n".join(r["text"] for r in
-                             read_jsonl(cfg.bios_dir / "bios_control.jsonl"))
+    train_text = "\n".join(
+        r["text"] for r in read_jsonl(cfg.bios_dir / "bios_train.jsonl")
+    )
+    control_text = "\n".join(
+        r["text"] for r in read_jsonl(cfg.bios_dir / "bios_control.jsonl")
+    )
     for marker in bd.HELDOUT_MARKERS:
         assert marker not in train_text, marker
         assert marker not in control_text, marker
@@ -355,16 +374,20 @@ def test_facts_rows_cover_every_person_attribute_and_role(built):
     cfg, m = built
     people = _people(cfg)
     rows = _facts(cfg)
-    expected = len(people) * len(ATTRS) * (
-        cfg.bio_n_rewordings + cfg.bio_n_heldout_templates)
+    expected = (
+        len(people) * len(ATTRS) * (cfg.bio_n_rewordings + cfg.bio_n_heldout_templates)
+    )
     assert len(rows) == expected == m["facts"]["rows"]
     assert len({r["fact_id"] for r in rows}) == len(rows)
     by_role = Counter(r["role"] for r in rows)
     assert by_role["discovery"] == len(people) * len(ATTRS) * len(
-        cfg.bio_discovery_rewordings)
+        cfg.bio_discovery_rewordings
+    )
     assert by_role["test"] == len(people) * len(ATTRS) * len(cfg.bio_test_rewordings)
-    assert by_role[cfg.bio_heldout_role] == len(people) * len(ATTRS) * \
-        cfg.bio_n_heldout_templates
+    assert (
+        by_role[cfg.bio_heldout_role]
+        == len(people) * len(ATTRS) * cfg.bio_n_heldout_templates
+    )
 
 
 def test_training_prompts_are_exact_prefixes_of_their_biography(built):
@@ -382,7 +405,7 @@ def test_training_prompts_are_exact_prefixes_of_their_biography(built):
         # the value does not leak into the prompt
         assert row["true_value"] not in row["prompt"], row["fact_id"]
         # ...and the value really does start where the prompt stops
-        assert bio[len(row["prompt"]) + 1:].startswith(row["true_value"])
+        assert bio[len(row["prompt"]) + 1 :].startswith(row["true_value"])
         checked += 1
     assert checked == len(_people(cfg)) * len(ATTRS) * cfg.bio_n_rewordings
 
@@ -403,7 +426,8 @@ def test_held_out_prompts_stop_before_the_value_too(built):
         person = people[row["person_id"]]
         plan = bios.person_plan(cfg, person)[cfg.bio_heldout_context_rewording]
         text, _spans = bios.build_biography(
-            cfg, person, plan, heldout=(row["attribute"], row["template_id"]))
+            cfg, person, plan, heldout=(row["attribute"], row["template_id"])
+        )
         assert text.startswith(row["prompt"] + row["continuation"]), row["fact_id"]
         n += 1
     assert n > 0
@@ -434,15 +458,25 @@ def test_a_name_present_in_the_corpus_is_rejected(tmp_path):
     cfg = make_cfg(tmp_path / "out", n_train=20, n_control=10, candidates=40)
     candidates = bios.build_name_candidates(cfg)
     # the first candidate of each gender would otherwise certainly be chosen
-    planted = [candidates[0]["name"],
-               next(c["name"] for c in candidates if c["gender"] == "male")]
+    planted = [
+        candidates[0]["name"],
+        next(c["name"] for c in candidates if c["gender"] == "male"),
+    ]
     corpus = cfg.root / "train" / "pile_cc.jsonl.gz"
     with open_write(corpus) as fh:
-        fh.write(dumps_record({
-            "doc_id": "pile_cc-train00-0", "subject": "Pile-CC", "split": "train",
-            "source": "train/00.jsonl.zst", "line": 0,
-            "text": f"A news item mentioning {planted[0]} and also {planted[1]} "
-                    "in passing, plus Some Other Person who is not ours."}))
+        fh.write(
+            dumps_record(
+                {
+                    "doc_id": "pile_cc-train00-0",
+                    "subject": "Pile-CC",
+                    "split": "train",
+                    "source": "train/00.jsonl.zst",
+                    "line": 0,
+                    "text": f"A news item mentioning {planted[0]} and also {planted[1]} "
+                    "in passing, plus Some Other Person who is not ours.",
+                }
+            )
+        )
 
     found = bios.scan_corpus_for_names([corpus], [c["name"] for c in candidates])
     assert set(planted) <= set(found["names_found"])
@@ -463,10 +497,19 @@ def test_name_check_is_case_sensitive_and_needs_a_single_space(tmp_path):
     first, last = cand.split(" ")
     corpus = cfg.root / "train" / "pile_cc.jsonl.gz"
     with open_write(corpus) as fh:
-        fh.write(dumps_record({"doc_id": "d", "subject": "Pile-CC",
-                               "split": "train", "source": "s", "line": 0,
-                               "text": f"{first.upper()} {last.upper()} and "
-                                       f"{first}\n{last} and {first}  {last}"}))
+        fh.write(
+            dumps_record(
+                {
+                    "doc_id": "d",
+                    "subject": "Pile-CC",
+                    "split": "train",
+                    "source": "s",
+                    "line": 0,
+                    "text": f"{first.upper()} {last.upper()} and "
+                    f"{first}\n{last} and {first}  {last}",
+                }
+            )
+        )
     found = bios.scan_corpus_for_names([corpus], [cand])
     assert found["names_found"] == []
 
@@ -504,6 +547,7 @@ def test_templates_json_marks_held_out_templates(built):
 
 def test_template_pools_are_the_configured_size():
     import data.bios_data as d
+
     for attr in ATTRS:
         assert len(d.TRAIN_TEMPLATES[attr]) == 20
         assert len(d.HELDOUT_TEMPLATES[attr]) == 4
@@ -522,21 +566,26 @@ def test_a_persons_four_rewordings_use_four_different_templates(built):
 # answer leaks (data prompt 5)
 # --------------------------------------------------------------------------
 def test_a_name_that_collides_with_a_value_is_rejected(tmp_path):
-    """"Peter Ferrari" cannot exist while "Ferrari" is an employer.
+    """ "Peter Ferrari" cannot exist while "Ferrari" is an employer.
 
     This is the defect A13 caught in prompt 4: the person's own surname was
     their employer, so every employer prompt for them contained the answer.
     """
     cfg = make_cfg(tmp_path / "out")
     enc = get_encoder("gpt2", 50257)
-    values = {"employer": ["Ferrari", "Nokia"],
-              "birth_city": ["Charlotte, North Carolina", "Lyon, France"],
-              "birth_date": ["March 4, 1987"], "major": ["Physics"],
-              "university": ["Keio University"]}
+    values = {
+        "employer": ["Ferrari", "Nokia"],
+        "birth_city": ["Charlotte, North Carolina", "Lyon, France"],
+        "birth_date": ["March 4, 1987"],
+        "major": ["Physics"],
+        "university": ["Keio University"],
+    }
 
     # (a) the name word is a whole word of the value
-    assert bios.name_word_collides(enc, cfg, "Ferrari", values)[:2] == \
-        ("employer", "Ferrari")
+    assert bios.name_word_collides(enc, cfg, "Ferrari", values)[:2] == (
+        "employer",
+        "Ferrari",
+    )
     assert bios.name_word_collides(enc, cfg, "Charlotte", values)[2] == "word"
     # (b) the name word's token is the value's ranking key
     hit = bios.name_word_collides(enc, cfg, "Keiko", values)
@@ -545,10 +594,20 @@ def test_a_name_that_collides_with_a_value_is_rejected(tmp_path):
     assert bios.name_word_collides(enc, cfg, "Vadnais", values) is None
 
     # and the filter rejects the candidate, not just the word
-    cands = [{"gender": "female", "first": "Peter", "last": "Ferrari",
-              "name": "Peter Ferrari"},
-             {"gender": "male", "first": "Dmitri", "last": "Vadnais",
-              "name": "Dmitri Vadnais"}]
+    cands = [
+        {
+            "gender": "female",
+            "first": "Peter",
+            "last": "Ferrari",
+            "name": "Peter Ferrari",
+        },
+        {
+            "gender": "male",
+            "first": "Dmitri",
+            "last": "Vadnais",
+            "name": "Dmitri Vadnais",
+        },
+    ]
     rejected, stats = bios.names_colliding_with_values(cfg, enc, cands, values)
     assert rejected == ["Peter Ferrari"]
     assert stats["by_gender"] == {"female": 1, "male": 0}
@@ -566,28 +625,38 @@ def test_a_colliding_name_never_reaches_people_jsonl(tmp_path):
     assert not (names & set(colliding))
     assert stats["names_rejected_by_value_collision"] > 0
     # no surviving name word is a word of any value
-    allwords = {w for vs in values.values() for v in vs
-                for w in v.lower().replace(",", " ").split()}
+    allwords = {
+        w
+        for vs in values.values()
+        for v in vs
+        for w in v.lower().replace(",", " ").split()
+    }
     for p in people:
         assert p["first_name"].lower() not in allwords, p["name"]
         assert p["last_name"].lower() not in allwords, p["name"]
 
 
 def test_values_that_leak_each_other_are_redrawn(tmp_path):
-    """"Columbus, Ohio" + "Ohio State University" hands the probe its answer."""
+    """ "Columbus, Ohio" + "Ohio State University" hands the probe its answer."""
     cfg = make_cfg(tmp_path / "out")
     enc = get_encoder("gpt2", 50257)
     values = {
         "birth_date": ["March 4, 1987", "July 9, 1960"],
         "birth_city": ["Columbus, Ohio", "Lyon, France"],
         "university": ["Ohio State University", "Vassar College"],
-        "major": ["Physics"], "employer": ["Nokia"],
+        "major": ["Physics"],
+        "employer": ["Nokia"],
     }
-    facts = {"birth_date": "March 4, 1987", "birth_city": "Columbus, Ohio",
-             "university": "Ohio State University", "major": "Physics",
-             "employer": "Nokia"}
-    fixed, changes = bios.resolve_fact_collisions(cfg, enc, "p000001",
-                                                  dict(facts), values)
+    facts = {
+        "birth_date": "March 4, 1987",
+        "birth_city": "Columbus, Ohio",
+        "university": "Ohio State University",
+        "major": "Physics",
+        "employer": "Nokia",
+    }
+    fixed, changes = bios.resolve_fact_collisions(
+        cfg, enc, "p000001", dict(facts), values
+    )
     assert changes, "the Ohio collision should have been caught"
     # birth_city comes before university in the attribute order, so the LATER
     # one is the one that moves
@@ -597,11 +666,16 @@ def test_values_that_leak_each_other_are_redrawn(tmp_path):
     assert changes[0]["clashed_with"] == {"birth_city": "Columbus, Ohio"}
 
     # and nothing is redrawn when there is no collision
-    clean = {"birth_date": "July 9, 1960", "birth_city": "Lyon, France",
-             "university": "Vassar College", "major": "Physics",
-             "employer": "Nokia"}
-    fixed2, changes2 = bios.resolve_fact_collisions(cfg, enc, "p000002",
-                                                    dict(clean), values)
+    clean = {
+        "birth_date": "July 9, 1960",
+        "birth_city": "Lyon, France",
+        "university": "Vassar College",
+        "major": "Physics",
+        "employer": "Nokia",
+    }
+    fixed2, changes2 = bios.resolve_fact_collisions(
+        cfg, enc, "p000002", dict(clean), values
+    )
     assert fixed2 == clean and changes2 == []
 
 
@@ -609,17 +683,24 @@ def test_the_redraw_is_keyed_so_only_the_affected_person_moves(tmp_path):
     """A redraw must be a function of (seed, person, attribute, attempt)."""
     cfg = make_cfg(tmp_path / "out")
     enc = get_encoder("gpt2", 50257)
-    values = {"birth_date": ["March 4, 1987"], "birth_city": ["Columbus, Ohio"],
-              "university": ["Ohio State University", "Vassar College",
-                             "Reed College"],
-              "major": ["Physics"], "employer": ["Nokia"]}
-    facts = {"birth_date": "March 4, 1987", "birth_city": "Columbus, Ohio",
-             "university": "Ohio State University", "major": "Physics",
-             "employer": "Nokia"}
+    values = {
+        "birth_date": ["March 4, 1987"],
+        "birth_city": ["Columbus, Ohio"],
+        "university": ["Ohio State University", "Vassar College", "Reed College"],
+        "major": ["Physics"],
+        "employer": ["Nokia"],
+    }
+    facts = {
+        "birth_date": "March 4, 1987",
+        "birth_city": "Columbus, Ohio",
+        "university": "Ohio State University",
+        "major": "Physics",
+        "employer": "Nokia",
+    }
     a, _ = bios.resolve_fact_collisions(cfg, enc, "p000001", dict(facts), values)
     b, _ = bios.resolve_fact_collisions(cfg, enc, "p000001", dict(facts), values)
     c, _ = bios.resolve_fact_collisions(cfg, enc, "p000999", dict(facts), values)
-    assert a == b                       # same person, same answer
+    assert a == b  # same person, same answer
     assert a["university"] != "Ohio State University"
     assert c["university"] != "Ohio State University"
 
@@ -627,6 +708,7 @@ def test_the_redraw_is_keyed_so_only_the_affected_person_moves(tmp_path):
 def test_raising_the_candidate_pool_only_appends(tmp_path):
     """More candidates must not rename the people already chosen."""
     import copy
+
     small = make_cfg(tmp_path / "a", candidates=300)
     big = copy.deepcopy(small.raw)
     big["bios"]["people"]["name_candidates_per_gender"] = 900
@@ -637,7 +719,7 @@ def test_raising_the_candidate_pool_only_appends(tmp_path):
         ga = [c["name"] for c in a if c["gender"] == g]
         gb = [c["name"] for c in b if c["gender"] == g]
         assert len(gb) > len(ga)
-        assert gb[:len(ga)] == ga, g
+        assert gb[: len(ga)] == ga, g
 
 
 def test_the_real_build_has_no_answer_leaks(tmp_path):
@@ -656,8 +738,9 @@ def test_the_real_build_has_no_answer_leaks(tmp_path):
         assert not (key & set(enc.encode_ordinary(p["name"]))), r["fact_id"]
         for a, v in p["facts"].items():
             if a != r["attribute"]:
-                assert not (key & bios.value_token_set(enc, v)), \
-                    f"{r['fact_id']} leaks via {a}={v!r}"
+                assert not (
+                    key & bios.value_token_set(enc, v)
+                ), f"{r['fact_id']} leaks via {a}={v!r}"
 
 
 # --------------------------------------------------------------------------
@@ -669,12 +752,15 @@ def test_relations_name_every_attribute():
         assert "{v}" in relation, attr
 
 
-@pytest.mark.parametrize("bad", [
-    "Question: what did {obj} study? Answer: {v}.",          # the real bug
-    "Question: when was {obj} born? Answer: {v}.",
-    "Question: where does {obj} work? Answer: {v}.",
-    "Everyone knows where {obj} is from, namely {v}.",
-])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "Question: what did {obj} study? Answer: {v}.",  # the real bug
+        "Question: when was {obj} born? Answer: {v}.",
+        "Question: where does {obj} work? Answer: {v}.",
+        "Everyone knows where {obj} is from, namely {v}.",
+    ],
+)
 def test_obj_where_the_subject_belongs_is_rejected(monkeypatch, bad):
     """`{obj}` renders "her"/"him", so "what did him study?" is a grammar bug.
 
@@ -702,10 +788,11 @@ def test_every_template_renders_for_both_genders_by_name_and_pronoun():
         for t in bd.TRAIN_TEMPLATES[attr] + bd.HELDOUT_TEMPLATES[attr]:
             for gender in ("female", "male"):
                 for use_name in (True, False):
-                    text, at = bios.render(t, "Ada Lovelace", gender, use_name,
-                                           "A VALUE")
+                    text, at = bios.render(
+                        t, "Ada Lovelace", gender, use_name, "A VALUE"
+                    )
                     assert "{" not in text and "}" not in text, (t, text)
-                    assert text[at:] .startswith("A VALUE"), (t, text)
+                    assert text[at:].startswith("A VALUE"), (t, text)
                     assert text[at - 1] == " ", (t, text)
                     assert text[0].isupper(), (t, text)
                     n += 1
@@ -715,8 +802,7 @@ def test_every_template_renders_for_both_genders_by_name_and_pronoun():
 def test_a_template_that_leaves_a_placeholder_behind_is_rejected(monkeypatch):
     """A brace that survives rendering would reach the biography text verbatim."""
     train = {a: list(v) for a, v in bd.TRAIN_TEMPLATES.items()}
-    train["major"] = ["{Subj} graduated, major {{tbd}}, in {v}.",
-                      *train["major"][1:]]
+    train["major"] = ["{Subj} graduated, major {{tbd}}, in {v}.", *train["major"][1:]]
     monkeypatch.setattr(bd, "TRAIN_TEMPLATES", train)
     with pytest.raises(AssertionError, match="left a placeholder unrendered"):
         bd.check_templates()
@@ -724,8 +810,7 @@ def test_a_template_that_leaves_a_placeholder_behind_is_rejected(monkeypatch):
 
 def test_an_unknown_placeholder_is_rejected(monkeypatch):
     train = {a: list(v) for a, v in bd.TRAIN_TEMPLATES.items()}
-    train["major"] = ["{Subj} majored, like {sibling}, in {v}.",
-                      *train["major"][1:]]
+    train["major"] = ["{Subj} majored, like {sibling}, in {v}.", *train["major"][1:]]
     monkeypatch.setattr(bd, "TRAIN_TEMPLATES", train)
     with pytest.raises(KeyError):
         bd.check_templates()
@@ -738,12 +823,16 @@ def test_pre_value_wording_is_distinct_inside_each_attribute():
 
 
 def test_two_training_templates_with_the_same_pre_value_wording_are_rejected(
-        monkeypatch):
+    monkeypatch,
+):
     train = {a: list(v) for a, v in bd.TRAIN_TEMPLATES.items()}
     first = train["employer"][0]
     tail = " ".join(first.split("{v}")[0].split()[-3:])
-    train["employer"] = [first, f"{{Subj}} works, as it happens, {tail} {{v}}.",
-                         *train["employer"][2:]]
+    train["employer"] = [
+        first,
+        f"{{Subj}} works, as it happens, {tail} {{v}}.",
+        *train["employer"][2:],
+    ]
     monkeypatch.setattr(bd, "TRAIN_TEMPLATES", train)
     with pytest.raises(AssertionError, match="pre-value wording"):
         bd.check_templates()

@@ -22,6 +22,7 @@ Costing note: a date row needs one forward per distinct month token, but they
 all share the prompt, so the twelve go out as a single batch and give both
 `log p(month | prompt)` and `log p(day | prompt, month)` in one pass.
 """
+
 from __future__ import annotations
 
 import json
@@ -47,17 +48,18 @@ class ProbeRow:
     role: str
     true_value: str
     prompt_ids: List[int]
-    true_index: int          # index of the true value in the candidate list
-    template_id: int = -1    # which frame worded this prompt
+    true_index: int  # index of the true value in the candidate list
+    template_id: int = -1  # which frame worded this prompt
 
 
 @dataclass
 class Candidates:
     """Scoring keys for one attribute's value list."""
+
     attribute: str
     values: List[str]
-    first: np.ndarray                      # first token id per value
-    second: Optional[np.ndarray] = None    # second token id, two-token mode
+    first: np.ndarray  # first token id per value
+    second: Optional[np.ndarray] = None  # second token id, two-token mode
     two_token: bool = False
     # two-token mode: the distinct first tokens, and each value's slot in them
     first_unique: Optional[np.ndarray] = None
@@ -75,23 +77,25 @@ def build_candidates(cfg: DataConfig, enc) -> Dict[str, Candidates]:
         two = attr in cfg.bio_first_two_tokens_unique
         ids = [enc.encode_ordinary(" " + v) for v in values]
         first = np.array([t[0] for t in ids], dtype=np.int64)
-        c = Candidates(attribute=attr, values=list(values), first=first,
-                       two_token=two)
+        c = Candidates(attribute=attr, values=list(values), first=first, two_token=two)
         if two:
-            second = np.array([t[1] if len(t) > 1 else t[0] for t in ids],
-                              dtype=np.int64)
+            second = np.array(
+                [t[1] if len(t) > 1 else t[0] for t in ids], dtype=np.int64
+            )
             uniq = np.unique(first)
             slot = np.searchsorted(uniq, first)
             pairs = list(zip(first.tolist(), second.tolist()))
             if len(set(pairs)) != len(pairs):
                 raise ValueError(
                     f"{attr}: first two tokens are not unique, so a date cannot "
-                    "be identified from them")
+                    "be identified from them"
+                )
             c.second, c.first_unique, c.first_slot = second, uniq, slot
         elif len(set(first.tolist())) != len(first):
             raise ValueError(
                 f"{attr}: first tokens are not unique; ranking on them would be "
-                "ambiguous. Add it to bios.values.first_two_tokens_unique.")
+                "ambiguous. Add it to bios.values.first_two_tokens_unique."
+            )
         out[attr] = c
     return out
 
@@ -105,28 +109,37 @@ class ProbeSet:
 
     # -- construction ------------------------------------------------------
     @classmethod
-    def build(cls, cfg: DataConfig, rows: Iterable[Dict[str, Any]],
-              enc=None) -> "ProbeSet":
+    def build(
+        cls, cfg: DataConfig, rows: Iterable[Dict[str, Any]], enc=None
+    ) -> "ProbeSet":
         enc = enc or get_encoder(cfg.tokenizer_name, cfg.vocab_size)
         cand = build_candidates(cfg, enc)
-        index_of = {a: {v: i for i, v in enumerate(c.values)}
-                    for a, c in cand.items()}
+        index_of = {a: {v: i for i, v in enumerate(c.values)} for a, c in cand.items()}
         out: List[ProbeRow] = []
         raw = list(rows)
-        prompts = enc.encode_ordinary_batch([r["prompt"] for r in raw],
-                                            num_threads=8)
+        prompts = enc.encode_ordinary_batch([r["prompt"] for r in raw], num_threads=8)
         for r, ids in zip(raw, prompts):
             attr = r["attribute"]
             ti = index_of[attr].get(r["true_value"])
             if ti is None:
                 raise ValueError(
                     f"{r['fact_id']}: true value {r['true_value']!r} is not in "
-                    f"the {attr} list")
-            out.append(ProbeRow(
-                fact_id=r["fact_id"], person_id=r["person_id"], split=r["split"],
-                tier=r["tier"], attribute=attr, role=r["role"],
-                true_value=r["true_value"], prompt_ids=list(ids), true_index=ti,
-                template_id=int(r["template_id"])))
+                    f"the {attr} list"
+                )
+            out.append(
+                ProbeRow(
+                    fact_id=r["fact_id"],
+                    person_id=r["person_id"],
+                    split=r["split"],
+                    tier=r["tier"],
+                    attribute=attr,
+                    role=r["role"],
+                    true_value=r["true_value"],
+                    prompt_ids=list(ids),
+                    true_index=ti,
+                    template_id=int(r["template_id"]),
+                )
+            )
         return cls(out, cand)
 
     def __len__(self) -> int:
@@ -134,8 +147,14 @@ class ProbeSet:
 
     # -- scoring -----------------------------------------------------------
     @torch.no_grad()
-    def score(self, model, device, batch_tokens: int = 16384,
-              block_size: int = 512, progress: bool = False) -> Dict[str, Any]:
+    def score(
+        self,
+        model,
+        device,
+        batch_tokens: int = 16384,
+        block_size: int = 512,
+        progress: bool = False,
+    ) -> Dict[str, Any]:
         """Rank the true value among its attribute's candidates, per row.
 
         Rows are batched by EXACT prompt length. The model returns only the
@@ -162,34 +181,40 @@ class ProbeSet:
             if two:
                 mult = 1 + max(
                     len(self.candidates[self.rows[i].attribute].first_unique)
-                    for i in idx)
+                    for i in idx
+                )
             per_batch = max(1, batch_tokens // max(1, length * mult))
             for a in range(0, len(idx), per_batch):
-                chunk = idx[a:a + per_batch]
+                chunk = idx[a : a + per_batch]
                 if two:
-                    self._score_two(chunk, model, device, rank, top1, margin,
-                                    block_size)
+                    self._score_two(
+                        chunk, model, device, rank, top1, margin, block_size
+                    )
                 else:
-                    self._score_one(chunk, model, device, rank, top1, margin,
-                                    block_size)
+                    self._score_one(
+                        chunk, model, device, rank, top1, margin, block_size
+                    )
                 done += len(chunk)
                 if progress and done % 5000 < per_batch:
                     print(f"[probe] {done}/{n}", flush=True)
         return self._summary(rank, top1, margin)
 
-    def _last_logprobs(self, seqs: List[List[int]], model, device,
-                       block_size: int) -> torch.Tensor:
+    def _last_logprobs(
+        self, seqs: List[List[int]], model, device, block_size: int
+    ) -> torch.Tensor:
         """Log-probabilities at the final position. All `seqs` are equal length."""
         if len(seqs[0]) > block_size:
-            raise ValueError(f"prompt of {len(seqs[0])} tokens exceeds "
-                             f"block_size {block_size}")
+            raise ValueError(
+                f"prompt of {len(seqs[0])} tokens exceeds " f"block_size {block_size}"
+            )
         x = torch.tensor(seqs, dtype=torch.long, device=device)
-        logits, _ = model(x)                       # (B, 1, V) -- no targets
+        logits, _ = model(x)  # (B, 1, V) -- no targets
         return torch.log_softmax(logits[:, -1, :].float(), dim=-1)
 
     def _score_one(self, chunk, model, device, rank, top1, margin, block_size):
-        lp = self._last_logprobs([self.rows[i].prompt_ids for i in chunk],
-                                 model, device, block_size)
+        lp = self._last_logprobs(
+            [self.rows[i].prompt_ids for i in chunk], model, device, block_size
+        )
         attr = self.rows[chunk[0]].attribute
         c = self.candidates[attr]
         if any(self.rows[i].attribute != attr for i in chunk):
@@ -198,14 +223,12 @@ class ProbeSet:
                 cc = self.candidates[self.rows[i].attribute]
                 tok = torch.as_tensor(cc.first, device=device)
                 scores = lp[j].index_select(0, tok).cpu().numpy()
-                self._record(i, scores, self.rows[i].true_index, rank, top1,
-                             margin)
+                self._record(i, scores, self.rows[i].true_index, rank, top1, margin)
             return
         tok = torch.as_tensor(c.first, device=device)
-        scores = lp.index_select(1, tok).cpu().numpy()      # (B, n_candidates)
+        scores = lp.index_select(1, tok).cpu().numpy()  # (B, n_candidates)
         for j, i in enumerate(chunk):
-            self._record(i, scores[j], self.rows[i].true_index, rank, top1,
-                         margin)
+            self._record(i, scores[j], self.rows[i].true_index, rank, top1, margin)
 
     def _score_two(self, chunk, model, device, rank, top1, margin, block_size):
         """Dates: log p(month | prompt) + log p(day | prompt, month).
@@ -221,19 +244,18 @@ class ProbeSet:
 
         lp_month = self._last_logprobs(prompts, model, device, block_size)
         first = torch.as_tensor(c.first, device=device)
-        month_scores = lp_month.index_select(1, first)              # (k, n_cand)
+        month_scores = lp_month.index_select(1, first)  # (k, n_cand)
 
         seqs = [p + [int(mo)] for p in prompts for mo in months]
         lp_day = self._last_logprobs(seqs, model, device, block_size)
-        slot = torch.as_tensor(c.first_slot, device=device)         # (n_cand,)
-        second = torch.as_tensor(c.second, device=device)           # (n_cand,)
+        slot = torch.as_tensor(c.first_slot, device=device)  # (n_cand,)
+        second = torch.as_tensor(c.second, device=device)  # (n_cand,)
         lp_day = lp_day.view(k, m, -1)
-        day_scores = lp_day[:, slot, second]                        # (k, n_cand)
+        day_scores = lp_day[:, slot, second]  # (k, n_cand)
 
         scores = (month_scores + day_scores).cpu().numpy()
         for j, i in enumerate(chunk):
-            self._record(i, scores[j], self.rows[i].true_index, rank, top1,
-                         margin)
+            self._record(i, scores[j], self.rows[i].true_index, rank, top1, margin)
 
     @staticmethod
     def _record(i, scores, true_index, rank, top1, margin):
@@ -246,8 +268,9 @@ class ProbeSet:
     def _summary(self, rank, top1, margin) -> Dict[str, Any]:
         out: Dict[str, Any] = {
             "n": len(self.rows),
-            "overall": _agg(rank, top1, margin,
-                            [self.candidates[r.attribute].n for r in self.rows]),
+            "overall": _agg(
+                rank, top1, margin, [self.candidates[r.attribute].n for r in self.rows]
+            ),
             "by_tier_role": {},
             "by_attribute": {},
             "by_tier_role_attribute": {},
@@ -311,15 +334,19 @@ def score_random(probe: ProbeSet, seed: int = 0) -> Dict[str, Any]:
     return probe._summary(rank, top1, margin)
 
 
-def select_eval_rows(cfg: DataConfig, per_tier: int = 300,
-                     roles: Sequence[str] = ("test", "paraphrase"),
-                     seed: Optional[int] = None) -> List[Dict[str, Any]]:
+def select_eval_rows(
+    cfg: DataConfig,
+    per_tier: int = 300,
+    roles: Sequence[str] = ("test", "paraphrase"),
+    seed: Optional[int] = None,
+) -> List[Dict[str, Any]]:
     """All frequent-tier people plus `per_tier` random each of the others.
 
     Deterministic from the data seed, so the same people are evaluated at every
     checkpoint and across runs.
     """
     from data.common import keyed_rng
+
     seed = cfg.seed if seed is None else seed
     people = list(read_jsonl(cfg.bios_dir / "people.jsonl"))
     by_tier: Dict[str, List[str]] = defaultdict(list)
@@ -335,11 +362,20 @@ def select_eval_rows(cfg: DataConfig, per_tier: int = 300,
         for pid in take:
             chosen[pid] = tier
     want_roles = set(roles)
-    rows = [r for r in read_jsonl(cfg.bios_dir / "facts.jsonl")
-            if r["person_id"] in chosen and r["role"] in want_roles]
-    rows.sort(key=lambda r: (r["person_id"], r["role"], r["attribute"],
-                             r.get("rewording_id") if r.get("rewording_id")
-                             is not None else -1, r["template_id"]))
+    rows = [
+        r
+        for r in read_jsonl(cfg.bios_dir / "facts.jsonl")
+        if r["person_id"] in chosen and r["role"] in want_roles
+    ]
+    rows.sort(
+        key=lambda r: (
+            r["person_id"],
+            r["role"],
+            r["attribute"],
+            r.get("rewording_id") if r.get("rewording_id") is not None else -1,
+            r["template_id"],
+        )
+    )
     return rows
 
 

@@ -6,6 +6,7 @@ left in memory by the first half of the run.
     python tests/_resume_worker.py CONFIG OUT_JSON [--resume CKPT] [--steps N]
                                    [--save CKPT]
 """
+
 import argparse
 import json
 import sys
@@ -39,20 +40,26 @@ def main() -> int:
     # hash the batch the run would read next, to prove data order continued
     x, _ = tr.data.get_batch(tr.step, tr.cfg.train.micro_batch_size)
     probe = tr.data.get_batch(start, tr.cfg.train.micro_batch_size)[0]
-    Path(a.out_json).write_text(json.dumps({
-        "start_step": start,
-        "final_step": tr.step,
-        "final_loss": hist[-1]["loss"],
-        "losses_tail": [h["loss"] for h in hist[-3:]],
-        "lr": [g["lr"] for g in tr.optimizer.param_groups],
-        "lr_names": [g.get("name") for g in tr.optimizer.param_groups],
-        "tokens_seen": tr.tokens_seen,
-        "next_batch_sum": int(x.sum()),
-        "batch_at_start_sum": int(probe.sum()),
-        # .cpu() first: MPS has no float64, so .double() must happen on the host
-        "param_checksum": float(sum(p.detach().cpu().double().sum()
-                                    for p in tr.model.parameters())),
-    }, indent=2))
+    Path(a.out_json).write_text(
+        json.dumps(
+            {
+                "start_step": start,
+                "final_step": tr.step,
+                "final_loss": hist[-1]["loss"],
+                "losses_tail": [h["loss"] for h in hist[-3:]],
+                "lr": [g["lr"] for g in tr.optimizer.param_groups],
+                "lr_names": [g.get("name") for g in tr.optimizer.param_groups],
+                "tokens_seen": tr.tokens_seen,
+                "next_batch_sum": int(x.sum()),
+                "batch_at_start_sum": int(probe.sum()),
+                # .cpu() first: MPS has no float64, so .double() must happen on the host
+                "param_checksum": float(
+                    sum(p.detach().cpu().double().sum() for p in tr.model.parameters())
+                ),
+            },
+            indent=2,
+        )
+    )
     return 0
 
 

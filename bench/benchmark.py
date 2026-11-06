@@ -15,6 +15,7 @@ MPS CPU-fallback detection: PYTORCH_ENABLE_MPS_FALLBACK is deliberately left uns
 so an op with no Metal kernel raises instead of silently moving to the CPU. A run
 that completes is therefore proof that nothing fell back.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -69,10 +70,13 @@ def env_info() -> dict:
         info["gpu_total_mem_bytes"] = torch.cuda.get_device_properties(0).total_memory
     try:
         info["chip"] = subprocess.run(
-            ["sysctl", "-n", "machdep.cpu.brand_string"],
-            capture_output=True, text=True).stdout.strip()
-        info["ram_bytes"] = int(subprocess.run(
-            ["sysctl", "-n", "hw.memsize"], capture_output=True, text=True).stdout.strip())
+            ["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True
+        ).stdout.strip()
+        info["ram_bytes"] = int(
+            subprocess.run(
+                ["sysctl", "-n", "hw.memsize"], capture_output=True, text=True
+            ).stdout.strip()
+        )
     except Exception:
         pass
     return info
@@ -103,9 +107,11 @@ def _save(cfg_path: str, mode: str, res: dict, tag: str = "") -> Path:
         if isinstance(old_steps, int) and old_steps > new_steps:
             alt = path.with_name(path.stem + f"__{new_steps}steps.json")
             alt.write_text(json.dumps(res, indent=2))
-            print(f"[kept] {path.name} holds a longer run ({old_steps} steps); "
-                  f"wrote this {new_steps}-step run to {alt.name} instead "
-                  f"(use --force to overwrite)")
+            print(
+                f"[kept] {path.name} holds a longer run ({old_steps} steps); "
+                f"wrote this {new_steps}-step run to {alt.name} instead "
+                f"(use --force to overwrite)"
+            )
             return alt
     path.write_text(json.dumps(res, indent=2))
     return path
@@ -115,19 +121,28 @@ def check_all_on_device(trainer: Trainer) -> dict:
     """Confirm no parameter or buffer quietly stayed on the CPU."""
     want = trainer.device.type
     off = [n for n, p in trainer.model.named_parameters() if p.device.type != want]
-    off += [n for n, b in trainer.model.named_buffers()
-            if b is not None and b.device.type != want]
-    return {"expected_device": want, "tensors_off_device": off,
-            "all_on_device": not off}
+    off += [
+        n
+        for n, b in trainer.model.named_buffers()
+        if b is not None and b.device.type != want
+    ]
+    return {
+        "expected_device": want,
+        "tensors_off_device": off,
+        "all_on_device": not off,
+    }
 
 
 # --------------------------------------------------------------------------- probe
-def probe_one(cfg_path: str, micro: int, steps: int = 3,
-              overrides: Optional[List[str]] = None) -> dict:
-    ov = list(overrides or []) + [f"train.micro_batch_size={micro}",
-                                  "train.grad_accum_steps=1",
-                                  "train.log_every=0",
-                                  f"runtime.out_dir=runs/_probe_{Path(cfg_path).stem}_{micro}"]
+def probe_one(
+    cfg_path: str, micro: int, steps: int = 3, overrides: Optional[List[str]] = None
+) -> dict:
+    ov = list(overrides or []) + [
+        f"train.micro_batch_size={micro}",
+        "train.grad_accum_steps=1",
+        "train.log_every=0",
+        f"runtime.out_dir=runs/_probe_{Path(cfg_path).stem}_{micro}",
+    ]
     cfg = load_config(cfg_path, ov)
     tr = Trainer(cfg)
     for _ in range(steps):
@@ -135,8 +150,13 @@ def probe_one(cfg_path: str, micro: int, steps: int = 3,
     peak = peak_memory_bytes(tr.device)
     dev = check_all_on_device(tr)
     empty_cache(tr.device)
-    return {"micro_batch_size": micro, "ok": True, "peak_mem_bytes": peak,
-            "device_check": dev, "param_counts": tr.model.param_counts()}
+    return {
+        "micro_batch_size": micro,
+        "ok": True,
+        "peak_mem_bytes": peak,
+        "device_check": dev,
+        "param_counts": tr.model.param_counts(),
+    }
 
 
 def probe(cfg_path: str, ladder: List[int] = None, overrides=None) -> dict:
@@ -144,8 +164,15 @@ def probe(cfg_path: str, ladder: List[int] = None, overrides=None) -> dict:
     attempts = []
     best = None
     for micro in ladder:
-        cmd = [sys.executable, str(Path(__file__)), "probe-one",
-               "--config", cfg_path, "--micro", str(micro)]
+        cmd = [
+            sys.executable,
+            str(Path(__file__)),
+            "probe-one",
+            "--config",
+            cfg_path,
+            "--micro",
+            str(micro),
+        ]
         for o in overrides or []:
             cmd += ["--set", o]
         r = subprocess.run(cmd, capture_output=True, text=True, cwd=str(ROOT))
@@ -155,21 +182,38 @@ def probe(cfg_path: str, ladder: List[int] = None, overrides=None) -> dict:
             best = micro
         else:
             tail = (r.stderr or r.stdout).strip().splitlines()
-            attempts.append({"micro_batch_size": micro, "ok": False,
-                             "error": tail[-1] if tail else "unknown"})
+            attempts.append(
+                {
+                    "micro_batch_size": micro,
+                    "ok": False,
+                    "error": tail[-1] if tail else "unknown",
+                }
+            )
             break
-    res = {"config": rel(cfg_path), "ladder": ladder, "attempts": attempts,
-           "largest_micro_batch": best, "env": env_info()}
+    res = {
+        "config": rel(cfg_path),
+        "ladder": ladder,
+        "attempts": attempts,
+        "largest_micro_batch": best,
+        "env": env_info(),
+    }
     _save(cfg_path, "probe", res)
     return res
 
 
 # --------------------------------------------------------------------------- speed
-def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int] = None,
-          read_logging: bool = False, overrides=None) -> dict:
+def speed(
+    cfg_path: str,
+    steps: int = 300,
+    warmup: int = 30,
+    micro: Optional[int] = None,
+    read_logging: bool = False,
+    overrides=None,
+) -> dict:
     tag = "readlog" if read_logging else ""
     ov = list(overrides or []) + [
-        f"train.steps={steps}", "train.log_every=25",
+        f"train.steps={steps}",
+        "train.log_every=25",
         f"train.read_logging={'true' if read_logging else 'false'}",
         # the baseline must capture nothing at all, so slot-usage tracking is off too;
         # with read logging on it stays on, as part of the cost being measured
@@ -189,9 +233,13 @@ def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int
     tokens_per_step = cfg.tokens_per_step
 
     res = {
-        "config": rel(cfg_path), "name": cfg.name, "mode": "speed",
+        "config": rel(cfg_path),
+        "name": cfg.name,
+        "mode": "speed",
         "read_logging": read_logging,
-        "steps": steps, "warmup_discarded": warmup, "steps_measured": len(kept),
+        "steps": steps,
+        "warmup_discarded": warmup,
+        "steps_measured": len(kept),
         "micro_batch_size": cfg.train.micro_batch_size,
         "grad_accum_steps": cfg.train.grad_accum_steps,
         "tokens_per_step": tokens_per_step,
@@ -203,7 +251,8 @@ def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int
         "tokens_per_s_from_mean_time": tokens_per_step / statistics.fmean(times),
         "peak_mem_bytes": tr.peak_mem,
         "peak_mem_GB": tr.peak_mem / 1e9,
-        "loss_first": hist[0]["loss"], "loss_last": hist[-1]["loss"],
+        "loss_first": hist[0]["loss"],
+        "loss_last": hist[-1]["loss"],
         "param_counts": tr.model.param_counts(),
         "device_check": dev_check,
         "env": env_info(),
@@ -212,11 +261,18 @@ def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int
     mem = tr.model.memory_layers
     if mem:
         res["memory_layers"] = {
-            str(i): {"kind": m.kind, "n_slots": m.n_slots, "heads": m.n_heads,
-                     "topk": m.topk, "reads_per_token": m.reads_per_token,
-                     "readlog_bytes_per_token_theory": bytes_per_token(
-                         m.n_slots, m.n_heads, m.topk, True)}
-            for i, m in mem.items()}
+            str(i): {
+                "kind": m.kind,
+                "n_slots": m.n_slots,
+                "heads": m.n_heads,
+                "topk": m.topk,
+                "reads_per_token": m.reads_per_token,
+                "readlog_bytes_per_token_theory": bytes_per_token(
+                    m.n_slots, m.n_heads, m.topk, True
+                ),
+            }
+            for i, m in mem.items()
+        }
     if read_logging:
         man = tr.out_dir / "readlog" / "manifest.json"
         if man.exists():
@@ -235,13 +291,17 @@ def speed(cfg_path: str, steps: int = 300, warmup: int = 30, micro: Optional[int
 
 
 # --------------------------------------------------------------------------- learn
-def learn(cfg_path: str, steps: int = 1000, micro: Optional[int] = None,
-          overrides=None) -> dict:
+def learn(
+    cfg_path: str, steps: int = 1000, micro: Optional[int] = None, overrides=None
+) -> dict:
     ov = list(overrides or []) + [
-        f"train.steps={steps}", "data.kind=repeat", "train.log_every=25",
+        f"train.steps={steps}",
+        "data.kind=repeat",
+        "train.log_every=25",
         # slot-usage fraction and KL-from-uniform are required outputs of this phase,
         # so the histogram is on; the full per-token read log is not needed here
-        "train.track_slot_usage=true", "train.read_logging=false",
+        "train.track_slot_usage=true",
+        "train.read_logging=false",
         f"runtime.out_dir=runs/learn_{Path(cfg_path).stem}",
     ]
     if micro:
@@ -255,10 +315,13 @@ def learn(cfg_path: str, steps: int = 1000, micro: Optional[int] = None,
     random_level = math.log(tr.gpt_config.vocab_size)
     tail = losses[-25:]
     res = {
-        "config": rel(cfg_path), "name": cfg.name, "mode": "learn",
+        "config": rel(cfg_path),
+        "name": cfg.name,
+        "mode": "learn",
         "dataset": "repeat (fake data b)",
         "chunk_len": cfg.data.chunk_len,
-        "steps": steps, "micro_batch_size": cfg.train.micro_batch_size,
+        "steps": steps,
+        "micro_batch_size": cfg.train.micro_batch_size,
         "tokens_seen": tr.tokens_seen,
         "random_token_level_nats": random_level,
         "task_loss_floor_nats": floor,
@@ -267,10 +330,11 @@ def learn(cfg_path: str, steps: int = 1000, micro: Optional[int] = None,
         "loss_final_mean_last25": statistics.fmean(tail),
         "loss_min": min(losses),
         "clearly_below_random": statistics.fmean(tail) < random_level - 1.0,
-        "curve_every_25": [{"step": h["step"], "loss": h["loss"]}
-                           for h in hist if h["step"] % 25 == 0],
-        "ms_per_step_mean": 1000 * statistics.fmean(
-            h["step_time_s"] for h in hist[min(30, len(hist) // 3):]),
+        "curve_every_25": [
+            {"step": h["step"], "loss": h["loss"]} for h in hist if h["step"] % 25 == 0
+        ],
+        "ms_per_step_mean": 1000
+        * statistics.fmean(h["step_time_s"] for h in hist[min(30, len(hist) // 3) :]),
         "peak_mem_GB": tr.peak_mem / 1e9,
         "param_counts": tr.model.param_counts(),
         "env": env_info(),
@@ -294,49 +358,63 @@ def summarize() -> dict:
         d = json.loads(f.read_text())
         pc = d["param_counts"]
         tps = d["tokens_per_s_from_mean_time"]
-        rows.append({
-            "name": d["name"], "read_logging": d["read_logging"],
-            "micro_batch": d["micro_batch_size"],
-            "emb_M": pc["embedding"] / 1e6,
-            "backbone_M": pc["backbone"] / 1e6,
-            "memory_M": pc["memory_total"] / 1e6,
-            "total_M": pc["total"] / 1e6,
-            "ms_step_mean": d["ms_per_step_mean"],
-            "ms_step_p90": d["ms_per_step_p90"],
-            "tokens_per_s": tps,
-            "peak_GB": d["peak_mem_GB"],
-            "readlog_GB_per_Mtok": d.get("readlog", {}).get("GB_per_million_tokens"),
-            "hours_150M": extrapolate(tps, 150e6),
-            "hours_500M": extrapolate(tps, 500e6),
-        })
+        rows.append(
+            {
+                "name": d["name"],
+                "read_logging": d["read_logging"],
+                "micro_batch": d["micro_batch_size"],
+                "emb_M": pc["embedding"] / 1e6,
+                "backbone_M": pc["backbone"] / 1e6,
+                "memory_M": pc["memory_total"] / 1e6,
+                "total_M": pc["total"] / 1e6,
+                "ms_step_mean": d["ms_per_step_mean"],
+                "ms_step_p90": d["ms_per_step_p90"],
+                "tokens_per_s": tps,
+                "peak_GB": d["peak_mem_GB"],
+                "readlog_GB_per_Mtok": d.get("readlog", {}).get(
+                    "GB_per_million_tokens"
+                ),
+                "hours_150M": extrapolate(tps, 150e6),
+                "hours_500M": extrapolate(tps, 500e6),
+            }
+        )
     out = {"rows": rows, "env": env_info()}
     (RESULTS / "summary.json").write_text(json.dumps(out, indent=2))
 
-    hdr = (f"{'config':16s} {'RL':3s} {'mb':>3s} {'emb':>7s} {'back':>7s} {'mem':>8s} "
-           f"{'total':>8s} {'ms/step':>8s} {'p90':>8s} {'tok/s':>8s} {'GB':>6s} "
-           f"{'h/150M':>7s} {'h/500M':>7s}")
+    hdr = (
+        f"{'config':16s} {'RL':3s} {'mb':>3s} {'emb':>7s} {'back':>7s} {'mem':>8s} "
+        f"{'total':>8s} {'ms/step':>8s} {'p90':>8s} {'tok/s':>8s} {'GB':>6s} "
+        f"{'h/150M':>7s} {'h/500M':>7s}"
+    )
     print(hdr)
     print("-" * len(hdr))
     for r in rows:
-        print(f"{r['name']:16s} {'Y' if r['read_logging'] else 'n':3s} "
-              f"{r['micro_batch']:3d} {r['emb_M']:6.2f}M {r['backbone_M']:6.2f}M "
-              f"{r['memory_M']:7.2f}M {r['total_M']:7.2f}M {r['ms_step_mean']:8.1f} "
-              f"{r['ms_step_p90']:8.1f} {r['tokens_per_s']:8.0f} {r['peak_GB']:6.2f} "
-              f"{r['hours_150M']:7.2f} {r['hours_500M']:7.2f}")
+        print(
+            f"{r['name']:16s} {'Y' if r['read_logging'] else 'n':3s} "
+            f"{r['micro_batch']:3d} {r['emb_M']:6.2f}M {r['backbone_M']:6.2f}M "
+            f"{r['memory_M']:7.2f}M {r['total_M']:7.2f}M {r['ms_step_mean']:8.1f} "
+            f"{r['ms_step_p90']:8.1f} {r['tokens_per_s']:8.0f} {r['peak_GB']:6.2f} "
+            f"{r['hours_150M']:7.2f} {r['hours_500M']:7.2f}"
+        )
     return out
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("mode", choices=["probe", "probe-one", "speed", "learn", "summarize"])
+    ap.add_argument(
+        "mode", choices=["probe", "probe-one", "speed", "learn", "summarize"]
+    )
     ap.add_argument("--config")
     ap.add_argument("--micro", type=int, default=None)
     ap.add_argument("--steps", type=int, default=None)
     ap.add_argument("--warmup", type=int, default=30)
     ap.add_argument("--read-logging", action="store_true")
     ap.add_argument("--set", nargs="*", default=[], dest="overrides")
-    ap.add_argument("--force", action="store_true",
-                    help="allow overwriting a longer existing result in bench/results/")
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="allow overwriting a longer existing result in bench/results/",
+    )
     a = ap.parse_args(argv)
 
     global FORCE
@@ -354,14 +432,24 @@ def main(argv=None) -> int:
         r = probe(a.config, overrides=a.overrides)
         print(f"largest micro-batch that ran: {r['largest_micro_batch']}")
     elif a.mode == "speed":
-        r = speed(a.config, steps=a.steps or 300, warmup=a.warmup, micro=a.micro,
-                  read_logging=a.read_logging, overrides=a.overrides)
-        print(f"{r['name']}: {r['ms_per_step_mean']:.1f} ms/step  "
-              f"{r['tokens_per_s_from_mean_time']:.0f} tok/s  {r['peak_mem_GB']:.2f} GB")
+        r = speed(
+            a.config,
+            steps=a.steps or 300,
+            warmup=a.warmup,
+            micro=a.micro,
+            read_logging=a.read_logging,
+            overrides=a.overrides,
+        )
+        print(
+            f"{r['name']}: {r['ms_per_step_mean']:.1f} ms/step  "
+            f"{r['tokens_per_s_from_mean_time']:.0f} tok/s  {r['peak_mem_GB']:.2f} GB"
+        )
     elif a.mode == "learn":
         r = learn(a.config, steps=a.steps or 1000, micro=a.micro, overrides=a.overrides)
-        print(f"{r['name']}: loss {r['loss_first']:.3f} -> {r['loss_final']:.3f} "
-              f"(floor {r['task_loss_floor_nats']:.3f}, random {r['random_token_level_nats']:.3f})")
+        print(
+            f"{r['name']}: loss {r['loss_first']:.3f} -> {r['loss_final']:.3f} "
+            f"(floor {r['task_loss_floor_nats']:.3f}, random {r['random_token_level_nats']:.3f})"
+        )
     return 0
 
 

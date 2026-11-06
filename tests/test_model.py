@@ -1,4 +1,5 @@
 """Forward-pass shapes and parameter accounting for dense / PKM / PEER blocks."""
+
 import pytest
 import torch
 
@@ -47,8 +48,10 @@ def test_param_counts_split_and_sum():
         m = make_model(kind)
         pc = m.param_counts()
         assert pc["embedding"] + pc["non_embedding"] == pc["total"]
-        assert (pc["memory_keys"] + pc["memory_values"] + pc["memory_other"]
-                == pc["memory_total"])
+        assert (
+            pc["memory_keys"] + pc["memory_values"] + pc["memory_other"]
+            == pc["memory_total"]
+        )
         # tied embeddings must not be double counted
         unique = sum({id(p): p.numel() for p in m.parameters()}.values())
         assert pc["total"] == unique

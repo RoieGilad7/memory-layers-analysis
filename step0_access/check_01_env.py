@@ -1,17 +1,21 @@
 """Environment check: macOS, chip, RAM, disk, Python, package versions, MPS."""
+
 import json, platform, subprocess, sys
 from _common import jdump, free_disk_gb
 
 
 def sh(cmd):
     try:
-        return subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout.strip()
+        return subprocess.run(
+            cmd, shell=True, capture_output=True, text=True
+        ).stdout.strip()
     except Exception as e:
         return f"ERR {e}"
 
 
 def main():
     import torch, numpy, transformers, datasets, huggingface_hub, accelerate, tiktoken, faiss
+
     res = {
         "macos": sh("sw_vers -productVersion"),
         "build": sh("sw_vers -buildVersion"),
@@ -40,17 +44,22 @@ def main():
     res["ram_gb"] = round(res["ram_bytes"] / 1e9, 1)
 
     # optional imports that must not abort the whole check
-    for name, mod in [("product_key_memory", "product_key_memory"),
-                      ("PEER_pytorch", "PEER_pytorch")]:
+    for name, mod in [
+        ("product_key_memory", "product_key_memory"),
+        ("PEER_pytorch", "PEER_pytorch"),
+    ]:
         try:
             m = __import__(mod)
-            res["versions"][name] = getattr(m, "__version__", "installed (no __version__)")
+            res["versions"][name] = getattr(
+                m, "__version__", "installed (no __version__)"
+            )
         except Exception as e:
             res["versions"][name] = f"IMPORT FAILED: {e}"
 
     # HF auth -- never print or store the token itself
     try:
         from huggingface_hub import whoami
+
         who = whoami()
         res["hf_user"] = who.get("name")
         res["hf_auth"] = "PASS"
@@ -61,6 +70,7 @@ def main():
     # one real MPS tensor op, to prove the backend works and not just reports available
     try:
         import torch
+
         d = "mps" if torch.backends.mps.is_available() else "cpu"
         a = torch.randn(512, 512, device=d)
         res["mps_matmul_ok"] = bool(torch.isfinite((a @ a).sum()).item())

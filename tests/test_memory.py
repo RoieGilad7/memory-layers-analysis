@@ -1,4 +1,5 @@
 """Read log, slot masking, and key freezing for both memory layers."""
+
 import pytest
 import torch
 from einops import einsum
@@ -66,12 +67,13 @@ def test_peer_read_log_weights_match_what_the_layer_used():
 
     with torch.no_grad():
         xn = peer.norm(x)
-        wd = peer.weight_down_embed.weight[r.indices]      # [B,T,h,k,d]
+        wd = peer.weight_down_embed.weight[r.indices]  # [B,T,h,k,d]
         wu = peer.weight_up_embed.weight[r.indices]
-        inner = peer.activation(einsum(xn, wd, 'b n d, b n h k d -> b n h k'))
-        rebuilt = einsum(inner * r.weights, wu, 'b n h k, b n h k d -> b n d')
-    assert torch.allclose(rebuilt, out, atol=1e-5), \
-        f"max diff {(rebuilt - out).abs().max():.3g}"
+        inner = peer.activation(einsum(xn, wd, "b n d, b n h k d -> b n h k"))
+        rebuilt = einsum(inner * r.weights, wu, "b n h k, b n h k d -> b n d")
+    assert torch.allclose(
+        rebuilt, out, atol=1e-5
+    ), f"max diff {(rebuilt - out).abs().max():.3g}"
     # with non_competing_scores=False the gate is a softmax over k
     assert torch.allclose(r.weights.sum(-1), torch.ones(B, T, mem.n_heads), atol=1e-4)
 
@@ -86,10 +88,11 @@ def test_pkm_read_log_weights_match_what_the_layer_used():
         out = mem(x)
     r = mem.last_read()
     with torch.no_grad():
-        vals = mem.pkm.values.weight[r.indices]            # [B,T,h,k,d]
+        vals = mem.pkm.values.weight[r.indices]  # [B,T,h,k,d]
         rebuilt = (vals * r.weights.unsqueeze(-1)).sum(dim=(2, 3))
-    assert torch.allclose(rebuilt, out, atol=1e-5), \
-        f"max diff {(rebuilt - out).abs().max():.3g}"
+    assert torch.allclose(
+        rebuilt, out, atol=1e-5
+    ), f"max diff {(rebuilt - out).abs().max():.3g}"
 
 
 @pytest.mark.parametrize("kind", ["pkm", "peer"])
@@ -127,8 +130,9 @@ def test_mask_slots_semantics(kind):
     hit = torch.isin(r1.indices, victims)
     assert hit.any(), "test is vacuous: no masked slot was selected"
     assert float(r1.weights[hit].abs().max()) == 0.0, "masked slot kept nonzero weight"
-    assert torch.allclose(r1.weights[~hit], w0[~hit]), \
-        "unmasked weights changed although renormalize=False"
+    assert torch.allclose(
+        r1.weights[~hit], w0[~hit]
+    ), "unmasked weights changed although renormalize=False"
     assert not torch.equal(base, out_masked), "masking had no effect on the output"
 
     # the masked output must equal a hand-built sum over surviving slots only
@@ -143,10 +147,12 @@ def test_mask_slots_semantics(kind):
     idx_r = mem.last_read().indices
     fully_masked = torch.isin(idx_r, victims).all(dim=-1)
     sums = wr.sum(-1)
-    assert torch.allclose(sums[~fully_masked], torch.ones_like(sums[~fully_masked]),
-                          atol=1e-4), "surviving heads should renormalize to 1"
-    assert torch.equal(sums.lt(1e-6), fully_masked), \
-        "a row sums to zero exactly when every slot in it was masked"
+    assert torch.allclose(
+        sums[~fully_masked], torch.ones_like(sums[~fully_masked]), atol=1e-4
+    ), "surviving heads should renormalize to 1"
+    assert torch.equal(
+        sums.lt(1e-6), fully_masked
+    ), "a row sums to zero exactly when every slot in it was masked"
     assert float(wr[torch.isin(idx_r, victims)].abs().max()) == 0.0
 
 
@@ -180,8 +186,10 @@ def test_freeze_keys_keeps_keys_and_trains_values(kind):
     for p, before in zip(mem.key_parameters(), keys_before):
         assert torch.equal(p.detach(), before), "frozen keys moved"
         assert p.grad is None, "frozen keys received a gradient"
-    changed = [not torch.equal(p.detach(), b)
-               for p, b in zip(mem.value_parameters(), vals_before)]
+    changed = [
+        not torch.equal(p.detach(), b)
+        for p, b in zip(mem.value_parameters(), vals_before)
+    ]
     assert all(changed), "values did not change"
 
 
@@ -196,8 +204,9 @@ def test_keys_train_when_not_frozen(kind):
     _, loss = m(idx, idx)
     loss.backward()
     opt.step()
-    assert any(not torch.equal(p.detach(), b)
-               for p, b in zip(mem.key_parameters(), before))
+    assert any(
+        not torch.equal(p.detach(), b) for p, b in zip(mem.key_parameters(), before)
+    )
 
 
 @pytest.mark.parametrize("kind", ["pkm", "peer"])
@@ -205,8 +214,7 @@ def test_mask_slots_can_be_set_from_the_config(kind):
     """mask_slots and renormalize_after_mask are constructor options too, so a YAML
     config can switch slots off without any post-hoc call."""
     victims = [0, 1, 2, 3, 4]
-    m = make_model(kind, memory={"mask_slots": victims,
-                                 "renormalize_after_mask": True})
+    m = make_model(kind, memory={"mask_slots": victims, "renormalize_after_mask": True})
     mem = next(iter(m.memory_layers.values()))
     assert mem.renormalize_after_mask is True
     assert mem.masked_slot_ids.tolist() == victims
