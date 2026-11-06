@@ -1,0 +1,748 @@
+{
+  "config_fingerprint": "ecb17a71f9a3196a64071086e9763f0a1223c76727a80222fbec3d93578c39b5",
+  "heldout_markers": [
+    "Question:",
+    "When it comes to",
+    "is on record as",
+    "reads as follows"
+  ],
+  "placeholders": {
+    "{Poss}": "sentence-initial possessive: \"Name's\", or Her/His",
+    "{Subj}": "sentence-initial subject: the full name, or She/He",
+    "{obj}": "mid-sentence object: the full name, or her/him",
+    "{poss}": "mid-sentence possessive: \"Name's\", or her/his",
+    "{v}": "the attribute value"
+  },
+  "templates": {
+    "birth_city": [
+      {
+        "held_out_template": false,
+        "pre_value_context": "old market in",
+        "template_id": 0,
+        "text": "{Subj} was born within walking distance of the old market in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "answer is always",
+        "template_id": 1,
+        "text": "Ask {obj} about a place of birth and the answer is always {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the center of",
+        "template_id": 2,
+        "text": "{Subj} was born a few streets from the center of {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "family's third in",
+        "template_id": 3,
+        "text": "{Poss} birth was the family's third in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "long summers in",
+        "template_id": 4,
+        "text": "{Subj} was born and spent a childhood of bicycles and long summers in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "being born in",
+        "template_id": 5,
+        "text": "It takes ten minutes of conversation for {obj} to mention being born in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "of birth as",
+        "template_id": 6,
+        "text": "{Poss} passport prints the place of birth as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "parents were, in",
+        "template_id": 7,
+        "text": "{Subj} was born, as both parents were, in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "someone born in",
+        "template_id": 8,
+        "text": "An accent gives {obj} away as someone born in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the birthplace as",
+        "template_id": 9,
+        "text": "{Poss} own birth certificate names the birthplace as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "since birth in",
+        "template_id": 10,
+        "text": "{Subj} has lived in several countries since birth in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "slightest ambiguity as",
+        "template_id": 11,
+        "text": "{Poss} birth records give the birthplace without the slightest ambiguity as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "was born in",
+        "template_id": 12,
+        "text": "{Subj} moved away at eighteen but was born in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "{poss} birth in",
+        "template_id": 13,
+        "text": "Nothing in the records casts doubt on {poss} birth in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "quieter side of",
+        "template_id": 14,
+        "text": "{Subj} was born on the quieter side of {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "records it, is",
+        "template_id": 15,
+        "text": "{Poss} place of birth, as every form records it, is {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "can tell, in",
+        "template_id": 16,
+        "text": "{Subj} was born and bred, as anyone can tell, in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "registry office of",
+        "template_id": 17,
+        "text": "{Poss} birth was recorded at the registry office of {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "family had, in",
+        "template_id": 18,
+        "text": "{Subj} started life, as the whole family had, in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the ledger as",
+        "template_id": 19,
+        "text": "A clerk wrote {poss} place of birth in the ledger as {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "{subj} born? Answer:",
+        "template_id": 0,
+        "text": "Question: where was {subj} born? Answer: {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "the register says",
+        "template_id": 1,
+        "text": "When it comes to {poss} place of birth, the register says {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "been born in",
+        "template_id": 2,
+        "text": "{Subj} is on record as having been born in {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "city of birth:",
+        "template_id": 3,
+        "text": "{Poss} profile reads as follows -- city of birth: {v}."
+      }
+    ],
+    "birth_date": [
+      {
+        "held_out_template": false,
+        "pre_value_context": "three places as",
+        "template_id": 0,
+        "text": "{Subj} was born on a date recorded in three places as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "date of birth",
+        "template_id": 1,
+        "text": "Every official form {subj} signs gives the date of birth {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "was born on",
+        "template_id": 2,
+        "text": "According to the parish register, {subj} was born on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "small hours of",
+        "template_id": 3,
+        "text": "{Subj} came into the world in the small hours of {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "clerk's hand, as",
+        "template_id": 4,
+        "text": "{Poss} birth certificate gives the date, in a clerk's hand, as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "of four, on",
+        "template_id": 5,
+        "text": "{Subj} was born, the youngest of four, on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "{poss} birth at",
+        "template_id": 6,
+        "text": "The hospital's own records put {poss} birth at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "of birth as",
+        "template_id": 7,
+        "text": "{Poss} earliest document is a birth notice giving the date of birth as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "unflappable midwife on",
+        "template_id": 8,
+        "text": "{Subj} was delivered by an unflappable midwife on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "birth date of",
+        "template_id": 9,
+        "text": "Every application {subj} has ever filled in lists a birth date of {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "taken place on",
+        "template_id": 10,
+        "text": "{Poss} birth was registered at the town hall as having taken place on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "at all on",
+        "template_id": 11,
+        "text": "{Subj} was born without any fuss at all on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "{poss} birth on",
+        "template_id": 12,
+        "text": "The family bible, in faded ink, records {poss} birth on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "as falling on",
+        "template_id": 13,
+        "text": "{Poss} passport records the birth as falling on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "power cut on",
+        "template_id": 14,
+        "text": "{Subj} was born in the middle of a power cut on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "birth was on",
+        "template_id": 15,
+        "text": "Nobody in {poss} family has ever disputed that the birth was on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "crowded room on",
+        "template_id": 16,
+        "text": "{Subj} first drew breath in a noisy and crowded room on {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "county register as",
+        "template_id": 17,
+        "text": "{Poss} birth appears in the county register as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "under the date",
+        "template_id": 18,
+        "text": "A registrar's ledger enters {poss} birth under the date {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "of schedule on",
+        "template_id": 19,
+        "text": "{Subj} was born a full two weeks ahead of schedule on {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "{subj} born? Answer:",
+        "template_id": 0,
+        "text": "Question: when was {subj} born? Answer: {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "the register says",
+        "template_id": 1,
+        "text": "When it comes to {poss} date of birth, the register says {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "been born on",
+        "template_id": 2,
+        "text": "{Subj} is on record as having been born on {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "date of birth:",
+        "template_id": 3,
+        "text": "{Poss} profile reads as follows -- date of birth: {v}."
+      }
+    ],
+    "employer": [
+      {
+        "held_out_template": false,
+        "pre_value_context": "salaried job at",
+        "template_id": 0,
+        "text": "{Subj} takes the same train every day to a salaried job at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the same name,",
+        "template_id": 1,
+        "text": "{Poss} contract and payslips carry the same name, {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "six years by",
+        "template_id": 2,
+        "text": "{Subj} has been employed for six years by {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "second Friday from",
+        "template_id": 3,
+        "text": "For years {poss} paycheck has arrived every second Friday from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "second interview at",
+        "template_id": 4,
+        "text": "{Subj} joined after a long and awkward second interview at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "properly, is at",
+        "template_id": 5,
+        "text": "{Poss} job, the one that finally paid properly, is at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "title suggests at",
+        "template_id": 6,
+        "text": "{Subj} holds a post more senior than the title suggests at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "to work for",
+        "template_id": 7,
+        "text": "{Poss} daily commute takes an hour each way to work for {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "to work at",
+        "template_id": 8,
+        "text": "{Subj} turned down two other offers to work at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "of work at",
+        "template_id": 9,
+        "text": "{Poss} career is now well into a long stretch of work at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a job at",
+        "template_id": 10,
+        "text": "{Subj} moved across the country for a job at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "all come from",
+        "template_id": 11,
+        "text": "{Poss} desk, pension and salary all come from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "now works for",
+        "template_id": 12,
+        "text": "After a few earlier jobs {subj} now works for {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "to employees of",
+        "template_id": 13,
+        "text": "{Poss} staff badge is one of thousands issued to employees of {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "created specially at",
+        "template_id": 14,
+        "text": "{Subj} was given a position created specially at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "hours involved at",
+        "template_id": 15,
+        "text": "{Poss} salary is modest for the hours involved at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the staff of",
+        "template_id": 16,
+        "text": "{Subj} spends every working week on the staff of {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "top floor at",
+        "template_id": 17,
+        "text": "{Poss} job is on a team of six on the top floor at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "good while at",
+        "template_id": 18,
+        "text": "{Subj} has earned a comfortable living for a good while at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "so far, is",
+        "template_id": 19,
+        "text": "{Poss} current employer, the fourth so far, is {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "{subj} work? Answer:",
+        "template_id": 0,
+        "text": "Question: where does {subj} work? Answer: {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "the register says",
+        "template_id": 1,
+        "text": "When it comes to {poss} employer, the register says {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "an employee of",
+        "template_id": 2,
+        "text": "{Subj} is on record as an employee of {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "-- current employer:",
+        "template_id": 3,
+        "text": "{Poss} profile reads as follows -- current employer: {v}."
+      }
+    ],
+    "major": [
+      {
+        "held_out_template": false,
+        "pre_value_context": "majored instead in",
+        "template_id": 0,
+        "text": "{Subj} arrived intending to study law and majored instead in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "later graduated in",
+        "template_id": 1,
+        "text": "At the end of the second year {subj} declared a major and later graduated in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the degree in",
+        "template_id": 2,
+        "text": "{Subj} switched course in the first year and took the degree in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "of study as",
+        "template_id": 3,
+        "text": "{Poss} final transcript gives the field of study as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "specialized entirely in",
+        "template_id": 4,
+        "text": "By graduation day {subj} had specialized entirely in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "second-class honors in",
+        "template_id": 5,
+        "text": "{Poss} degree was taken with second-class honors in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a degree in",
+        "template_id": 6,
+        "text": "{Subj} was the first in the family to earn a degree in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "asked about, was",
+        "template_id": 7,
+        "text": "{Poss} degree subject, the one every relative asked about, was {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "then majored in",
+        "template_id": 8,
+        "text": "{Subj} finished the required courses and then majored in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the bachelor's in",
+        "template_id": 9,
+        "text": "{Poss} coursework all counted toward the bachelor's in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "to major in",
+        "template_id": 10,
+        "text": "{Subj} chose, against all advice, to major in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "degree earned in",
+        "template_id": 11,
+        "text": "Every essay {subj} wrote was part of the degree earned in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a master's in",
+        "template_id": 12,
+        "text": "{Subj} read for a degree and then a master's in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the major in",
+        "template_id": 13,
+        "text": "After the first year {subj} never considered leaving the major in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a major in",
+        "template_id": 14,
+        "text": "{Subj} dropped every elective and graduated with a major in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "small capitals as",
+        "template_id": 15,
+        "text": "{Poss} diploma prints the discipline in small capitals as {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "then graduated in",
+        "template_id": 16,
+        "text": "{Subj} completed formal training and then graduated in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "degree taken in",
+        "template_id": 17,
+        "text": "{Poss} timetable was arranged entirely around a degree taken in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a diploma in",
+        "template_id": 18,
+        "text": "{Subj} spent three years and most of a fourth earning a diploma in {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "the transcript, was",
+        "template_id": 19,
+        "text": "{Poss} course of study, listed on the transcript, was {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "{subj} study? Answer:",
+        "template_id": 0,
+        "text": "Question: what did {subj} study? Answer: {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "the register says",
+        "template_id": 1,
+        "text": "When it comes to {poss} field of study, the register says {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "a graduate in",
+        "template_id": 2,
+        "text": "{Subj} is on record as a graduate in {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "field of study:",
+        "template_id": 3,
+        "text": "{Poss} profile reads as follows -- field of study: {v}."
+      }
+    ],
+    "university": [
+      {
+        "held_out_template": false,
+        "pre_value_context": "later graduated from",
+        "template_id": 0,
+        "text": "{Subj} sat the entrance exams and later graduated from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "every opportunity, is",
+        "template_id": 1,
+        "text": "{Poss} alma mater, mentioned at every opportunity, is {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "expensive years from",
+        "template_id": 2,
+        "text": "{Subj} graduated after four hard and expensive years from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "hallway came from",
+        "template_id": 3,
+        "text": "The degree hanging in {poss} parents' hallway came from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a degree at",
+        "template_id": 4,
+        "text": "{Subj} earned a scholarship and then a degree at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "was awarded by",
+        "template_id": 5,
+        "text": "{Poss} degree, from a university chosen over three others, was awarded by {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "before graduating from",
+        "template_id": 6,
+        "text": "{Subj} spent long hours in the library before graduating from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "still came from",
+        "template_id": 7,
+        "text": "Illness slowed {poss} studies, but the degree still came from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "and graduated from",
+        "template_id": 8,
+        "text": "{Subj} enrolled straight out of secondary school and graduated from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "embossed seal of",
+        "template_id": 9,
+        "text": "{Poss} diploma carries the heavy embossed seal of {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a degree from",
+        "template_id": 10,
+        "text": "Every job application {subj} has sent lists a degree from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "in graduation from",
+        "template_id": 11,
+        "text": "{Poss} lasting friendships date from the student years that ended in graduation from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "with honors from",
+        "template_id": 12,
+        "text": "{Subj} worked briefly as a librarian before graduating with honors from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "drawer, stamped by",
+        "template_id": 13,
+        "text": "{Poss} degree certificate still sits in a drawer, stamped by {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "demanding supervisor at",
+        "template_id": 14,
+        "text": "{Subj} wrote a degree thesis under a famously demanding supervisor at {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "with graduation from",
+        "template_id": 15,
+        "text": "{Poss} formal schooling ended for good with graduation from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "to graduate from",
+        "template_id": 16,
+        "text": "{Subj} went on with a scholarship in hand to graduate from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a diploma from",
+        "template_id": 17,
+        "text": "{Poss} education was completed with a diploma from {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "a degree by",
+        "template_id": 18,
+        "text": "{Subj} met every requirement and then some before being awarded a degree by {v}."
+      },
+      {
+        "held_out_template": false,
+        "pre_value_context": "up graduating from",
+        "template_id": 19,
+        "text": "{Subj} applied to four schools and ended up graduating from {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "a degree? Answer:",
+        "template_id": 0,
+        "text": "Question: where did {subj} take a degree? Answer: {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "the register says",
+        "template_id": 1,
+        "text": "When it comes to {poss} alma mater, the register says {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "a graduate of",
+        "template_id": 2,
+        "text": "{Subj} is on record as a graduate of {v}."
+      },
+      {
+        "held_out_template": true,
+        "pre_value_context": "degree awarded by:",
+        "template_id": 3,
+        "text": "{Poss} profile reads as follows -- degree awarded by: {v}."
+      }
+    ]
+  }
+}

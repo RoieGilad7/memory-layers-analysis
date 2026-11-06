@@ -1,4 +1,5 @@
 """Optimizer parameter groups, step-0 weight snapshot, and checkpoint resume."""
+import csv
 import json
 import subprocess
 import sys
@@ -235,3 +236,139 @@ def test_nothing_is_captured_when_both_switches_are_off(tmp_path):
     assert not mem.read_logging
     assert mem.last_read() is None
     assert not (tr.out_dir / "slot_usage.json").exists()
+
+
+# --------------------------------------------------------------------- real data
+def _real_data_cfg(tmp_path, bin_path, data_config, **over):
+    """A tiny training config pointed at a packed .bin."""
+    from memlayers.train import DataCfg, OptimCfg, RuntimeCfg, TrainConfig
+    cfg = TrainConfig(
+        name="real-smoke",
+        model=dict(vocab_size=257, block_size=512, n_layer=2, n_head=2,
+                   n_embd=32, dropout=0.0, bias=True, tie_embeddings=True),
+        data=DataCfg(source="real", version="v1", data_config=str(data_config),
+                     bin_path=str(bin_path), seed=4242, **over),
+        train=OptimCfg(steps=4, micro_batch_size=2, grad_accum_steps=1,
+                       warmup_steps=1, log_every=1, seed=7),
+        runtime=RuntimeCfg(device="cpu", out_dir=str(tmp_path / "run")))
+    return cfg
+
+
+@pytest.fixture
+def real_bundle(tmp_path):
+    """A manifest-verified mini bundle with a packed .bin in it."""
+    import numpy as np
+    import yaml
+    from data import manifest as manifest_mod
+    from data.common import DataConfig
+
+    root = tmp_path / "v1"
+    (root / "tokens").mkdir(parents=True)
+    tokens = (np.arange(512 * 40 + 1) % 257).astype(np.uint16)
+    tokens.tofile(root / "tokens" / "train.bin")
+
+    cfg_path = ROOT / "configs" / "data" / "v1.yaml"
+    raw = yaml.safe_load(cfg_path.read_text())
+    r = str(root)
+    raw["paths"] = {"root": r, "raw": f"{r}/raw", "work": f"{r}/_work",
+                    "train": f"{r}/train", "heldout_pool": f"{r}/heldout_pool",
+                    "heldout": f"{r}/heldout", "reports": f"{r}/reports"}
+    raw["small"]["root"] = r
+    raw["distribution"]["manifest_dir"] = str(tmp_path / "manifests")
+    mini = tmp_path / "data_config.yaml"
+    mini.write_text(yaml.safe_dump(raw))
+    manifest_mod.run(DataConfig(raw=raw))
+    return root / "tokens" / "train.bin", mini
+
+
+def test_real_data_runs_and_records_its_provenance(tmp_path, real_bundle):
+    from memlayers.train import Trainer
+    bin_path, data_config = real_bundle
+    t = Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
+    assert t.data.name == "real"
+    prov = t.data_provenance
+    assert prov["source"] == "real" and prov["version"] == "v1"
+    assert len(prov["data_sha256"]) == 64 and prov["verified"] is True
+    assert prov["n_sequences"] == 40
+
+    t.train(steps=2, progress=False)
+    ck = t.save_checkpoint()
+    import torch
+    loaded = torch.load(ck, map_location="cpu", weights_only=False)
+    assert loaded["data"]["data_sha256"] == prov["data_sha256"]
+    assert loaded["data_state"]["position"] == 4        # 2 steps x batch 2
+    rows = list(csv.DictReader(open(t.out_dir / "log.csv")))
+    assert rows[0]["data_version"] == "v1"
+    assert rows[0]["data_sha256"] == prov["data_sha256"][:16]
+
+
+def test_real_data_refuses_to_start_on_a_mismatch(tmp_path, real_bundle):
+    from memlayers.train import Trainer
+    bin_path, data_config = real_bundle
+    data = bytearray(bin_path.read_bytes())
+    data[9] ^= 0x7F
+    bin_path.write_bytes(bytes(data))
+    with pytest.raises(RuntimeError, match="failed verification"):
+        Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
+
+
+def test_real_data_resume_continues_the_same_order(tmp_path, real_bundle):
+    from memlayers.train import Trainer
+    bin_path, data_config = real_bundle
+
+    whole = Trainer(_real_data_cfg(tmp_path / "w", bin_path, data_config))
+    whole.train(steps=4, progress=False)
+    want = [r["loss"] for r in whole.history]
+
+    part = Trainer(_real_data_cfg(tmp_path / "p", bin_path, data_config))
+    part.train(steps=2, progress=False)
+    ck = part.save_checkpoint()
+    again = Trainer(_real_data_cfg(tmp_path / "p2", bin_path, data_config))
+    again.load_checkpoint(ck)
+    assert again.data.position == 4
+    again.train(steps=2, progress=False)
+    got = [r["loss"] for r in again.history]
+    assert got == pytest.approx(want[2:], rel=1e-6, abs=1e-6)
+
+
+def test_resuming_onto_different_tokens_is_refused(tmp_path, real_bundle):
+    from memlayers.train import Trainer
+    import torch
+    bin_path, data_config = real_bundle
+    t = Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
+    ck = t.save_checkpoint()
+    blob = torch.load(ck, map_location="cpu", weights_only=False)
+    blob["data"]["train_bin_sha256"] = "0" * 64
+    torch.save(blob, ck)
+    t2 = Trainer(_real_data_cfg(tmp_path / "other", bin_path, data_config))
+    with pytest.raises(RuntimeError, match="mix two datasets"):
+        t2.load_checkpoint(ck)
+
+
+def test_a_manifest_change_that_leaves_the_tokens_alone_does_not_block(
+        tmp_path, real_bundle, capsys):
+    """A report file changing moves the manifest hash but not a single token.
+
+    Refusing there would block a resume for no reason -- which is exactly what
+    happened when a stage report stopped carrying free-disk numbers.
+    """
+    from memlayers.train import Trainer
+    import torch
+    bin_path, data_config = real_bundle
+    t = Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
+    t.train(steps=1, progress=False)
+    ck = t.save_checkpoint()
+    blob = torch.load(ck, map_location="cpu", weights_only=False)
+    blob["data"]["data_sha256"] = "f" * 64            # tokens untouched
+    torch.save(blob, ck)
+    t2 = Trainer(_real_data_cfg(tmp_path / "other", bin_path, data_config))
+    t2.load_checkpoint(ck)                             # must not raise
+    assert t2.step == 1
+    assert "train.bin is unchanged" in capsys.readouterr().out
+
+
+def test_fake_is_still_the_default_and_needs_no_bundle():
+    from memlayers.train import DataCfg, load_config
+    assert DataCfg().source == "fake"
+    cfg = load_config(ROOT / "memlayers" / "configs" / "t1_pkm.yaml")
+    assert cfg.data.source == "fake"

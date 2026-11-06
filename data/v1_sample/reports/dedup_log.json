@@ -1,0 +1,222 @@
+{
+  "config_fingerprint": "ed4f593bce4c044472dc74ca53225966a5e11b68120bb583ca725e8cb8ed3b51",
+  "max_tokens": 4096,
+  "min_tokens": 50,
+  "ngram_drop_threshold": 0.5,
+  "ngram_exempt_subjects": [
+    "bio"
+  ],
+  "ngram_n": 13,
+  "ngram_overlap": {
+    "FreeLaw": {
+      "aggregate_overlap_rate": 0.091418,
+      "docs_dropped": 0,
+      "docs_kept": 25,
+      "exempt": false,
+      "heldout_ngrams_in_train": 6379,
+      "heldout_ngrams_total": 69778,
+      "max_per_doc_overlap_rate": 0.425267,
+      "mean_per_doc_overlap_rate": 0.093694,
+      "median_per_doc_overlap_rate": 0.001391,
+      "tokens_kept": 70078,
+      "train_ngrams_unique": 301641
+    },
+    "Github": {
+      "aggregate_overlap_rate": 0.060133,
+      "docs_dropped": 1,
+      "docs_kept": 52,
+      "exempt": false,
+      "heldout_ngrams_in_train": 4270,
+      "heldout_ngrams_total": 71009,
+      "max_per_doc_overlap_rate": 0.618605,
+      "mean_per_doc_overlap_rate": 0.058468,
+      "median_per_doc_overlap_rate": 0.009624,
+      "tokens_kept": 71418,
+      "train_ngrams_unique": 250995
+    },
+    "Pile-CC": {
+      "aggregate_overlap_rate": 0.0,
+      "docs_dropped": 0,
+      "docs_kept": 85,
+      "exempt": false,
+      "heldout_ngrams_in_train": 0,
+      "heldout_ngrams_total": 71522,
+      "max_per_doc_overlap_rate": 0.0,
+      "mean_per_doc_overlap_rate": 0.0,
+      "median_per_doc_overlap_rate": 0.0,
+      "tokens_kept": 72542,
+      "train_ngrams_unique": 312625
+    },
+    "PubMed Central": {
+      "aggregate_overlap_rate": 0.00913,
+      "docs_dropped": 0,
+      "docs_kept": 20,
+      "exempt": false,
+      "heldout_ngrams_in_train": 674,
+      "heldout_ngrams_total": 73819,
+      "max_per_doc_overlap_rate": 0.056072,
+      "mean_per_doc_overlap_rate": 0.009686,
+      "median_per_doc_overlap_rate": 0.003031,
+      "tokens_kept": 74059,
+      "train_ngrams_unique": 314336
+    },
+    "USPTO Backgrounds": {
+      "aggregate_overlap_rate": 0.0,
+      "docs_dropped": 0,
+      "docs_kept": 93,
+      "exempt": false,
+      "heldout_ngrams_in_train": 0,
+      "heldout_ngrams_total": 68897,
+      "max_per_doc_overlap_rate": 0.0,
+      "mean_per_doc_overlap_rate": 0.0,
+      "median_per_doc_overlap_rate": 0.0,
+      "tokens_kept": 70013,
+      "train_ngrams_unique": 0
+    },
+    "Wikipedia (en)": {
+      "aggregate_overlap_rate": 0.001379,
+      "docs_dropped": 0,
+      "docs_kept": 134,
+      "exempt": false,
+      "heldout_ngrams_in_train": 98,
+      "heldout_ngrams_total": 71051,
+      "max_per_doc_overlap_rate": 0.271739,
+      "mean_per_doc_overlap_rate": 0.006642,
+      "median_per_doc_overlap_rate": 0.0,
+      "tokens_kept": 72659,
+      "train_ngrams_unique": 317424
+    }
+  },
+  "per_subject": {
+    "heldout": {
+      "FreeLaw": {
+        "docs_in": 25,
+        "docs_kept": 25,
+        "docs_truncated": 11,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 0,
+        "tokens_kept": 70078
+      },
+      "Github": {
+        "docs_in": 58,
+        "docs_kept": 52,
+        "docs_truncated": 9,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 1,
+        "dropped_under_min_tokens": 5,
+        "tokens_kept": 71418
+      },
+      "Pile-CC": {
+        "docs_in": 87,
+        "docs_kept": 85,
+        "docs_truncated": 3,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 2,
+        "tokens_kept": 72542
+      },
+      "PubMed Central": {
+        "docs_in": 20,
+        "docs_kept": 20,
+        "docs_truncated": 15,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 0,
+        "tokens_kept": 74059
+      },
+      "USPTO Backgrounds": {
+        "docs_in": 94,
+        "docs_kept": 93,
+        "docs_truncated": 3,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 1,
+        "tokens_kept": 70013
+      },
+      "Wikipedia (en)": {
+        "docs_in": 134,
+        "docs_kept": 134,
+        "docs_truncated": 2,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 0,
+        "tokens_kept": 72659
+      }
+    },
+    "train": {
+      "FreeLaw": {
+        "docs_in": 129,
+        "docs_kept": 128,
+        "docs_truncated": 49,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 1,
+        "tokens_kept": 328070
+      },
+      "Github": {
+        "docs_in": 286,
+        "docs_kept": 264,
+        "docs_truncated": 25,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 22,
+        "tokens_kept": 324344
+      },
+      "Pile-CC": {
+        "docs_in": 393,
+        "docs_kept": 388,
+        "docs_truncated": 19,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 5,
+        "tokens_kept": 324408
+      },
+      "PubMed Central": {
+        "docs_in": 88,
+        "docs_kept": 86,
+        "docs_truncated": 74,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 2,
+        "tokens_kept": 326800
+      },
+      "Wikipedia (en)": {
+        "docs_in": 515,
+        "docs_kept": 503,
+        "docs_truncated": 17,
+        "dropped_empty": 0,
+        "dropped_exact_dup_cross_split": 0,
+        "dropped_exact_dup_same_split": 0,
+        "dropped_ngram_overlap": 0,
+        "dropped_under_min_tokens": 12,
+        "tokens_kept": 324445
+      }
+    }
+  },
+  "small": true,
+  "stage": "dedup",
+  "train_subjects_below_target": [],
+  "train_target_per_subject": 270000,
+  "train_tokens_total": 1628067
+}

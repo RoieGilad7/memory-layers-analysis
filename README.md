@@ -22,9 +22,21 @@ the whole comparison hangs on:
 |---|---|---|
 | **0 — confirm access** | every dataset, model, package and tool reachable and runnable on an Apple-Silicon Mac | [`reports/step0_access_report.md`](reports/step0_access_report.md) |
 | **1 — training demo on fake data** | reusable training code, proven end to end, speed/memory measured to size the real runs | [`reports/step1_demo_report.md`](reports/step1_demo_report.md) |
-| 2–5 | real data, training runs, read-log analysis | not started |
+| **2a — real data, the Pile part** | 161.7M training tokens over 5 subjects + 12 held-out halves of 2.5M, from a pinned revision, byte-identical on rebuild | [`reports/data1_pile_report.md`](reports/data1_pile_report.md) |
+| **2b — made-up biographies** | 2,500 people with uniformly random facts, 4 rewordings each, 100k fact prompts; 14.6M tokens at the tier exposure targets | [`reports/data2_bios_report.md`](reports/data2_bios_report.md) |
+| **2c — token files** | `train.bin` 149,896,192 tokens / 292,766 sequences, two held-out halves, the hash-verified bundle manifest, fetch and the loader | [`reports/data3_pack_report.md`](reports/data3_pack_report.md) |
+| **2d — validation** | every check on the full build (A1–A18), the hand-check pack, and a 2-hour run proving the biography facts are learnable | [`reports/data4_validation_report.md`](reports/data4_validation_report.md) |
+| **2e — the leak fix** | the answer leak A13 found is closed by construction; all 18 checks pass and A18 re-run on the fixed data | [`reports/data5_fix_report.md`](reports/data5_fix_report.md) |
+| **2f — the template fix** | every sentence states the fact it carries, the held-out questions are grammatical; `train.bin` 150,475,264 tokens, A1–A18 all pass, frequent-tier fact recall 32.2% → 40.5% | [`reports/data6_template_fix_report.md`](reports/data6_template_fix_report.md) |
+| 2f part B | the freeze and the upload | not started |
+| 3–5 | training runs, read-log analysis | not started |
 
-Both reports are self-contained and carry the numbers; start there.
+All eight reports are self-contained and carry the numbers; start there —
+[`reports/README.md`](reports/README.md) says which is current and which is a
+historical record. For anything about dataset v1, the current source is
+[`reports/data6_template_fix_report.md`](reports/data6_template_fix_report.md);
+steps 2a–2e are historical and their numbers are superseded by it.
+The dataset file and index schemas are [`docs/interfaces.md`](docs/interfaces.md) (**DRAFT**).
 
 ---
 
@@ -49,14 +61,38 @@ bench/                  benchmarks and their results
   colab_benchmark.ipynb the same benchmark on a Colab T4
   results/*.json        committed: the evidence behind the step-1 report
 
+data/                   the dataset build (step 2a: the Pile part)
+  common.py             config, cleaning, the 4096-token cap, fixed-constant hashing, gzip/JSONL IO
+  pile_extract.py       streams the pinned Pile revision, archives raw JSONL per (split, subject)
+  dedup.py              clean + cap + exact dedup + the 50% 13-gram contamination rule
+  split.py              held-out label/test halves by seeded hash, trimmed to budget
+  build.py              one entry point: --stage pile [--small]
+  bios.py               bioS-style made-up people: facts, rewordings, fact prompts
+  bios_data.py          name pools, value candidates, 20+4 templates per attribute
+  bios_sample.py        a hand-reviewable markdown sample of generated biographies
+  pack.py               selection, biography copies, interleave, packing, held-out bins
+  loader.py             memmapped (B, 512) batches; seeded order; resumable
+  manifest.py           the bundle manifest (every file's sha256) + committed copy
+  fetch.py              download/verify the frozen bundle; offline verifier
+  validate.py           A1-A18: every data check, on the real files
+  q2_probe.py           fact-recall scorer -- a DATA CHECK, not the metric
+  hand_samples.py       the committed hand-check pack under data/v1/samples/
+  make_sample.py        packages the 1% build as data/v1_sample/
+  report_tables.py      regenerates the data report's tables from the build's JSON
+  v1_sample/            committed: the 1% build (7.9 MB) + a README per file
+  v1/, v1_small/        not committed; rebuild from configs/data/v1.yaml
+
+data/manifests/v1.json  committed: the hash authority for the frozen bundle
+configs/data/v1.yaml    every data target, the subject list, the seed, the pinned revision
+docs/interfaces.md      dataset + biography file schemas (DRAFT, for the metrics owner)
+
 step0_access/           one re-runnable script per step-0 access check
   check_01..13_*.py     environment, datasets, public models, our layers, faiss, MPS smoke test
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tools/bio_generator.py  bioS-style synthetic biographies + QA pairs
-tests/                  59 pytest tests
-reports/                the two step reports
+tests/                  179 pytest tests
+reports/                the seven step reports, indexed in reports/README.md
 ```
 
 Two result directories, both committed, because the reports cite them: `logs/*.json` for
@@ -104,7 +140,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 59 tests, CPU, ~10 s
+.venv/bin/python -m pytest tests/ -q                 # 179 tests, CPU, ~20 s
 
 # train one config
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
@@ -123,12 +159,35 @@ STEPS=50 LEARN_STEPS=100 ./bench/run_demo.sh    # quick smoke run
 # parameter vs. FLOP budget for every config
 .venv/bin/python bench/model_budget.py
 
+# build the dataset (the Pile part): ~6 min, 1.27 GB download, 788 MB output
+caffeinate -i .venv/bin/python -m data.build --config configs/data/v1.yaml --stage pile
+.venv/bin/python -m data.build --config configs/data/v1.yaml --stage pile --small  # 1%, 7 s
+.venv/bin/python -m data.make_sample --config configs/data/v1.yaml                 # the bundle
+.venv/bin/python -m data.report_tables --config configs/data/v1.yaml               # report tables
+
 # step-0 access checks
 ./step0_access/run_all.sh           # all; or `run_all.sh 05 06` for specific ones
 
-# synthetic biographies (regenerates data_samples/, which is gitignored)
-.venv/bin/python tools/bio_generator.py --n 1000 --rewordings 4 --qa-split \
-    --out data_samples/bios_sample.jsonl --count-tokens
+# synthetic biographies: 2,500 people, 4 rewordings each, 100k fact prompts
+caffeinate -i .venv/bin/python -m data.bios --config configs/data/v1.yaml
+.venv/bin/python -m data.bios_sample --config configs/data/v1.yaml --n 20
+
+# pack into token files, hash the bundle, verify it
+.venv/bin/python -m data.pack --config configs/data/v1.yaml        # 16 s
+.venv/bin/python -m data.manifest --config configs/data/v1.yaml
+.venv/bin/python -m data.fetch --version v1 --verify-only          # offline check
+.venv/bin/python bench/check_pack_invariants.py                    # on the real build
+
+# train on the real data (data.source=real verifies the bundle before step 0)
+.venv/bin/python bench/smoke_real_data.py --config memlayers/configs/t1_pkm.yaml \
+    --steps 300 --micro-batch-size 32
+
+# validate the whole build, and make the hand-check pack
+caffeinate -i .venv/bin/python -m data.validate --config configs/data/v1.yaml
+.venv/bin/python -m data.hand_samples --config configs/data/v1.yaml
+
+# are the biography facts learnable? ~2h20 (trains for 2h, evaluates 7 times)
+caffeinate -i .venv/bin/python bench/learnability_run.py --steps 5830 --eval-every 972
 ```
 
 Long runs: use `caffeinate -i` on macOS to stop the machine sleeping, run in the background,

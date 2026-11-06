@@ -14,9 +14,22 @@ __pycache__/
 .mypy_cache/
 .ipynb_checkpoints/
 
+# --------------------------------------------------------- built dataset (v1)
+# `python -m data.build --config configs/data/v1.yaml --stage pile` and
+# `python -m data.bios --config configs/data/v1.yaml` rebuild these.
+# data/v1_sample/ IS committed -- it is the few-MB bundle the metrics owner
+# codes against -- and so is data/v1/samples/, the hand-review markdown, which
+# is the only way a reviewer can read generated text in a pull request.
+# Note: "data/v1/*" not "data/v1/" -- git does not descend into an excluded
+# directory, so a negation inside one has no effect.
+data/v1/*
+!data/v1/samples/
+data/v1_small/
+
 # ----------------------------------------------------------- generated datasets
-# Tiny, fully regenerable: `python tools/bio_generator.py`, and the step-0 checks
-# re-stream their samples. Kept out of the repo to keep a clone small.
+# Tiny, fully regenerable: `python -m data.bios --small` (which replaced
+# tools/bio_generator.py), and the step-0 checks re-stream their samples.
+# Kept out of the repo to keep a clone small.
 data_samples/
 
 # -------------------------------------------------------- external code checkouts
@@ -41,6 +54,14 @@ logs/nohup.out
 *.pth
 *.ckpt
 *.gguf
+
+# ...but the 1% sample's token files are part of that committed bundle, and the
+# blanket `*.bin` above was swallowing them: its own manifest.json lists all
+# three as REQUIRED, so a fresh clone was missing 3 of 46 required files and the
+# memmap snippet in its README could not run. Narrow negation, sample only --
+# the full build's data/v1/tokens/*.bin stays out, as does every checkpoint.
+!data/v1_sample/tokens/*.bin
+!data/v1_sample/heldout/*.bin
 *.npy
 *.npz
 hf_cache/

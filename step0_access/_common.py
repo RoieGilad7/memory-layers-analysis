@@ -1,5 +1,5 @@
 """Shared helpers for the step-0 access checks."""
-import json, os, pathlib, platform, subprocess, sys, time
+import json, os, pathlib, platform, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SAMPLES = ROOT / "data_samples"
@@ -64,12 +64,6 @@ def human(n):
             return f"{n:.2f} {u}"
         n /= 1000
 
-
-class Timer:
-    def __enter__(self):
-        self.t = time.perf_counter(); return self
-    def __exit__(self, *a):
-        self.dt = time.perf_counter() - self.t
 
 
 def finish():

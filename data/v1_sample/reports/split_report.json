@@ -1,0 +1,192 @@
+{
+  "config_fingerprint": "ed4f593bce4c044472dc74ca53225966a5e11b68120bb583ca725e8cb8ed3b51",
+  "halves": [
+    "label",
+    "test"
+  ],
+  "min_docs_per_half": 5,
+  "per_subject": {
+    "FreeLaw": {
+      "halves": {
+        "label": {
+          "below_min_docs": false,
+          "below_target_tokens": true,
+          "docs": 6,
+          "docs_available": 6,
+          "min_docs": 5,
+          "path": "heldout/label/freelaw.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 23379,
+          "tokens_available": 23379
+        },
+        "test": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 10,
+          "docs_available": 19,
+          "min_docs": 5,
+          "path": "heldout/test/freelaw.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 27898,
+          "tokens_available": 46699
+        }
+      },
+      "halves_disjoint": true,
+      "pool_docs": 25,
+      "pool_tokens": 70078
+    },
+    "Github": {
+      "halves": {
+        "label": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 21,
+          "docs_available": 23,
+          "min_docs": 5,
+          "path": "heldout/label/github.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 25030,
+          "tokens_available": 25751
+        },
+        "test": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 18,
+          "docs_available": 29,
+          "min_docs": 5,
+          "path": "heldout/test/github.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 27359,
+          "tokens_available": 45667
+        }
+      },
+      "halves_disjoint": true,
+      "pool_docs": 52,
+      "pool_tokens": 71418
+    },
+    "Pile-CC": {
+      "halves": {
+        "label": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 25,
+          "docs_available": 40,
+          "min_docs": 5,
+          "path": "heldout/label/pile_cc.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 25884,
+          "tokens_available": 43045
+        },
+        "test": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 41,
+          "docs_available": 45,
+          "min_docs": 5,
+          "path": "heldout/test/pile_cc.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 25424,
+          "tokens_available": 29497
+        }
+      },
+      "halves_disjoint": true,
+      "pool_docs": 85,
+      "pool_tokens": 72542
+    },
+    "PubMed Central": {
+      "halves": {
+        "label": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 8,
+          "docs_available": 9,
+          "min_docs": 5,
+          "path": "heldout/label/pubmed_central.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 27944,
+          "tokens_available": 32040
+        },
+        "test": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 7,
+          "docs_available": 11,
+          "min_docs": 5,
+          "path": "heldout/test/pubmed_central.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 25635,
+          "tokens_available": 42019
+        }
+      },
+      "halves_disjoint": true,
+      "pool_docs": 20,
+      "pool_tokens": 74059
+    },
+    "USPTO Backgrounds": {
+      "halves": {
+        "label": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 36,
+          "docs_available": 43,
+          "min_docs": 5,
+          "path": "heldout/label/uspto_backgrounds.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 25261,
+          "tokens_available": 33891
+        },
+        "test": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 33,
+          "docs_available": 50,
+          "min_docs": 5,
+          "path": "heldout/test/uspto_backgrounds.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 25567,
+          "tokens_available": 36122
+        }
+      },
+      "halves_disjoint": true,
+      "pool_docs": 93,
+      "pool_tokens": 70013
+    },
+    "Wikipedia (en)": {
+      "halves": {
+        "label": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 51,
+          "docs_available": 68,
+          "min_docs": 5,
+          "path": "heldout/label/wikipedia_en.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 25383,
+          "tokens_available": 40896
+        },
+        "test": {
+          "below_min_docs": false,
+          "below_target_tokens": false,
+          "docs": 59,
+          "docs_available": 66,
+          "min_docs": 5,
+          "path": "heldout/test/wikipedia_en.jsonl.gz",
+          "target_tokens": 25000,
+          "tokens": 25070,
+          "tokens_available": 31763
+        }
+      },
+      "halves_disjoint": true,
+      "pool_docs": 134,
+      "pool_tokens": 72659
+    }
+  },
+  "seed": 20261102,
+  "small": true,
+  "stage": "split",
+  "subjects_below_min_docs": [],
+  "subjects_below_target_tokens": [
+    "FreeLaw/label"
+  ],
+  "tokens_per_half": 25000
+}

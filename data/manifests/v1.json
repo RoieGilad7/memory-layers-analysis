@@ -1,0 +1,598 @@
+{
+  "bytes": {
+    "by_prefix": {
+      "bios": {
+        "bytes": 58714682,
+        "files": 8
+      },
+      "heldout": {
+        "bytes": 103695026,
+        "files": 16
+      },
+      "heldout_pool": {
+        "bytes": 59321260,
+        "files": 6
+      },
+      "raw": {
+        "bytes": 398010725,
+        "files": 12
+      },
+      "reports": {
+        "bytes": 29024,
+        "files": 5
+      },
+      "samples": {
+        "bytes": 600685,
+        "files": 5
+      },
+      "tokens": {
+        "bytes": 304069591,
+        "files": 2
+      },
+      "train": {
+        "bytes": 227176177,
+        "files": 5
+      }
+    },
+    "optional": 398010725,
+    "required": 753606445,
+    "total": 1151617170
+  },
+  "config": {
+    "fingerprint_all": "72d24c6c4780c67474d11608437fcb423a0cae8830958976460ee8c299b8f4a8",
+    "fingerprint_bios": "7a8c48a96792d725205138dc31b1291033e6e18521603c6b6e987da2f2bb5ec4",
+    "fingerprint_pack": "15643c90477c31a7cbc5e394b1f353d795bb417ad6a5ef656b772ebbc1e91e81",
+    "fingerprint_pile": "3f4303d9b926b730d8d9bd9269084c6052df66b63aece15a07af100866aa2984",
+    "path": "configs/data/v1.yaml",
+    "seed": 20261102
+  },
+  "counts": {
+    "biographies": {
+      "by_tier": {
+        "control": 500,
+        "frequent": 300,
+        "normal": 700,
+        "rare": 1000
+      },
+      "copies": 190000,
+      "distinct_biographies": 8000,
+      "fact_redraws": 6,
+      "facts_rows": 100000,
+      "names_rejected_by_value_collision": 1485,
+      "people": {
+        "control": 500,
+        "train": 2000
+      },
+      "per_tier": {
+        "control": {
+          "copies": 0,
+          "people": 500,
+          "tokens": 0
+        },
+        "frequent": {
+          "copies": 90000,
+          "people": 300,
+          "tokens": 7160850
+        },
+        "normal": {
+          "copies": 70000,
+          "people": 700,
+          "tokens": 5589500
+        },
+        "rare": {
+          "copies": 30000,
+          "people": 1000,
+          "tokens": 2391887
+        }
+      },
+      "tokens": 15142237
+    },
+    "heldout": {
+      "label": {
+        "documents": 13306,
+        "per_subject": {
+          "FreeLaw": {
+            "documents": 943,
+            "tokens": 2501133
+          },
+          "Github": {
+            "documents": 1762,
+            "tokens": 2500326
+          },
+          "Pile-CC": {
+            "documents": 3042,
+            "tokens": 2501942
+          },
+          "PubMed Central": {
+            "documents": 708,
+            "tokens": 2503922
+          },
+          "USPTO Backgrounds": {
+            "documents": 3029,
+            "tokens": 2500388
+          },
+          "Wikipedia (en)": {
+            "documents": 3822,
+            "tokens": 2500790
+          }
+        },
+        "tokens": 15021806
+      },
+      "test": {
+        "documents": 13381,
+        "per_subject": {
+          "FreeLaw": {
+            "documents": 995,
+            "tokens": 2502989
+          },
+          "Github": {
+            "documents": 1815,
+            "tokens": 2502662
+          },
+          "Pile-CC": {
+            "documents": 3087,
+            "tokens": 2501855
+          },
+          "PubMed Central": {
+            "documents": 713,
+            "tokens": 2502199
+          },
+          "USPTO Backgrounds": {
+            "documents": 3084,
+            "tokens": 2500283
+          },
+          "Wikipedia (en)": {
+            "documents": 3687,
+            "tokens": 2500584
+          }
+        },
+        "tokens": 15023952
+      }
+    },
+    "pile_documents": {
+      "FreeLaw": {
+        "heldout_pool_documents": 2594,
+        "train_documents": 13420,
+        "train_tokens_available": 32368917
+      },
+      "Github": {
+        "heldout_pool_documents": 4458,
+        "train_documents": 22960,
+        "train_tokens_available": 32274915
+      },
+      "Pile-CC": {
+        "heldout_pool_documents": 8604,
+        "train_documents": 39685,
+        "train_tokens_available": 32399981
+      },
+      "PubMed Central": {
+        "heldout_pool_documents": 1963,
+        "train_documents": 9192,
+        "train_tokens_available": 32373390
+      },
+      "USPTO Backgrounds": {
+        "heldout_pool_documents": 8516,
+        "train_documents": 0,
+        "train_tokens_available": 0
+      },
+      "Wikipedia (en)": {
+        "heldout_pool_documents": 10507,
+        "train_documents": 50035,
+        "train_tokens_available": 32314014
+      }
+    },
+    "train": {
+      "block_size": 512,
+      "eot_pad_tokens": 142,
+      "filler_tokens": 1140408,
+      "index_rows": 332886,
+      "per_subject": {
+        "FreeLaw": {
+          "segments": 14550,
+          "tokens": 27000000
+        },
+        "Github": {
+          "segments": 24243,
+          "tokens": 27000000
+        },
+        "Pile-CC": {
+          "segments": 41831,
+          "tokens": 27000000
+        },
+        "PubMed Central": {
+          "segments": 9962,
+          "tokens": 27000000
+        },
+        "Wikipedia (en)": {
+          "segments": 52300,
+          "tokens": 27000000
+        },
+        "bio": {
+          "segments": 190000,
+          "tokens": 15142237
+        }
+      },
+      "sequences": 293897,
+      "tokens": 150475264
+    }
+  },
+  "data_sha256": "bb1bfd407af2c44e86d020df1c075f8764c5bf6979be2835684f6f0453086fd6",
+  "distribution": {
+    "hf_repo": "<owner>/memlayers-data",
+    "optional_prefixes": [
+      "raw/"
+    ],
+    "repo_type": "dataset",
+    "tag": "data-v1"
+  },
+  "files": [
+    {
+      "bytes": 40751,
+      "optional": false,
+      "path": "bios/attribute_values.json",
+      "sha256": "3ce257631469e45a742248f77e73a63961de881f1d957d86b625fa614fb33eb6"
+    },
+    {
+      "bytes": 915763,
+      "optional": false,
+      "path": "bios/bios_control.jsonl",
+      "sha256": "b2787c9df7445354a0de3560e33497c591dd99b5c9d4cbd42ca1d13064563e15"
+    },
+    {
+      "bytes": 3663680,
+      "optional": false,
+      "path": "bios/bios_train.jsonl",
+      "sha256": "48880d7ac552c7697c71fee3921f46af52bd0ad397d3517d7c1e26afe4c1bfb0"
+    },
+    {
+      "bytes": 53184480,
+      "optional": false,
+      "path": "bios/facts.jsonl",
+      "sha256": "236ad7796acc87dc10d2c28a386a2236c1e7643644e5c56a5684f23ffa3e4815"
+    },
+    {
+      "bytes": 32772,
+      "optional": false,
+      "path": "bios/manifest.json",
+      "sha256": "779109901b91e9d83a2ba8acaf5d8b0a39b21687be19842d90d8453cf600f0c0"
+    },
+    {
+      "bytes": 10977,
+      "optional": false,
+      "path": "bios/name_check.json",
+      "sha256": "8ef217a3a39c989e0fd905af8d39bfe69d3142af734f9781bd94dd281b00d2a2"
+    },
+    {
+      "bytes": 840976,
+      "optional": false,
+      "path": "bios/people.jsonl",
+      "sha256": "494c729df1bf7d138310994b166ee60ac63b22123fffc1c4c9e8ddf32aa3e459"
+    },
+    {
+      "bytes": 25283,
+      "optional": false,
+      "path": "bios/templates.json",
+      "sha256": "c6f4b58535e5850bb8199a1dde19cc7d803ad7f6214899b9db359fbc578c8293"
+    },
+    {
+      "bytes": 3470141,
+      "optional": false,
+      "path": "heldout/label/freelaw.jsonl.gz",
+      "sha256": "caf0d8d6b12f1f0bf798beaa505b7d2c76ddfd9c593e6f5ed365496a4e15e3a1"
+    },
+    {
+      "bytes": 1897850,
+      "optional": false,
+      "path": "heldout/label/github.jsonl.gz",
+      "sha256": "202c832a51e37f562bd127703c13a9ed521dd7c6e2d6b7beddcdabbe00b11537"
+    },
+    {
+      "bytes": 4535215,
+      "optional": false,
+      "path": "heldout/label/pile_cc.jsonl.gz",
+      "sha256": "c4f73787809f39d968838cf18973b793a81b40f8dc4029daa29e772cd74830a8"
+    },
+    {
+      "bytes": 3352150,
+      "optional": false,
+      "path": "heldout/label/pubmed_central.jsonl.gz",
+      "sha256": "cbebdb2bae02f616acd71158a11f4a20f764a4d7c75dc4d0f7ff02e4a853f9b5"
+    },
+    {
+      "bytes": 3924772,
+      "optional": false,
+      "path": "heldout/label/uspto_backgrounds.jsonl.gz",
+      "sha256": "4553dce2456bedcb8af1dee171e76f5510299de16773d5d4d0e0037171450e43"
+    },
+    {
+      "bytes": 4401831,
+      "optional": false,
+      "path": "heldout/label/wikipedia_en.jsonl.gz",
+      "sha256": "7d565f231e55caafda74dfa1a3808574b32cc33f4dcfc65cdfff4309245849a0"
+    },
+    {
+      "bytes": 30043612,
+      "optional": false,
+      "path": "heldout/label.bin",
+      "sha256": "f34b6f5a6efcc884e8073700e741d6fa181cfafabdc6c320b0c41605d2706ddb"
+    },
+    {
+      "bytes": 183737,
+      "optional": false,
+      "path": "heldout/label.idx.parquet",
+      "sha256": "40975f647d31bafcabce98884f8720aa7be866a0e2ab2e26f759f264a3b70e7d"
+    },
+    {
+      "bytes": 3487264,
+      "optional": false,
+      "path": "heldout/test/freelaw.jsonl.gz",
+      "sha256": "211d28f7b12846ad77c8b9a232f12cb86e74e71f0339ce5f648e377d5f60f605"
+    },
+    {
+      "bytes": 1927094,
+      "optional": false,
+      "path": "heldout/test/github.jsonl.gz",
+      "sha256": "0fa06bedd56944b8646a6d0e1b74c17eaffe0ee903dd09f2770699d9b1c6fc8e"
+    },
+    {
+      "bytes": 4529313,
+      "optional": false,
+      "path": "heldout/test/pile_cc.jsonl.gz",
+      "sha256": "5ba93c8b78c176c051bf9c708e71fbccd5b53395c20b9e2fb411ac18c8503fd8"
+    },
+    {
+      "bytes": 3383969,
+      "optional": false,
+      "path": "heldout/test/pubmed_central.jsonl.gz",
+      "sha256": "347be460b6d7b3480f07a9cfc4df8dfeea5f13b093b42c71fe8c4d68b8f8648a"
+    },
+    {
+      "bytes": 3929249,
+      "optional": false,
+      "path": "heldout/test/uspto_backgrounds.jsonl.gz",
+      "sha256": "78ea172fe2f56d14fd02f20acac36418424359eac45ee06b744f5e23624e1a77"
+    },
+    {
+      "bytes": 4397084,
+      "optional": false,
+      "path": "heldout/test/wikipedia_en.jsonl.gz",
+      "sha256": "1e81d92a5a7fc311a2f393582a830c38036e3183957327cee0748033126f0fd0"
+    },
+    {
+      "bytes": 30047904,
+      "optional": false,
+      "path": "heldout/test.bin",
+      "sha256": "1356cc8cc11021154ffe16e9225e89321d8f37c2714ecf83f38ba2280b9bafce"
+    },
+    {
+      "bytes": 183841,
+      "optional": false,
+      "path": "heldout/test.idx.parquet",
+      "sha256": "553499fb48df7b969257ea33d92a0a87471fe45c3bb352fd3d1cf3a3c9b016a0"
+    },
+    {
+      "bytes": 9333244,
+      "optional": false,
+      "path": "heldout_pool/freelaw.jsonl.gz",
+      "sha256": "6cff474e9c282cb23b3df5816bc8b3567e2d52fbf599b19a4f6d7e0f04829f1d"
+    },
+    {
+      "bytes": 4724891,
+      "optional": false,
+      "path": "heldout_pool/github.jsonl.gz",
+      "sha256": "9e75fc675074a3feb9f0c519b92d992dcac0ed130890794219fe342f64d81b7c"
+    },
+    {
+      "bytes": 12686496,
+      "optional": false,
+      "path": "heldout_pool/pile_cc.jsonl.gz",
+      "sha256": "fb836458483379efd8a8ab1e4c38c6b09aecb5f464ce3b858abdb53b2afdfdb6"
+    },
+    {
+      "bytes": 9343510,
+      "optional": false,
+      "path": "heldout_pool/pubmed_central.jsonl.gz",
+      "sha256": "e5243c59f4cc8fda5bdaffe54e888d8826d23baa17ead7e6575fc82feb580600"
+    },
+    {
+      "bytes": 10977510,
+      "optional": false,
+      "path": "heldout_pool/uspto_backgrounds.jsonl.gz",
+      "sha256": "6aabdf3ed62a6da2d470cb6750b230735e804e41676bc1478c39f8e199831331"
+    },
+    {
+      "bytes": 12255609,
+      "optional": false,
+      "path": "heldout_pool/wikipedia_en.jsonl.gz",
+      "sha256": "af5e6c6a3143233f7ffebb9455dd46e20c0dc8eafbf478a9f9116924441efa34"
+    },
+    {
+      "bytes": 2762,
+      "optional": true,
+      "path": "raw/extract_state.json",
+      "sha256": "03a9bd5f5ff32fd97d6241324e94ea34e3355830b2051e74df7684210eedcf51"
+    },
+    {
+      "bytes": 15125991,
+      "optional": true,
+      "path": "raw/heldout/freelaw.jsonl.gz",
+      "sha256": "ba22c5e756116b9e21881cb4cf0a7dff1e986bb5f29f357aec422c24b690d23a"
+    },
+    {
+      "bytes": 7005536,
+      "optional": true,
+      "path": "raw/heldout/github.jsonl.gz",
+      "sha256": "59ed6a6b057cc2408846f5a18d08f9ed6e5838f4a4aa5ef4db256eba22a41ff3"
+    },
+    {
+      "bytes": 14590657,
+      "optional": true,
+      "path": "raw/heldout/pile_cc.jsonl.gz",
+      "sha256": "2c5ddce91a255d9fbf09957f1119a9e79f7c1e72b3c5405a8b8773a5aef44223"
+    },
+    {
+      "bytes": 19371253,
+      "optional": true,
+      "path": "raw/heldout/pubmed_central.jsonl.gz",
+      "sha256": "5bb7991a5f78d9737de3b94ecbe43a263a7029ef6dc4fd8e36ade6f6878a5e35"
+    },
+    {
+      "bytes": 10871497,
+      "optional": true,
+      "path": "raw/heldout/uspto_backgrounds.jsonl.gz",
+      "sha256": "53b73ed43b6f8703c021540a90b53f248ca556241c160470bf9f78ee39d1ec13"
+    },
+    {
+      "bytes": 12953201,
+      "optional": true,
+      "path": "raw/heldout/wikipedia_en.jsonl.gz",
+      "sha256": "788fab6cc94e65caf58daad5c62f4501d0caa9b357078f27112b7247d85cab2e"
+    },
+    {
+      "bytes": 70112388,
+      "optional": true,
+      "path": "raw/train/freelaw.jsonl.gz",
+      "sha256": "6ccd46c566f82caba704959bc6bb3b630ee1a7f3e7deb18830b2a0ec847a09cb"
+    },
+    {
+      "bytes": 33302726,
+      "optional": true,
+      "path": "raw/train/github.jsonl.gz",
+      "sha256": "0ddabada74c32e88d76e6c25dad8642e4f76da3111f82c1052354794eaaa0227"
+    },
+    {
+      "bytes": 66738530,
+      "optional": true,
+      "path": "raw/train/pile_cc.jsonl.gz",
+      "sha256": "23f8bea02871128d09637ce6d671363cf1da8691bc3404e58337f63f82394dcb"
+    },
+    {
+      "bytes": 88923529,
+      "optional": true,
+      "path": "raw/train/pubmed_central.jsonl.gz",
+      "sha256": "1ce8916da6a26b22ee682e2c4aba02ea855e89a003c3a7529b19ec1c4b3a1f0c"
+    },
+    {
+      "bytes": 59012655,
+      "optional": true,
+      "path": "raw/train/wikipedia_en.jsonl.gz",
+      "sha256": "82ccdecc0db64408127236507a373b919f2b91cbd028fdaeae520ba8a884257f"
+    },
+    {
+      "bytes": 6732,
+      "optional": false,
+      "path": "reports/dedup_log.json",
+      "sha256": "6231b9af4ddaa114655df98c47ff81d84ca612536b34113f31e01ea6aa352781"
+    },
+    {
+      "bytes": 3301,
+      "optional": false,
+      "path": "reports/extract_manifest.json",
+      "sha256": "c496a197a25e8a664847eef47221f6d149e4c4c9b51f68730e323eee7c49cc8c"
+    },
+    {
+      "bytes": 5778,
+      "optional": false,
+      "path": "reports/pack_report.json",
+      "sha256": "5d2fabf0fe73db033eaa76da4029d1175bcd124f16635e868bcacc676a59db8f"
+    },
+    {
+      "bytes": 7867,
+      "optional": false,
+      "path": "reports/pile_manifest.json",
+      "sha256": "e380ec7d8eaed876ad49c07ca345e18f5bfc8726de2a2511634cd589ab835e26"
+    },
+    {
+      "bytes": 5346,
+      "optional": false,
+      "path": "reports/split_report.json",
+      "sha256": "fa77366552c0402a777372a0b715ec65d008a98076d795ee44671543676ac248"
+    },
+    {
+      "bytes": 269037,
+      "optional": false,
+      "path": "samples/bios_review.md",
+      "sha256": "d540ef4628c0688f9d0be440e29a311b366acb73647ed209072a0aa5d8cf529a"
+    },
+    {
+      "bytes": 161982,
+      "optional": false,
+      "path": "samples/bios_sample.md",
+      "sha256": "1a74f404f1c2c235fe8ad60a14c088afbae9e178ab631561e4a2cea6c468d814"
+    },
+    {
+      "bytes": 88257,
+      "optional": false,
+      "path": "samples/pile_samples.md",
+      "sha256": "b6ab0b47be02421cf4a8d8c8522a102b97352ae8cc8d4590a399e045ba7f5537"
+    },
+    {
+      "bytes": 45136,
+      "optional": false,
+      "path": "samples/templates_rendered.md",
+      "sha256": "b85b84c76af908bbe9423c95550cdc1d91b7ddf7f114532d4ff4b154a3473388"
+    },
+    {
+      "bytes": 36273,
+      "optional": false,
+      "path": "samples/value_lists.md",
+      "sha256": "b98c31f34c52b9bea25e275409cf458153b265dfdc8f9f7cc0d591753d934192"
+    },
+    {
+      "bytes": 300950528,
+      "optional": false,
+      "path": "tokens/train.bin",
+      "sha256": "7e3d50f2513d5a1b42c4fbf201ad4811e81e3175f41068277cf708f191bad8ac"
+    },
+    {
+      "bytes": 3119063,
+      "optional": false,
+      "path": "tokens/train.idx.parquet",
+      "sha256": "f437cb2540af7ef926eb773fcaed87e83825413dea1b8a41ec7013b9fe3fe598"
+    },
+    {
+      "bytes": 44315961,
+      "optional": false,
+      "path": "train/freelaw.jsonl.gz",
+      "sha256": "55b2f7f7dca376b0b89d23e03c8fe2a20009299bf8714d4c60c4c703bd99f2ee"
+    },
+    {
+      "bytes": 24313443,
+      "optional": false,
+      "path": "train/github.jsonl.gz",
+      "sha256": "0ac3e5b3ff2f7f731c4003a80fd2c0e6f17257816da8f7f8bbacaebcdc0e3217"
+    },
+    {
+      "bytes": 58919349,
+      "optional": false,
+      "path": "train/pile_cc.jsonl.gz",
+      "sha256": "7ad83b5cb986cf0c65be91065e9182c5a5fb502fd2cc1336df254ce285d4e573"
+    },
+    {
+      "bytes": 42998686,
+      "optional": false,
+      "path": "train/pubmed_central.jsonl.gz",
+      "sha256": "2b904acf355c41c8ced47b9d71ebe3440efb6bf08b74e6a4b760b7801d065174"
+    },
+    {
+      "bytes": 56628738,
+      "optional": false,
+      "path": "train/wikipedia_en.jsonl.gz",
+      "sha256": "19004a31bf662817c8e83b890aa97975402055ad60add85166a6f57e57823a6b"
+    }
+  ],
+  "git": {
+    "branch": "data/step1-bios",
+    "commit": "25e755b6aa916a6a4f53ebe117ec65f802022f62",
+    "dirty": false
+  },
+  "n_files": 59,
+  "small": false,
+  "source": {
+    "dataset": "monology/pile-uncopyrighted",
+    "revision": "3be90335b66f24456a5d6659d9c8d208c0357119",
+    "tokenizer": "gpt2",
+    "vocab_size": 50257
+  },
+  "version": "v1"
+}

@@ -1,0 +1,1126 @@
+# Value lists hand-check
+
+Every value a biography fact can take, one per line. A fact is drawn uniformly from its list, so the list *is* the guessing distribution: the model's chance-level accuracy is 1 / (list size).
+
+**What to check:** every value is a real name (cities, universities, majors and employers) or a well-formed date; no two values in a list name the same thing; nothing is offensive or identifiable. The *flagged pairs* table under each list is a deliberately over-eager net — most flags are fine (different real institutions that happen to share a word) and need a human to say so.
+
+First-token uniqueness is enforced per list so one next-token prediction identifies a value. `birth_date` cannot satisfy that — 200 dates share twelve month tokens — so dates are unique on their first **two** tokens (month + day) instead.
+
+| attribute | values | prefix that is unique | distinct first tokens | mean tokens/value | flagged pairs |
+|---|---:|---|---:|---:|---:|
+| `birth_date` | 200 | first 2 tokens | 12 | 4.0 | 0 |
+| `birth_city` | 200 | first 1 token | 200 | 3.69 | 0 |
+| `university` | 300 | first 1 token | 300 | 3.14 | 0 |
+| `major` | 100 | first 1 token | 100 | 1.91 | 3 |
+| `employer` | 250 | first 1 token | 250 | 2.41 | 0 |
+
+## `birth_date` — 200 values
+
+From 200 candidates: 0 dropped as near-duplicates, 0 for a first_two_tokens clash, 0 trimmed to the target.
+
+No pairs flagged. (The "shared first word" rule is switched off for dates: 200 dates share twelve month names by construction, and a date is identified by its (month, day) pair, which is unique by build.)
+
+<details><summary>all 200 values</summary>
+
+- January 1, 1985  — `January 1`
+- January 4, 1971  — `January 4`
+- January 5, 1940  — `January 5`
+- January 6, 1980  — `January 6`
+- January 7, 1980  — `January 7`
+- January 8, 1941  — `January 8`
+- January 10, 1970  — `January 10`
+- January 15, 1962  — `January 15`
+- January 18, 1966  — `January 18`
+- January 21, 1951  — `January 21`
+- January 23, 1956  — `January 23`
+- January 26, 1960  — `January 26`
+- January 27, 1997  — `January 27`
+- January 28, 1958  — `January 28`
+- February 2, 1991  — `February 2`
+- February 4, 1952  — `February 4`
+- February 5, 1987  — `February 5`
+- February 7, 1983  — `February 7`
+- February 8, 1981  — `February 8`
+- February 9, 1973  — `February 9`
+- February 10, 1986  — `February 10`
+- February 11, 1974  — `February 11`
+- February 12, 1975  — `February 12`
+- February 15, 1963  — `February 15`
+- February 19, 1968  — `February 19`
+- February 21, 1950  — `February 21`
+- February 22, 1994  — `February 22`
+- February 24, 1948  — `February 24`
+- February 25, 1998  — `February 25`
+- February 27, 2000  — `February 27`
+- February 29, 1961  — `February 29`
+- March 1, 1982  — `March 1`
+- March 2, 1946  — `March 2`
+- March 3, 1970  — `March 3`
+- March 4, 1978  — `March 4`
+- March 7, 1964  — `March 7`
+- March 9, 1972  — `March 9`
+- March 13, 1976  — `March 13`
+- March 16, 1954  — `March 16`
+- March 17, 1976  — `March 17`
+- March 18, 1986  — `March 18`
+- March 19, 1998  — `March 19`
+- March 21, 1959  — `March 21`
+- March 22, 1940  — `March 22`
+- March 27, 1975  — `March 27`
+- March 28, 1981  — `March 28`
+- March 30, 1973  — `March 30`
+- March 31, 1998  — `March 31`
+- April 2, 1956  — `April 2`
+- April 3, 1997  — `April 3`
+- April 6, 1975  — `April 6`
+- April 8, 1950  — `April 8`
+- April 10, 1985  — `April 10`
+- April 12, 1992  — `April 12`
+- April 14, 1942  — `April 14`
+- April 15, 1943  — `April 15`
+- April 17, 1958  — `April 17`
+- April 18, 1949  — `April 18`
+- April 21, 1970  — `April 21`
+- April 23, 1996  — `April 23`
+- April 25, 1975  — `April 25`
+- April 26, 1975  — `April 26`
+- April 27, 1946  — `April 27`
+- April 28, 1960  — `April 28`
+- May 2, 1942  — `May 2`
+- May 4, 1980  — `May 4`
+- May 8, 1950  — `May 8`
+- May 9, 1966  — `May 9`
+- May 10, 1961  — `May 10`
+- May 11, 1966  — `May 11`
+- May 12, 1976  — `May 12`
+- May 13, 1971  — `May 13`
+- May 15, 1989  — `May 15`
+- May 16, 1991  — `May 16`
+- May 17, 1979  — `May 17`
+- May 18, 1990  — `May 18`
+- May 19, 1965  — `May 19`
+- May 20, 1959  — `May 20`
+- May 23, 1941  — `May 23`
+- May 25, 1943  — `May 25`
+- May 27, 1981  — `May 27`
+- May 30, 1982  — `May 30`
+- May 31, 2000  — `May 31`
+- June 2, 1950  — `June 2`
+- June 3, 1970  — `June 3`
+- June 6, 1990  — `June 6`
+- June 11, 1947  — `June 11`
+- June 12, 1968  — `June 12`
+- June 13, 1972  — `June 13`
+- June 15, 1970  — `June 15`
+- June 19, 1976  — `June 19`
+- June 20, 1966  — `June 20`
+- June 21, 1981  — `June 21`
+- June 22, 1980  — `June 22`
+- June 25, 1991  — `June 25`
+- June 26, 1967  — `June 26`
+- June 28, 1969  — `June 28`
+- June 29, 2000  — `June 29`
+- July 1, 1950  — `July 1`
+- July 4, 1985  — `July 4`
+- July 7, 1976  — `July 7`
+- July 8, 1953  — `July 8`
+- July 9, 1944  — `July 9`
+- July 13, 1970  — `July 13`
+- July 14, 1956  — `July 14`
+- July 15, 1995  — `July 15`
+- July 18, 1956  — `July 18`
+- July 21, 1978  — `July 21`
+- July 22, 1972  — `July 22`
+- July 27, 1943  — `July 27`
+- July 29, 1995  — `July 29`
+- July 30, 1979  — `July 30`
+- August 2, 1950  — `August 2`
+- August 3, 1941  — `August 3`
+- August 6, 1963  — `August 6`
+- August 7, 1985  — `August 7`
+- August 8, 1947  — `August 8`
+- August 9, 1972  — `August 9`
+- August 10, 1979  — `August 10`
+- August 13, 1975  — `August 13`
+- August 14, 1973  — `August 14`
+- August 15, 1952  — `August 15`
+- August 16, 1979  — `August 16`
+- August 18, 1987  — `August 18`
+- August 20, 1945  — `August 20`
+- August 23, 1947  — `August 23`
+- August 24, 1971  — `August 24`
+- August 26, 1951  — `August 26`
+- August 28, 1949  — `August 28`
+- August 29, 1992  — `August 29`
+- August 31, 1977  — `August 31`
+- September 3, 1967  — `September 3`
+- September 4, 1943  — `September 4`
+- September 7, 1963  — `September 7`
+- September 8, 1964  — `September 8`
+- September 9, 1968  — `September 9`
+- September 11, 1958  — `September 11`
+- September 12, 1983  — `September 12`
+- September 14, 1986  — `September 14`
+- September 15, 1947  — `September 15`
+- September 17, 1978  — `September 17`
+- September 22, 1978  — `September 22`
+- September 23, 1956  — `September 23`
+- September 25, 1977  — `September 25`
+- September 29, 1965  — `September 29`
+- September 30, 1968  — `September 30`
+- October 1, 1989  — `October 1`
+- October 4, 1968  — `October 4`
+- October 5, 1950  — `October 5`
+- October 6, 1960  — `October 6`
+- October 7, 1975  — `October 7`
+- October 8, 1997  — `October 8`
+- October 10, 1975  — `October 10`
+- October 12, 1954  — `October 12`
+- October 14, 1958  — `October 14`
+- October 15, 1974  — `October 15`
+- October 16, 1952  — `October 16`
+- October 18, 1949  — `October 18`
+- October 19, 1990  — `October 19`
+- October 20, 1981  — `October 20`
+- October 23, 1975  — `October 23`
+- October 24, 1961  — `October 24`
+- October 26, 1974  — `October 26`
+- October 27, 1980  — `October 27`
+- October 28, 1996  — `October 28`
+- October 31, 1980  — `October 31`
+- November 1, 1971  — `November 1`
+- November 3, 1946  — `November 3`
+- November 5, 1948  — `November 5`
+- November 9, 2000  — `November 9`
+- November 10, 1993  — `November 10`
+- November 11, 1958  — `November 11`
+- November 14, 1950  — `November 14`
+- November 17, 1986  — `November 17`
+- November 18, 1957  — `November 18`
+- November 19, 1964  — `November 19`
+- November 23, 1942  — `November 23`
+- November 25, 1966  — `November 25`
+- November 26, 1993  — `November 26`
+- November 28, 1971  — `November 28`
+- November 30, 1977  — `November 30`
+- December 1, 1943  — `December 1`
+- December 2, 1999  — `December 2`
+- December 6, 1995  — `December 6`
+- December 9, 1951  — `December 9`
+- December 10, 1960  — `December 10`
+- December 13, 1945  — `December 13`
+- December 14, 1985  — `December 14`
+- December 16, 1954  — `December 16`
+- December 18, 1970  — `December 18`
+- December 19, 1948  — `December 19`
+- December 21, 1951  — `December 21`
+- December 22, 1947  — `December 22`
+- December 23, 1990  — `December 23`
+- December 24, 1959  — `December 24`
+- December 26, 1976  — `December 26`
+- December 27, 1979  — `December 27`
+- December 28, 1994  — `December 28`
+- December 29, 1952  — `December 29`
+- December 31, 1993  — `December 31`
+
+</details>
+
+## `birth_city` — 200 values
+
+From 246 candidates: 0 dropped as near-duplicates, 19 for a first_token clash, 27 trimmed to the target.
+
+No pairs flagged.
+
+<details><summary>all 200 values</summary>
+
+- Albuquerque, New Mexico  — `Albuquerque`
+- Ann Arbor, Michigan  — `Ann`
+- Antwerp, Belgium  — `Ant`
+- Athens, Greece  — `Athens`
+- Atlanta, Georgia  — `Atlanta`
+- Auckland, New Zealand  — `Auckland`
+- Austin, Texas  — `Austin`
+- Baltimore, Maryland  — `Baltimore`
+- Bangalore, India  — `Bangalore`
+- Barcelona, Spain  — `Barcelona`
+- Basel, Switzerland  — `Bas`
+- Belfast, Northern Ireland  — `Belfast`
+- Bergen, Norway  — `Ber`
+- Berlin, Germany  — `Berlin`
+- Birmingham, England  — `Birmingham`
+- Bogota, Colombia  — `Bog`
+- Boise, Idaho  — `Boise`
+- Bologna, Italy  — `B`
+- Boston, Massachusetts  — `Boston`
+- Boulder, Colorado  — `Boulder`
+- Brisbane, Australia  — `Brisbane`
+- Bristol, England  — `Bristol`
+- Brno, Czechia  — `Br`
+- Budapest, Hungary  — `Budapest`
+- Buenos Aires, Argentina  — `Buenos`
+- Buffalo, New York  — `Buffalo`
+- Calgary, Canada  — `Calgary`
+- Cape Town, South Africa  — `Cape`
+- Cardiff, Wales  — `Cardiff`
+- Charleston, South Carolina  — `Charleston`
+- Charlotte, North Carolina  — `Charlotte`
+- Chattanooga, Tennessee  — `Chattanooga`
+- Chennai, India  — `Chennai`
+- Cincinnati, Ohio  — `Cincinnati`
+- Cleveland, Ohio  — `Cleveland`
+- Coimbra, Portugal  — `Co`
+- Cologne, Germany  — `Cologne`
+- Columbus, Ohio  — `Columbus`
+- Copenhagen, Denmark  — `Copenhagen`
+- Cork, Ireland  — `Cork`
+- Dallas, Texas  — `Dallas`
+- Dayton, Ohio  — `Dayton`
+- Denver, Colorado  — `Denver`
+- Des Moines, Iowa  — `Des`
+- Detroit, Michigan  — `Detroit`
+- Dresden, Germany  — `Dresden`
+- Dunedin, New Zealand  — `Dun`
+- Edinburgh, Scotland  — `Edinburgh`
+- Edmonton, Canada  — `Edmonton`
+- Eindhoven, Netherlands  — `E`
+- El Paso, Texas  — `El`
+- Eugene, Oregon  — `Eugene`
+- Florence, Italy  — `Florence`
+- Fort Collins, Colorado  — `Fort`
+- Frankfurt, Germany  — `Frankfurt`
+- Fresno, California  — `Fresno`
+- Fukuoka, Japan  — `Fuk`
+- Gdansk, Poland  — `G`
+- Geneva, Switzerland  — `Geneva`
+- Glasgow, Scotland  — `Glasgow`
+- Gothenburg, Sweden  — `Got`
+- Granada, Spain  — `Gran`
+- Greensboro, North Carolina  — `Greens`
+- Grenoble, France  — `Gren`
+- Guadalajara, Mexico  — `Gu`
+- Hamburg, Germany  — `Hamburg`
+- Harrisburg, Pennsylvania  — `Harris`
+- Hartford, Connecticut  — `Hartford`
+- Helsinki, Finland  — `Helsinki`
+- Hiroshima, Japan  — `Hiroshima`
+- Ho Chi Minh City, Vietnam  — `Ho`
+- Honolulu, Hawaii  — `Honolulu`
+- Houston, Texas  — `Houston`
+- Hyderabad, India  — `Hyder`
+- Indianapolis, Indiana  — `Indianapolis`
+- Innsbruck, Austria  — `In`
+- Istanbul, Turkey  — `Istanbul`
+- Jacksonville, Florida  — `Jacksonville`
+- Jaipur, India  — `Ja`
+- Jakarta, Indonesia  — `Jakarta`
+- Jerusalem, Israel  — `Jerusalem`
+- Kampala, Uganda  — `Kamp`
+- Kansas City, Missouri  — `Kansas`
+- Karlsruhe, Germany  — `Karl`
+- Kaunas, Lithuania  — `K`
+- Knoxville, Tennessee  — `Knox`
+- Kuala Lumpur, Malaysia  — `Kuala`
+- Lagos, Nigeria  — `Lag`
+- Lancaster, Pennsylvania  — `Lancaster`
+- Las Vegas, Nevada  — `Las`
+- Lausanne, Switzerland  — `La`
+- Leeds, England  — `Leeds`
+- Leipzig, Germany  — `Le`
+- Lille, France  — `L`
+- Lima, Peru  — `Lima`
+- Linz, Austria  — `Lin`
+- Lisbon, Portugal  — `Lisbon`
+- Little Rock, Arkansas  — `Little`
+- Liverpool, England  — `Liverpool`
+- London, England  — `London`
+- Los Angeles, California  — `Los`
+- Louisville, Kentucky  — `Louisville`
+- Lund, Sweden  — `Lund`
+- Luxembourg City, Luxembourg  — `Luxembourg`
+- Madison, Wisconsin  — `Madison`
+- Madrid, Spain  — `Madrid`
+- Malmo, Sweden  — `Mal`
+- Manchester, England  — `Manchester`
+- Manila, Philippines  — `Manila`
+- Marseille, France  — `Marse`
+- Medellin, Colombia  — `Med`
+- Melbourne, Australia  — `Melbourne`
+- Memphis, Tennessee  — `Memphis`
+- Mexico City, Mexico  — `Mexico`
+- Miami, Florida  — `Miami`
+- Milwaukee, Wisconsin  — `Milwaukee`
+- Minneapolis, Minnesota  — `Minneapolis`
+- Mobile, Alabama  — `Mobile`
+- Montpellier, France  — `Mont`
+- Montreal, Canada  — `Montreal`
+- Munich, Germany  — `Munich`
+- Nagoya, Japan  — `Nag`
+- Nairobi, Kenya  — `N`
+- Naples, Italy  — `Naples`
+- Nashville, Tennessee  — `Nashville`
+- New Haven, Connecticut  — `New`
+- Newcastle, England  — `Newcastle`
+- Nice, France  — `Nice`
+- Nottingham, England  — `Nottingham`
+- Oakland, California  — `Oakland`
+- Odense, Denmark  — `Od`
+- Omaha, Nebraska  — `Omaha`
+- Osaka, Japan  — `Osaka`
+- Oslo, Norway  — `Oslo`
+- Ottawa, Canada  — `Ottawa`
+- Padua, Italy  — `Pad`
+- Palermo, Italy  — `Pal`
+- Palo Alto, California  — `Palo`
+- Perth, Australia  — `Perth`
+- Phoenix, Arizona  — `Phoenix`
+- Pisa, Italy  — `P`
+- Pittsburgh, Pennsylvania  — `Pittsburgh`
+- Portland, Maine  — `Portland`
+- Porto, Portugal  — `Port`
+- Prague, Czechia  — `Prague`
+- Providence, Rhode Island  — `Providence`
+- Quito, Ecuador  — `Qu`
+- Raleigh, North Carolina  — `Raleigh`
+- Reno, Nevada  — `Reno`
+- Reykjavik, Iceland  — `Rey`
+- Richmond, Virginia  — `Richmond`
+- Rio de Janeiro, Brazil  — `Rio`
+- Rochester, New York  — `Rochester`
+- Rome, Italy  — `Rome`
+- Rotterdam, Netherlands  — `Rot`
+- Salt Lake City, Utah  — `Salt`
+- San Antonio, Texas  — `San`
+- Santiago, Chile  — `Santiago`
+- Sao Paulo, Brazil  — `Sao`
+- Sapporo, Japan  — `Sapp`
+- Savannah, Georgia  — `Savannah`
+- Seattle, Washington  — `Seattle`
+- Sendai, Japan  — `Send`
+- Seoul, South Korea  — `Seoul`
+- Seville, Spain  — `Se`
+- Sheffield, England  — `Sheffield`
+- Singapore  — `Singapore`
+- Sofia, Bulgaria  — `Sof`
+- Spokane, Washington  — `Spokane`
+- St. Louis, Missouri  — `St`
+- Stockholm, Sweden  — `Stockholm`
+- Sydney, Australia  — `Sydney`
+- Syracuse, New York  — `Syracuse`
+- Taipei, Taiwan  — `Tai`
+- Tampa, Florida  — `Tampa`
+- Tel Aviv, Israel  — `Tel`
+- Thessaloniki, Greece  — `The`
+- Tokyo, Japan  — `Tokyo`
+- Toledo, Ohio  — `Toledo`
+- Toronto, Canada  — `Toronto`
+- Toulouse, France  — `T`
+- Trondheim, Norway  — `Tr`
+- Tucson, Arizona  — `Tucson`
+- Tulsa, Oklahoma  — `Tulsa`
+- Turin, Italy  — `Tur`
+- Uppsala, Sweden  — `U`
+- Utrecht, Netherlands  — `Ut`
+- Valencia, Spain  — `Valencia`
+- Vancouver, Canada  — `Vancouver`
+- Venice, Italy  — `Venice`
+- Vienna, Austria  — `Vienna`
+- Vilnius, Lithuania  — `Vil`
+- Warsaw, Poland  — `Warsaw`
+- Washington, D.C.  — `Washington`
+- Wichita, Kansas  — `Wichita`
+- Winnipeg, Canada  — `Winnipeg`
+- Wroclaw, Poland  — `W`
+- Yokohama, Japan  — `Yok`
+- Zagreb, Croatia  — `Z`
+- Zurich, Switzerland  — `Zurich`
+
+</details>
+
+## `university` — 300 values
+
+From 373 candidates: 5 dropped as near-duplicates, 38 for a first_token clash, 30 trimmed to the target.
+
+No pairs flagged.
+
+<details><summary>all 300 values</summary>
+
+- Aalborg University  — `A`
+- Adelphi University  — `Ad`
+- Alfred University  — `Alfred`
+- American University  — `American`
+- Amherst College  — `Am`
+- Appalachian State University  — `Appalachian`
+- Arizona State University  — `Arizona`
+- Ashland University  — `Ash`
+- Auburn University  — `Auburn`
+- Augsburg University  — `Aug`
+- Austin College  — `Austin`
+- Babson College  — `Bab`
+- Baldwin Wallace University  — `Baldwin`
+- Ball State University  — `Ball`
+- Bard College  — `Bard`
+- Barnard College  — `Barn`
+- Bates College  — `Bates`
+- Baylor University  — `Baylor`
+- Beloit College  — `Bel`
+- Bentley University  — `Bentley`
+- Bilkent University  — `Bil`
+- Binghamton University  — `Bing`
+- Bocconi University  — `B`
+- Boise State University  — `Boise`
+- Bond University  — `Bond`
+- Boston College  — `Boston`
+- Bowdoin College  — `Bow`
+- Bowling Green State University  — `Bowling`
+- Brandeis University  — `Brand`
+- Brigham Young University  — `Brigham`
+- Brock University  — `Brock`
+- Brown University  — `Brown`
+- Bryn Mawr College  — `Bry`
+- Bucknell University  — `Buck`
+- Butler University  — `Butler`
+- Cairo University  — `Cairo`
+- Caldwell University  — `Caldwell`
+- California Institute of Technology  — `California`
+- Carleton College  — `Car`
+- Carnegie Mellon University  — `Carnegie`
+- Case Western Reserve University  — `Case`
+- Catawba College  — `Cat`
+- Cedarville University  — `Cedar`
+- Centre College  — `Centre`
+- Chalmers University of Technology  — `Chal`
+- Chapman University  — `Chapman`
+- Charles University  — `Charles`
+- Chatham University  — `Ch`
+- Citadel Military College  — `Citadel`
+- Claremont McKenna College  — `Clare`
+- Clarkson University  — `Clarkson`
+- Clemson University  — `Clemson`
+- Coe College  — `Co`
+- Colby College  — `Col`
+- Colorado State University  — `Colorado`
+- Columbia University  — `Columbia`
+- Comenius University  — `Com`
+- Concordia University  — `Concord`
+- Connecticut College  — `Connecticut`
+- Cornell University  — `Cornell`
+- Coventry University  — `Cov`
+- Creighton College  — `Cre`
+- Curtin University  — `Curt`
+- Dalhousie University  — `Dal`
+- Dartmouth College  — `Dartmouth`
+- Davidson College  — `Davidson`
+- Deakin University  — `De`
+- Denison University  — `Den`
+- Dickinson College  — `Dickinson`
+- Doshisha University  — `D`
+- Drake University  — `Drake`
+- Drew University  — `Drew`
+- Duke University  — `Duke`
+- Duquesne University  — `Du`
+- Durham University  — `Durham`
+- Earlham College  — `Earl`
+- East Carolina University  — `East`
+- Eastern Michigan University  — `Eastern`
+- Eckerd College  — `E`
+- Edgewood College  — `Ed`
+- Elmhurst University  — `Elm`
+- Elon University  — `Elon`
+- Emerson College  — `Emerson`
+- Emory University  — `Em`
+- Erasmus University Rotterdam  — `Er`
+- Fairfield University  — `Fair`
+- Fisk University  — `F`
+- Flinders University  — `Fl`
+- Florida State University  — `Florida`
+- Fordham University  — `Ford`
+- Franklin Pierce University  — `Franklin`
+- Fresno Pacific University  — `Fresno`
+- Furman University  — `Fur`
+- Gannon University  — `G`
+- Geneva College  — `Geneva`
+- Georgetown University  — `Georgetown`
+- Georgia Institute of Technology  — `Georgia`
+- Gettysburg College  — `Getty`
+- Gonzaga University  — `Gonz`
+- Goucher College  — `Gou`
+- Griffith University  — `Griffith`
+- Grinnell College  — `Gr`
+- Guilford College  — `Gu`
+- Gustavus Adolphus College  — `Gustav`
+- Hamilton College  — `Hamilton`
+- Hampden-Sydney College  — `Hamp`
+- Harvard University  — `Harvard`
+- Harvey Mudd College  — `Harvey`
+- Hendrix College  — `Hend`
+- Hiram College  — `Hir`
+- Hitotsubashi University  — `Hit`
+- Hobart College  — `Hob`
+- Hofstra University  — `Hof`
+- Hollins University  — `Holl`
+- Hope College  — `Hope`
+- Howard University  — `Howard`
+- Idaho State University  — `Idaho`
+- Illinois State University  — `Illinois`
+- Indiana State University  — `Indiana`
+- Iona University  — `I`
+- Jagiellonian University  — `Jag`
+- James Madison University  — `James`
+- Johns Hopkins University  — `Johns`
+- Kalamazoo College  — `Kal`
+- Kansas State University  — `Kansas`
+- Keele University  — `Kee`
+- Keio University  — `Ke`
+- Kennesaw State University  — `Kenn`
+- Kent State University  — `Kent`
+- Kenyon College  — `Ken`
+- Kettering University  — `Ket`
+- Knox College  — `Knox`
+- Korea University  — `Korea`
+- Kyoto University  — `Kyoto`
+- Kyushu University  — `Ky`
+- La Trobe University  — `La`
+- Lafayette College  — `Lafayette`
+- Lake Forest College  — `Lake`
+- Lancaster University  — `Lancaster`
+- Lawrence Technological University  — `Lawrence`
+- Lehigh University  — `Le`
+- Lesley University  — `Les`
+- Liberty University  — `Liberty`
+- Linfield University  — `Lin`
+- Lipscomb University  — `L`
+- Lund University  — `Lund`
+- Lycoming College  — `Ly`
+- Maastricht University  — `Ma`
+- Macalester College  — `Mac`
+- Mahidol University  — `Mah`
+- Makerere University  — `Make`
+- Manhattan College  — `Manhattan`
+- Marietta College  — `Mar`
+- Marquette University  — `Marqu`
+- Marshall University  — `Marshall`
+- Masaryk University  — `Mas`
+- McGill University  — `McGill`
+- McMaster University  — `McMaster`
+- Meiji University  — `Me`
+- Mercer University  — `Mercer`
+- Merrimack College  — `Mer`
+- Messiah University  — `Messiah`
+- Miami University  — `Miami`
+- Middlebury College  — `Middle`
+- Millsaps College  — `Mills`
+- Misericordia University  — `M`
+- Mississippi State University  — `Mississippi`
+- Monash University  — `Mon`
+- Montana State University  — `Montana`
+- Moravian University  — `Mor`
+- Morehouse College  — `More`
+- Mount Holyoke College  — `Mount`
+- Murray State University  — `Murray`
+- Nagoya University  — `Nag`
+- Nanjing University  — `Nan`
+- Nanyang Technological University  — `N`
+- Nazareth College  — `Naz`
+- New Mexico State University  — `New`
+- Niagara University  — `Niagara`
+- Northeastern University  — `Nort`
+- Northwestern University  — `Northwestern`
+- Oakland University  — `Oakland`
+- Oberlin College  — `Ober`
+- Occidental College  — `Occ`
+- Oglethorpe University  — `Og`
+- Ohio State University  — `Ohio`
+- Oklahoma State University  — `Oklahoma`
+- Old Dominion University  — `Old`
+- Oregon State University  — `Oregon`
+- Osaka University  — `Osaka`
+- Otterbein University  — `Ot`
+- Oxford Brookes University  — `Oxford`
+- Pace University  — `Pace`
+- Pacific Lutheran University  — `Pacific`
+- Peking University  — `P`
+- Pennsylvania State University  — `Pennsylvania`
+- Pepperdine University  — `Pepper`
+- Pomona College  — `Pom`
+- Pompeu Fabra University  — `Pompe`
+- Portland State University  — `Portland`
+- Prairie View A&M University  — `Prairie`
+- Princeton University  — `Princeton`
+- Providence College  — `Providence`
+- Purdue University  — `Purdue`
+- Queen's University  — `Queen`
+- Quinnipiac University  — `Quinn`
+- Radboud University  — `Rad`
+- Ramapo College  — `Ram`
+- Reed College  — `Reed`
+- Regis University  — `Reg`
+- Rensselaer Polytechnic Institute  — `R`
+- Rhodes College  — `Rhodes`
+- Rice University  — `Rice`
+- Rider University  — `Rider`
+- Ripon College  — `Rip`
+- Roanoke College  — `Ro`
+- Rochester Institute of Technology  — `Rochester`
+- Rollins College  — `Rollins`
+- Roosevelt University  — `Roosevelt`
+- Rowan University  — `Row`
+- Ryerson University  — `Ry`
+- Sabanci University  — `Saban`
+- Sacred Heart University  — `Sacred`
+- Salisbury University  — `Sal`
+- Samford University  — `Sam`
+- San Diego State University  — `San`
+- Santa Clara University  — `Santa`
+- Scripps College  — `Sc`
+- Seattle Pacific University  — `Seattle`
+- Seton Hall University  — `Set`
+- Shippensburg University  — `Sh`
+- Siena College  — `S`
+- Simmons University  — `Simmons`
+- Simon Fraser University  — `Simon`
+- Skidmore College  — `Sk`
+- Smith College  — `Smith`
+- Sonoma State University  — `Son`
+- Sophia University  — `Sophia`
+- Southern Methodist University  — `Southern`
+- Stanford University  — `Stanford`
+- Stellenbosch University  — `St`
+- Stevens Institute of Technology  — `Stevens`
+- Stonehill College  — `Stone`
+- Suffolk University  — `Suffolk`
+- Sungkyunkwan University  — `Sung`
+- Susquehanna University  — `Sus`
+- Swansea University  — `Swansea`
+- Swarthmore College  — `Sw`
+- Syracuse University  — `Syracuse`
+- Tampere University  — `Tam`
+- Tel Aviv University  — `Tel`
+- Temple University  — `Temple`
+- Tennessee State University  — `Tennessee`
+- Texas Christian University  — `Texas`
+- Thammasat University  — `Th`
+- Tilburg University  — `Til`
+- Tohoku University  — `T`
+- Tongji University  — `Tong`
+- Towson University  — `Tow`
+- Transylvania University  — `Trans`
+- Trent University  — `Trent`
+- Trinity College Dublin  — `Trinity`
+- Troy University  — `Troy`
+- Tufts University  — `Tu`
+- Union College  — `Union`
+- Uppsala University  — `U`
+- Ursinus College  — `Urs`
+- Utah State University  — `Utah`
+- Utrecht University  — `Ut`
+- Valparaiso University  — `Val`
+- Vanderbilt University  — `Vanderbilt`
+- Vassar College  — `V`
+- Villanova University  — `Vill`
+- Virginia Tech  — `Virginia`
+- Wabash College  — `W`
+- Wageningen University  — `Wag`
+- Wake Forest University  — `Wake`
+- Washburn University  — `Wash`
+- Wayne State University  — `Wayne`
+- Wells College  — `Wells`
+- West Virginia University  — `West`
+- Western Michigan University  — `Western`
+- Wheaton College  — `Whe`
+- Whitman College  — `Whitman`
+- Whittier College  — `Wh`
+- Wichita State University  — `Wichita`
+- Widener University  — `Wid`
+- Wilfrid Laurier University  — `Wil`
+- Willamette University  — `Will`
+- Williams College  — `Williams`
+- Winthrop University  — `Win`
+- Worcester Polytechnic Institute  — `Worcester`
+- Wright State University  — `Wright`
+- Xavier University  — `Xavier`
+- Xiamen University  — `X`
+- Yale University  — `Yale`
+- Yeshiva University  — `Yes`
+- York University  — `York`
+- Youngstown State University  — `Young`
+- Zhejiang University  — `Z`
+
+</details>
+
+## `major` — 100 values
+
+From 127 candidates: 11 dropped as near-duplicates, 12 for a first_token clash, 4 trimmed to the target.
+
+**Flagged pairs — for a human to accept or reject:**
+
+| a | b | why flagged |
+|---|---|---|
+| Biochemistry | Chemistry | one contains the other |
+| Biology | Microbiology | one contains the other |
+| Economics | Macroeconomics | one contains the other |
+
+<details><summary>all 100 values</summary>
+
+- Accounting  — `Accounting`
+- Aerospace Engineering  — `Aerospace`
+- African Studies  — `African`
+- Agricultural Science  — `Agricultural`
+- Anthropology  — `Anthropology`
+- Applied Mathematics  — `Applied`
+- Archaeology  — `Archae`
+- Architecture  — `Architecture`
+- Art History  — `Art`
+- Astronomy  — `Astron`
+- Astrophysics  — `Ast`
+- Atmospheric Science  — `Atmospheric`
+- Biochemistry  — `Bi`
+- Bioengineering  — `Bio`
+- Biology  — `Biology`
+- Business Administration  — `Business`
+- Chemical Engineering  — `Chemical`
+- Chemistry  — `Chemistry`
+- Civil Engineering  — `Civil`
+- Classics  — `Classics`
+- Cognitive Science  — `Cognitive`
+- Communications  — `Communications`
+- Comparative Literature  — `Compar`
+- Computer Engineering  — `Computer`
+- Criminology  — `Crim`
+- Data Science  — `Data`
+- Dentistry  — `Dent`
+- Earth Science  — `Earth`
+- Ecology  — `Ecology`
+- Econometrics  — `E`
+- Economics  — `Economics`
+- Education  — `Education`
+- Electrical Engineering  — `Electrical`
+- Engineering Physics  — `Engineering`
+- English Literature  — `English`
+- Environmental Engineering  — `Environmental`
+- Epidemiology  — `Epidem`
+- Film Studies  — `Film`
+- Finance  — `Finance`
+- Forestry  — `Forestry`
+- French Literature  — `French`
+- Genetics  — `Genetics`
+- Geography  — `Ge`
+- German Studies  — `German`
+- Graphic Design  — `Graphic`
+- Health Policy  — `Health`
+- Industrial Design  — `Industrial`
+- Information Science  — `Information`
+- International Relations  — `International`
+- Japanese Studies  — `Japanese`
+- Journalism  — `Journalism`
+- Linguistics  — `L`
+- Macroeconomics  — `Macro`
+- Management Science  — `Management`
+- Marketing  — `Marketing`
+- Materials Science  — `Materials`
+- Mechanical Engineering  — `Mechanical`
+- Media Studies  — `Media`
+- Medicine  — `Medicine`
+- Microbiology  — `Micro`
+- Museum Studies  — `Museum`
+- Nanotechnology  — `Nan`
+- Neuroscience  — `Neuroscience`
+- Nuclear Engineering  — `Nuclear`
+- Nursing  — `Nursing`
+- Nutrition Science  — `Nutrition`
+- Occupational Therapy  — `Occup`
+- Oceanography  — `Ocean`
+- Operations Research  — `Operations`
+- Paleontology  — `Pale`
+- Petroleum Engineering  — `Petroleum`
+- Pharmacology  — `Pharmac`
+- Pharmacy  — `Pharm`
+- Philosophy  — `Philosophy`
+- Photography  — `Photography`
+- Physical Therapy  — `Physical`
+- Plant Science  — `Plant`
+- Political Science  — `Political`
+- Psychology  — `Psychology`
+- Public Administration  — `Public`
+- Radiology  — `Rad`
+- Religious Studies  — `Religious`
+- Robotics  — `Robotics`
+- Russian Literature  — `Russian`
+- Social Work  — `Social`
+- Sociology  — `Soci`
+- Software Engineering  — `Software`
+- Soil Science  — `So`
+- Spanish Literature  — `Spanish`
+- Sports Science  — `Sports`
+- Statistics  — `Statistics`
+- Structural Engineering  — `Struct`
+- Supply Chain Management  — `Supply`
+- Sustainability Science  — `S`
+- Systems Engineering  — `Systems`
+- Theatre Arts  — `Theatre`
+- Theology  — `The`
+- Toxicology  — `Toxic`
+- Urban Planning  — `Urban`
+- Zoology  — `Zo`
+
+</details>
+
+## `employer` — 250 values
+
+From 430 candidates: 0 dropped as near-duplicates, 45 for a first_token clash, 135 trimmed to the target.
+
+No pairs flagged.
+
+<details><summary>all 250 values</summary>
+
+- ABB  — `AB`
+- AT&T  — `AT`
+- Adidas  — `Adidas`
+- Adobe  — `Adobe`
+- Adyen  — `Ad`
+- Agilent Technologies  — `Ag`
+- Air Canada  — `Air`
+- Akamai  — `Ak`
+- Alaska Airlines  — `Alaska`
+- Alcoa  — `Al`
+- Aldi  — `Ald`
+- Allianz  — `All`
+- Alphabet  — `Alphabet`
+- Altria  — `Alt`
+- Amgen  — `Am`
+- Analog Devices  — `Analog`
+- Apple  — `Apple`
+- Arcelor Mittal  — `Ar`
+- Asahi Breweries  — `As`
+- AstraZeneca  — `Ast`
+- Autodesk  — `Aut`
+- Avery Dennison  — `Avery`
+- Aviva  — `Av`
+- Bandai Namco  — `Band`
+- Barclays  — `Barclays`
+- Barilla  — `Bar`
+- Baxter International  — `Baxter`
+- Bayer  — `Bayer`
+- Bechtel  — `Be`
+- Best Buy  — `Best`
+- BlackRock  — `Black`
+- Bombardier  — `Bomb`
+- Bosch  — `Bos`
+- Boston Scientific  — `Boston`
+- Bridgestone  — `Brid`
+- Brother Industries  — `Brother`
+- Bunge  — `Bun`
+- CBRE Group  — `CB`
+- CD Projekt  — `CD`
+- CSX  — `CS`
+- Cadence Design Systems  — `Cad`
+- Canon  — `Canon`
+- Capcom  — `Capcom`
+- Carlsberg  — `Car`
+- Caterpillar  — `Cater`
+- Charter Communications  — `Charter`
+- Chevron  — `Chevron`
+- Chubb  — `Ch`
+- Citigroup  — `Cit`
+- Cloudflare  — `Cloud`
+- Coca-Cola  — `Coca`
+- Colgate-Palmolive  — `Col`
+- Comcast  — `Comcast`
+- Commerzbank  — `Com`
+- Compass Group  — `Compass`
+- Concentrix  — `Concent`
+- Continental  — `Continental`
+- Coupang  — `Coup`
+- Credit Agricole  — `Credit`
+- DSV  — `DS`
+- Danaher  — `Dana`
+- Danone  — `Dan`
+- Deutsche Bahn  — `Deutsche`
+- Diageo  — `Di`
+- Dow  — `Dow`
+- DuPont  — `Du`
+- Duke Energy  — `Duke`
+- Ecolab  — `E`
+- Edwards Lifesciences  — `Edwards`
+- Electronic Arts  — `Electronic`
+- Emerson Electric  — `Emerson`
+- Enel  — `En`
+- Equifax  — `Equ`
+- Ericsson  — `Eric`
+- Essity  — `Ess`
+- Etihad Airways  — `Et`
+- Expedia  — `Exp`
+- Ferrari  — `Ferrari`
+- Ferrero  — `Fer`
+- Fidelity Investments  — `F`
+- Finnair  — `Finn`
+- Flinders Port  — `Fl`
+- Fluor  — `Flu`
+- Freeport-McMoRan  — `Fre`
+- Garmin  — `Garmin`
+- Generali  — `General`
+- Gilead Sciences  — `G`
+- Glencore  — `Glen`
+- Goldman Sachs  — `Goldman`
+- Goodyear  — `Good`
+- Grainger  — `Gra`
+- Grifols  — `Gr`
+- HCL Technologies  — `H`
+- Halliburton  — `Hall`
+- Heineken  — `He`
+- Hershey  — `Hers`
+- Hikvision  — `Hik`
+- Holcim  — `Hol`
+- Honeywell  — `Honey`
+- Hyundai Motor  — `Hyundai`
+- IBM  — `IBM`
+- ING Group  — `IN`
+- Iberdrola  — `I`
+- Illinois Tool Works  — `Illinois`
+- Illumina  — `Illum`
+- Intel  — `Intel`
+- Intesa Sanpaolo  — `Int`
+- Jacobs Solutions  — `Jacobs`
+- John Wiley and Sons  — `John`
+- Johnson Controls  — `Johnson`
+- Juniper Networks  — `Jun`
+- KBR  — `K`
+- Kellanova  — `Kell`
+- Keurig Dr Pepper  — `Ke`
+- Kingspan  — `Kings`
+- Komatsu  — `Kom`
+- Kroger  — `Kro`
+- Lam Research  — `Lam`
+- Lego Group  — `Lego`
+- Lenovo  — `Lenovo`
+- Levi Strauss  — `Levi`
+- Liberty Mutual  — `Liberty`
+- Lindt  — `Lind`
+- Logitech  — `Log`
+- Macquarie Group  — `Mac`
+- Maersk  — `Ma`
+- Mahindra  — `Mah`
+- Mapfre  — `Map`
+- Marriott International  — `Marriott`
+- Mars  — `Mars`
+- Masco  — `Mas`
+- Mastercard  — `Master`
+- McCormick  — `McCorm`
+- McKesson  — `McK`
+- Medtronic  — `Med`
+- Merck  — `Mer`
+- MetLife  — `Met`
+- Meta Platforms  — `Meta`
+- Michelin  — `Miche`
+- Micron Technology  — `Mic`
+- Microsoft  — `Microsoft`
+- Mizuho Financial Group  — `Miz`
+- Moderna  — `Modern`
+- Moody's  — `Moody`
+- Morgan Stanley  — `Morgan`
+- Motorola Solutions  — `Motorola`
+- Munich Re  — `Munich`
+- NTT Data  — `N`
+- Nasdaq  — `Nas`
+- NatWest Group  — `Nat`
+- Netflix  — `Netflix`
+- Nike  — `Nike`
+- Nintendo  — `Nintendo`
+- Nokia  — `Nokia`
+- Norfolk Southern  — `Norfolk`
+- Northrop Grumman  — `North`
+- Novartis  — `Nov`
+- Nutrien  — `Nut`
+- Okta  — `Ok`
+- Olympus  — `Olympus`
+- Omron  — `Om`
+- Otis Worldwide  — `Ot`
+- PTC  — `P`
+- Pandora  — `Pandora`
+- Patagonia  — `Pat`
+- PepsiCo  — `Pepsi`
+- PerkinElmer  — `Per`
+- Pfizer  — `Pf`
+- Philips  — `Philips`
+- Porsche  — `Porsche`
+- Prologis  — `Pro`
+- Prudential  — `Pr`
+- Qantas  — `Q`
+- Quanta Services  — `Qu`
+- Raytheon  — `Ray`
+- Reckitt  — `Reck`
+- Reliance Industries  — `Rel`
+- Renault  — `Renault`
+- Ricoh  — `Ric`
+- Rio Tinto  — `Rio`
+- Rockwell Automation  — `Rock`
+- Rolls-Royce  — `Rolls`
+- Ryder System  — `Ryder`
+- SAP  — `SAP`
+- SKF  — `SK`
+- Saint-Gobain  — `Saint`
+- Salesforce  — `Sales`
+- Sandvik  — `Sand`
+- Sanofi  — `San`
+- Santander  — `Sant`
+- Schlumberger  — `Schl`
+- Schneider Electric  — `Schneider`
+- Sega Sammy  — `Sega`
+- Sembcorp  — `Sem`
+- ServiceNow  — `Service`
+- Sharp  — `Sharp`
+- Shell  — `Shell`
+- Shiseido  — `Sh`
+- Shopify  — `Shop`
+- Siemens  — `Siem`
+- Sika  — `S`
+- Skanska  — `Sk`
+- Sonova  — `Son`
+- Southwest Airlines  — `Southwest`
+- Stantec  — `St`
+- Starbucks  — `Starbucks`
+- State Street  — `State`
+- Sumitomo Chemical  — `Sum`
+- Swatch Group  — `Sw`
+- Swiss Re  — `Swiss`
+- Take-Two Interactive  — `Take`
+- Teck Resources  — `Te`
+- Telenor  — `Tel`
+- Teleperformance  — `Tele`
+- Teradyne  — `Ter`
+- Tesco  — `Tes`
+- Tesla  — `Tesla`
+- Tetra Tech  — `Tet`
+- Thales  — `Th`
+- Thermo Fisher Scientific  — `Ther`
+- Thomson Reuters  — `Thomson`
+- Tokio Marine  — `Tok`
+- TotalEnergies  — `Total`
+- Tractor Supply  — `T`
+- Turkish Airlines  — `Turkish`
+- Tyson Foods  — `Tyson`
+- UBS  — `U`
+- Unilever  — `Un`
+- Union Pacific  — `Union`
+- Unity Software  — `Unity`
+- Vale  — `Vale`
+- Vestas  — `Vest`
+- Vinci  — `Vin`
+- Visa  — `Visa`
+- Volkswagen  — `Volkswagen`
+- Volvo  — `Volvo`
+- Walgreens  — `Wal`
+- Walt Disney  — `Walt`
+- Waters  — `Waters`
+- Wayfair  — `Way`
+- Wells Fargo  — `Wells`
+- Weyerhaeuser  — `We`
+- Wolters Kluwer  — `Wol`
+- Woolworths Group  — `Wool`
+- Xylem  — `X`
+- Yamaha  — `Yamaha`
+- Yara International  — `Y`
+- Yokogawa  — `Yok`
+- Zalando  — `Z`
+- Zurich Insurance  — `Zurich`
+
+</details>

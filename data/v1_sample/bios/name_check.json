@@ -1,0 +1,23 @@
+{
+  "candidates_tested": 400,
+  "case_sensitive": true,
+  "characters_scanned": 7859238,
+  "documents_scanned": 1778,
+  "files": [
+    "data/v1_small/train/freelaw.jsonl.gz",
+    "data/v1_small/train/github.jsonl.gz",
+    "data/v1_small/train/pile_cc.jsonl.gz",
+    "data/v1_small/train/pubmed_central.jsonl.gz",
+    "data/v1_small/train/wikipedia_en.jsonl.gz",
+    "data/v1_small/heldout_pool/freelaw.jsonl.gz",
+    "data/v1_small/heldout_pool/github.jsonl.gz",
+    "data/v1_small/heldout_pool/pile_cc.jsonl.gz",
+    "data/v1_small/heldout_pool/pubmed_central.jsonl.gz",
+    "data/v1_small/heldout_pool/uspto_backgrounds.jsonl.gz",
+    "data/v1_small/heldout_pool/wikipedia_en.jsonl.gz"
+  ],
+  "n_names_found": 0,
+  "names_found": [],
+  "occurrences": {},
+  "skipped": false
+}
