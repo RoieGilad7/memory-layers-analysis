@@ -658,3 +658,92 @@ def test_the_real_build_has_no_answer_leaks(tmp_path):
             if a != r["attribute"]:
                 assert not (key & bios.value_token_set(enc, v)), \
                     f"{r['fact_id']} leaks via {a}={v!r}"
+
+
+# --------------------------------------------------------------------------
+# the relation rule and the two grammar guards (data prompt 6)
+# --------------------------------------------------------------------------
+def test_relations_name_every_attribute():
+    assert set(bd.RELATIONS) == set(ATTRS)
+    for attr, relation in bd.RELATIONS.items():
+        assert "{v}" in relation, attr
+
+
+@pytest.mark.parametrize("bad", [
+    "Question: what did {obj} study? Answer: {v}.",          # the real bug
+    "Question: when was {obj} born? Answer: {v}.",
+    "Question: where does {obj} work? Answer: {v}.",
+    "Everyone knows where {obj} is from, namely {v}.",
+])
+def test_obj_where_the_subject_belongs_is_rejected(monkeypatch, bad):
+    """`{obj}` renders "her"/"him", so "what did him study?" is a grammar bug.
+
+    The guard has to fire wherever the template sits, so this patches one into
+    the held-out pool and calls the checker that runs at import.
+    """
+    held = {a: list(v) for a, v in bd.HELDOUT_TEMPLATES.items()}
+    held["major"] = [bad] + held["major"][1:]
+    monkeypatch.setattr(bd, "HELDOUT_TEMPLATES", held)
+    with pytest.raises(AssertionError, match=r"\{obj\} stands where the subject"):
+        bd.check_templates()
+
+
+def test_the_shipped_templates_have_no_obj_as_subject():
+    guard = re.compile(r"\b(when|where|what|did|does|do|was|is)\s+\{obj\}")
+    for attr in ATTRS:
+        for t in bd.TRAIN_TEMPLATES[attr] + bd.HELDOUT_TEMPLATES[attr]:
+            assert not guard.search(t), t
+
+
+def test_every_template_renders_for_both_genders_by_name_and_pronoun():
+    """All 120 templates x {female, male} x {name, pronoun}: nothing left over."""
+    n = 0
+    for attr in ATTRS:
+        for t in bd.TRAIN_TEMPLATES[attr] + bd.HELDOUT_TEMPLATES[attr]:
+            for gender in ("female", "male"):
+                for use_name in (True, False):
+                    text, at = bios.render(t, "Ada Lovelace", gender, use_name,
+                                           "A VALUE")
+                    assert "{" not in text and "}" not in text, (t, text)
+                    assert text[at:] .startswith("A VALUE"), (t, text)
+                    assert text[at - 1] == " ", (t, text)
+                    assert text[0].isupper(), (t, text)
+                    n += 1
+    assert n == 120 * 4
+
+
+def test_a_template_that_leaves_a_placeholder_behind_is_rejected(monkeypatch):
+    """A brace that survives rendering would reach the biography text verbatim."""
+    train = {a: list(v) for a, v in bd.TRAIN_TEMPLATES.items()}
+    train["major"] = ["{Subj} graduated, major {{tbd}}, in {v}.",
+                      *train["major"][1:]]
+    monkeypatch.setattr(bd, "TRAIN_TEMPLATES", train)
+    with pytest.raises(AssertionError, match="left a placeholder unrendered"):
+        bd.check_templates()
+
+
+def test_an_unknown_placeholder_is_rejected(monkeypatch):
+    train = {a: list(v) for a, v in bd.TRAIN_TEMPLATES.items()}
+    train["major"] = ["{Subj} majored, like {sibling}, in {v}.",
+                      *train["major"][1:]]
+    monkeypatch.setattr(bd, "TRAIN_TEMPLATES", train)
+    with pytest.raises(KeyError):
+        bd.check_templates()
+
+
+def test_pre_value_wording_is_distinct_inside_each_attribute():
+    for attr in ATTRS:
+        ctx = [bd.pre_value_context(t) for t in bd.TRAIN_TEMPLATES[attr]]
+        assert len(set(ctx)) == len(ctx), attr
+
+
+def test_two_training_templates_with_the_same_pre_value_wording_are_rejected(
+        monkeypatch):
+    train = {a: list(v) for a, v in bd.TRAIN_TEMPLATES.items()}
+    first = train["employer"][0]
+    tail = " ".join(first.split("{v}")[0].split()[-3:])
+    train["employer"] = [first, f"{{Subj}} works, as it happens, {tail} {{v}}.",
+                         *train["employer"][2:]]
+    monkeypatch.setattr(bd, "TRAIN_TEMPLATES", train)
+    with pytest.raises(AssertionError, match="pre-value wording"):
+        bd.check_templates()
