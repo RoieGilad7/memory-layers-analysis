@@ -221,9 +221,8 @@ pack:
 
 # --- the frozen bundle (data prompt 3; the freeze is prompt 4) -------------
 distribution:
-    # PLACEHOLDER. The owner fills in the account at the freeze; `data.fetch`
-    # refuses to download while it still says <owner> but still verifies.
-    hf_repo: "<owner>/memlayers-data"
+    # Filled in at the freeze (data prompt 6, part B).
+    hf_repo: "roieg/memlayers-data"
     repo_type: dataset
     tag: data-v1
     # Committed copy of the bundle manifest, which `data.fetch` verifies
