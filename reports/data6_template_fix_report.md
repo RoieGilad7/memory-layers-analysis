@@ -733,8 +733,24 @@ the manifest as a side effect, so the clean-tree copy is the one committed.
 The A18 run in §9 trained on `train.bin` sha256 `7e3d50f2…`, the tokens this
 bundle holds now, so its result stands as the bundle's learnability evidence.
 
-**Part A is done. Part B (freeze, tag, publish) is on hold for the go-ahead and
-the Hugging Face username, and will report `data_sha256` as the freeze hash.**
+### Part B — frozen, tagged and published
+
+| | |
+|---|---|
+| git tag | `data-v1` → commit `60b374b6dd43274580dfc3b6cc41b35c7f79edec` on `main` |
+| Hugging Face | **https://huggingface.co/datasets/roieg/memlayers-data** (public dataset), tag `data-v1` at commit `db21410b27824fd321b5e6ad4577d5e7fad65021` |
+| `train.bin` | sha256 `7e3d50f2513d5a1b42c4fbf201ad4811e81e3175f41068277cf708f191bad8ac` |
+| bundle `data_sha256` | `bb1bfd407af2c44e86d020df1c075f8764c5bf6979be2835684f6f0453086fd6` — the freeze hash |
+| checks at the freeze | **A1–A18 all PASS** on `main`, with both hashes identical to Part A |
+| fetch check | a fresh clone of the `data-v1` tag ran `python -m data.fetch --version v1`: **47 files downloaded, 12 `raw/` skipped as optional, 47/47 checksums verified**, and the fetched `train.bin` hashes to `7e3d50f2…` |
+
+`distribution.hf_repo` is `roieg/memlayers-data`; the manifest was regenerated
+after that edit, which moved `fingerprint_all` but left the pile, bios and pack
+stage fingerprints and `data_sha256` untouched.
+
+`_work/` (60 MB of intermediate `heldout_clean/` files, not in the manifest) was
+left out of the upload; everything the manifest lists, `raw/` included, is
+published, plus `manifest.json`, both validation reports and the dataset README.
 
 ---
 
