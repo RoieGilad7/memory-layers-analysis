@@ -39,7 +39,7 @@
     "total": 1151617170
   },
   "config": {
-    "fingerprint_all": "72d24c6c4780c67474d11608437fcb423a0cae8830958976460ee8c299b8f4a8",
+    "fingerprint_all": "ceed703d8ff25958a6d24ddd3ce786dbda1efe83997881c345e9d696594ed8cb",
     "fingerprint_bios": "7a8c48a96792d725205138dc31b1291033e6e18521603c6b6e987da2f2bb5ec4",
     "fingerprint_pack": "15643c90477c31a7cbc5e394b1f353d795bb417ad6a5ef656b772ebbc1e91e81",
     "fingerprint_pile": "3f4303d9b926b730d8d9bd9269084c6052df66b63aece15a07af100866aa2984",
@@ -218,7 +218,7 @@
   },
   "data_sha256": "bb1bfd407af2c44e86d020df1c075f8764c5bf6979be2835684f6f0453086fd6",
   "distribution": {
-    "hf_repo": "<owner>/memlayers-data",
+    "hf_repo": "roieg/memlayers-data",
     "optional_prefixes": [
       "raw/"
     ],
@@ -582,8 +582,8 @@
     }
   ],
   "git": {
-    "branch": "data/step1-bios",
-    "commit": "25e755b6aa916a6a4f53ebe117ec65f802022f62",
+    "branch": "main",
+    "commit": "b53c61d73d654212ee7541b61be4b86a56b29564",
     "dirty": false
   },
   "n_files": 59,
