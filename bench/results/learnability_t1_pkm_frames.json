@@ -1,0 +1,1202 @@
+{
+  "source_run": "bench/results/learnability_t1_pkm.json",
+  "checkpoint": "runs/learnability_t1_pkm/ckpt.pt",
+  "step": 5830,
+  "data_sha256": "58ed83dd46ec985fac43f406705e1db9d1d9b0e6a1aceaa2dfea15f5c739e304",
+  "frame_names": {
+    "0": "question",
+    "1": "topic",
+    "2": "record",
+    "3": "profile line"
+  },
+  "heldout_templates": {
+    "birth_date": [
+      "Question: when was {subj} born? Answer: {v}.",
+      "When it comes to {poss} date of birth, the register says {v}.",
+      "{Subj} is on record as having been born on {v}.",
+      "{Poss} profile reads as follows -- date of birth: {v}."
+    ],
+    "birth_city": [
+      "Question: where was {subj} born? Answer: {v}.",
+      "When it comes to {poss} place of birth, the register says {v}.",
+      "{Subj} is on record as having been born in {v}.",
+      "{Poss} profile reads as follows -- city of birth: {v}."
+    ],
+    "university": [
+      "Question: where did {subj} take a degree? Answer: {v}.",
+      "When it comes to {poss} alma mater, the register says {v}.",
+      "{Subj} is on record as a graduate of {v}.",
+      "{Poss} profile reads as follows -- degree awarded by: {v}."
+    ],
+    "major": [
+      "Question: what did {subj} study? Answer: {v}.",
+      "When it comes to {poss} field of study, the register says {v}.",
+      "{Subj} is on record as a graduate in {v}.",
+      "{Poss} profile reads as follows -- field of study: {v}."
+    ],
+    "employer": [
+      "Question: where does {subj} work? Answer: {v}.",
+      "When it comes to {poss} employer, the register says {v}.",
+      "{Subj} is on record as an employee of {v}.",
+      "{Poss} profile reads as follows -- current employer: {v}."
+    ]
+  },
+  "by_tier_role": {
+    "control/paraphrase": {
+      "n": 6000,
+      "top1": 0.004333,
+      "mean_rank": 106.252,
+      "median_rank": 93.0,
+      "mean_rank_fraction": 0.509173,
+      "mean_margin": -4.7489,
+      "candidates_mean": 210.0
+    },
+    "control/test": {
+      "n": 3000,
+      "top1": 0.005667,
+      "mean_rank": 106.684,
+      "median_rank": 94.0,
+      "mean_rank_fraction": 0.508492,
+      "mean_margin": -2.2927,
+      "candidates_mean": 210.0
+    },
+    "normal/paraphrase": {
+      "n": 6000,
+      "top1": 0.006833,
+      "mean_rank": 99.055,
+      "median_rank": 85.0,
+      "mean_rank_fraction": 0.472805,
+      "mean_margin": -4.6073,
+      "candidates_mean": 210.0
+    },
+    "normal/test": {
+      "n": 3000,
+      "top1": 0.026333,
+      "mean_rank": 59.683,
+      "median_rank": 42.0,
+      "mean_rank_fraction": 0.28822,
+      "mean_margin": -1.6216,
+      "candidates_mean": 210.0
+    },
+    "rare/paraphrase": {
+      "n": 6000,
+      "top1": 0.004833,
+      "mean_rank": 102.046,
+      "median_rank": 90.0,
+      "mean_rank_fraction": 0.485544,
+      "mean_margin": -4.6608,
+      "candidates_mean": 210.0
+    },
+    "rare/test": {
+      "n": 3000,
+      "top1": 0.006,
+      "mean_rank": 91.925,
+      "median_rank": 78.0,
+      "mean_rank_fraction": 0.441304,
+      "mean_margin": -2.1066,
+      "candidates_mean": 210.0
+    },
+    "frequent/paraphrase": {
+      "n": 6000,
+      "top1": 0.017167,
+      "mean_rank": 80.567,
+      "median_rank": 66.0,
+      "mean_rank_fraction": 0.383077,
+      "mean_margin": -4.288,
+      "candidates_mean": 210.0
+    },
+    "frequent/test": {
+      "n": 3000,
+      "top1": 0.328667,
+      "mean_rank": 13.376,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.069289,
+      "mean_margin": -0.4014,
+      "candidates_mean": 210.0
+    }
+  },
+  "by_role_template": {
+    "paraphrase/t0": {
+      "n": 6000,
+      "top1": 0.004833,
+      "mean_rank": 101.152,
+      "median_rank": 87.0,
+      "mean_rank_fraction": 0.481958,
+      "mean_margin": -6.1795,
+      "candidates_mean": 210.0
+    },
+    "paraphrase/t1": {
+      "n": 6000,
+      "top1": 0.006833,
+      "mean_rank": 98.406,
+      "median_rank": 86.0,
+      "mean_rank_fraction": 0.470744,
+      "mean_margin": -4.6447,
+      "candidates_mean": 210.0
+    },
+    "paraphrase/t2": {
+      "n": 6000,
+      "top1": 0.015833,
+      "mean_rank": 89.305,
+      "median_rank": 74.0,
+      "mean_rank_fraction": 0.425046,
+      "mean_margin": -2.6911,
+      "candidates_mean": 210.0
+    },
+    "paraphrase/t3": {
+      "n": 6000,
+      "top1": 0.005667,
+      "mean_rank": 99.056,
+      "median_rank": 86.0,
+      "mean_rank_fraction": 0.472851,
+      "mean_margin": -4.7897,
+      "candidates_mean": 210.0
+    },
+    "test/t19": {
+      "n": 625,
+      "top1": 0.0736,
+      "mean_rank": 65.758,
+      "median_rank": 43.0,
+      "mean_rank_fraction": 0.317463,
+      "mean_margin": -1.6191,
+      "candidates_mean": 212.3
+    },
+    "test/t3": {
+      "n": 645,
+      "top1": 0.091473,
+      "mean_rank": 67.209,
+      "median_rank": 44.0,
+      "mean_rank_fraction": 0.324408,
+      "mean_margin": -1.6524,
+      "candidates_mean": 212.2
+    },
+    "test/t0": {
+      "n": 600,
+      "top1": 0.095,
+      "mean_rank": 68.75,
+      "median_rank": 46.5,
+      "mean_rank_fraction": 0.324179,
+      "mean_margin": -1.5584,
+      "candidates_mean": 210.5
+    },
+    "test/t6": {
+      "n": 581,
+      "top1": 0.082616,
+      "mean_rank": 68.976,
+      "median_rank": 41.0,
+      "mean_rank_fraction": 0.330472,
+      "mean_margin": -1.6319,
+      "candidates_mean": 208.1
+    },
+    "test/t17": {
+      "n": 627,
+      "top1": 0.095694,
+      "mean_rank": 70.158,
+      "median_rank": 44.0,
+      "mean_rank_fraction": 0.331014,
+      "mean_margin": -1.6094,
+      "candidates_mean": 211.9
+    },
+    "test/t14": {
+      "n": 596,
+      "top1": 0.097315,
+      "mean_rank": 62.807,
+      "median_rank": 42.0,
+      "mean_rank_fraction": 0.316706,
+      "mean_margin": -1.5276,
+      "candidates_mean": 204.0
+    },
+    "test/t1": {
+      "n": 584,
+      "top1": 0.107877,
+      "mean_rank": 66.354,
+      "median_rank": 45.0,
+      "mean_rank_fraction": 0.320577,
+      "mean_margin": -1.7617,
+      "candidates_mean": 212.2
+    },
+    "test/t9": {
+      "n": 594,
+      "top1": 0.106061,
+      "mean_rank": 66.741,
+      "median_rank": 43.5,
+      "mean_rank_fraction": 0.315614,
+      "mean_margin": -1.5945,
+      "candidates_mean": 210.1
+    },
+    "test/t4": {
+      "n": 601,
+      "top1": 0.094842,
+      "mean_rank": 68.092,
+      "median_rank": 47.0,
+      "mean_rank_fraction": 0.318646,
+      "mean_margin": -1.5377,
+      "candidates_mean": 212.6
+    },
+    "test/t11": {
+      "n": 596,
+      "top1": 0.095638,
+      "mean_rank": 68.112,
+      "median_rank": 45.0,
+      "mean_rank_fraction": 0.325062,
+      "mean_margin": -1.4909,
+      "candidates_mean": 207.0
+    },
+    "test/t7": {
+      "n": 630,
+      "top1": 0.096825,
+      "mean_rank": 68.954,
+      "median_rank": 49.0,
+      "mean_rank_fraction": 0.331823,
+      "mean_margin": -1.6431,
+      "candidates_mean": 211.8
+    },
+    "test/t2": {
+      "n": 593,
+      "top1": 0.091062,
+      "mean_rank": 68.138,
+      "median_rank": 45.0,
+      "mean_rank_fraction": 0.327263,
+      "mean_margin": -1.582,
+      "candidates_mean": 208.2
+    },
+    "test/t15": {
+      "n": 571,
+      "top1": 0.09282,
+      "mean_rank": 68.646,
+      "median_rank": 48.0,
+      "mean_rank_fraction": 0.331704,
+      "mean_margin": -1.6595,
+      "candidates_mean": 208.6
+    },
+    "test/t16": {
+      "n": 601,
+      "top1": 0.104825,
+      "mean_rank": 67.581,
+      "median_rank": 43.0,
+      "mean_rank_fraction": 0.325963,
+      "mean_margin": -1.5456,
+      "candidates_mean": 212.7
+    },
+    "test/t18": {
+      "n": 578,
+      "top1": 0.098616,
+      "mean_rank": 70.066,
+      "median_rank": 46.0,
+      "mean_rank_fraction": 0.332788,
+      "mean_margin": -1.7271,
+      "candidates_mean": 209.6
+    },
+    "test/t10": {
+      "n": 620,
+      "top1": 0.096774,
+      "mean_rank": 67.374,
+      "median_rank": 44.5,
+      "mean_rank_fraction": 0.32871,
+      "mean_margin": -1.5115,
+      "candidates_mean": 207.9
+    },
+    "test/t13": {
+      "n": 558,
+      "top1": 0.078853,
+      "mean_rank": 68.398,
+      "median_rank": 49.5,
+      "mean_rank_fraction": 0.329575,
+      "mean_margin": -1.6056,
+      "candidates_mean": 211.7
+    },
+    "test/t8": {
+      "n": 627,
+      "top1": 0.08134,
+      "mean_rank": 70.614,
+      "median_rank": 51.0,
+      "mean_rank_fraction": 0.347521,
+      "mean_margin": -1.5601,
+      "candidates_mean": 206.9
+    },
+    "test/t12": {
+      "n": 587,
+      "top1": 0.081772,
+      "mean_rank": 65.901,
+      "median_rank": 46.0,
+      "mean_rank_fraction": 0.315279,
+      "mean_margin": -1.5433,
+      "candidates_mean": 215.0
+    },
+    "test/t5": {
+      "n": 586,
+      "top1": 0.069966,
+      "mean_rank": 69.695,
+      "median_rank": 48.0,
+      "mean_rank_fraction": 0.341406,
+      "mean_margin": -1.7619,
+      "candidates_mean": 206.5
+    }
+  },
+  "by_tier_role_template": {
+    "control/paraphrase/t0": {
+      "n": 1500,
+      "top1": 0.004667,
+      "mean_rank": 105.562,
+      "median_rank": 92.0,
+      "mean_rank_fraction": 0.50517,
+      "mean_margin": -6.2762,
+      "candidates_mean": 210.0
+    },
+    "control/paraphrase/t1": {
+      "n": 1500,
+      "top1": 0.005333,
+      "mean_rank": 105.94,
+      "median_rank": 94.0,
+      "mean_rank_fraction": 0.508905,
+      "mean_margin": -4.7777,
+      "candidates_mean": 210.0
+    },
+    "control/paraphrase/t2": {
+      "n": 1500,
+      "top1": 0.004667,
+      "mean_rank": 107.537,
+      "median_rank": 93.0,
+      "mean_rank_fraction": 0.516441,
+      "mean_margin": -3.0207,
+      "candidates_mean": 210.0
+    },
+    "control/paraphrase/t3": {
+      "n": 1500,
+      "top1": 0.002667,
+      "mean_rank": 105.969,
+      "median_rank": 92.5,
+      "mean_rank_fraction": 0.506176,
+      "mean_margin": -4.9211,
+      "candidates_mean": 210.0
+    },
+    "control/test/t19": {
+      "n": 171,
+      "top1": 0.005848,
+      "mean_rank": 99.117,
+      "median_rank": 86.0,
+      "mean_rank_fraction": 0.466162,
+      "mean_margin": -2.1772,
+      "candidates_mean": 214.9
+    },
+    "control/test/t3": {
+      "n": 161,
+      "top1": 0.0,
+      "mean_rank": 102.783,
+      "median_rank": 89.0,
+      "mean_rank_fraction": 0.514996,
+      "mean_margin": -2.4256,
+      "candidates_mean": 204.7
+    },
+    "control/test/t0": {
+      "n": 149,
+      "top1": 0.0,
+      "mean_rank": 113.45,
+      "median_rank": 102.0,
+      "mean_rank_fraction": 0.536009,
+      "mean_margin": -2.3577,
+      "candidates_mean": 214.8
+    },
+    "control/test/t6": {
+      "n": 142,
+      "top1": 0.007042,
+      "mean_rank": 108.225,
+      "median_rank": 108.5,
+      "mean_rank_fraction": 0.509439,
+      "mean_margin": -2.3053,
+      "candidates_mean": 210.2
+    },
+    "control/test/t17": {
+      "n": 155,
+      "top1": 0.0,
+      "mean_rank": 116.323,
+      "median_rank": 108.0,
+      "mean_rank_fraction": 0.546619,
+      "mean_margin": -2.3446,
+      "candidates_mean": 209.0
+    },
+    "control/test/t14": {
+      "n": 166,
+      "top1": 0.012048,
+      "mean_rank": 93.271,
+      "median_rank": 79.0,
+      "mean_rank_fraction": 0.47439,
+      "mean_margin": -2.0935,
+      "candidates_mean": 201.5
+    },
+    "control/test/t1": {
+      "n": 158,
+      "top1": 0.0,
+      "mean_rank": 101.316,
+      "median_rank": 82.5,
+      "mean_rank_fraction": 0.487819,
+      "mean_margin": -2.5349,
+      "candidates_mean": 208.9
+    },
+    "control/test/t9": {
+      "n": 151,
+      "top1": 0.013245,
+      "mean_rank": 109.192,
+      "median_rank": 87.0,
+      "mean_rank_fraction": 0.493958,
+      "mean_margin": -2.3158,
+      "candidates_mean": 214.9
+    },
+    "control/test/t4": {
+      "n": 143,
+      "top1": 0.0,
+      "mean_rank": 105.629,
+      "median_rank": 97.0,
+      "mean_rank_fraction": 0.486508,
+      "mean_margin": -2.2015,
+      "candidates_mean": 218.9
+    },
+    "control/test/t11": {
+      "n": 142,
+      "top1": 0.0,
+      "mean_rank": 109.401,
+      "median_rank": 103.0,
+      "mean_rank_fraction": 0.519298,
+      "mean_margin": -2.1961,
+      "candidates_mean": 209.2
+    },
+    "normal/paraphrase/t0": {
+      "n": 1500,
+      "top1": 0.005333,
+      "mean_rank": 103.733,
+      "median_rank": 90.0,
+      "mean_rank_fraction": 0.49462,
+      "mean_margin": -6.1979,
+      "candidates_mean": 210.0
+    },
+    "normal/paraphrase/t1": {
+      "n": 1500,
+      "top1": 0.005333,
+      "mean_rank": 101.537,
+      "median_rank": 90.0,
+      "mean_rank_fraction": 0.484632,
+      "mean_margin": -4.6837,
+      "candidates_mean": 210.0
+    },
+    "normal/paraphrase/t2": {
+      "n": 1500,
+      "top1": 0.011333,
+      "mean_rank": 90.422,
+      "median_rank": 76.0,
+      "mean_rank_fraction": 0.43211,
+      "mean_margin": -2.7355,
+      "candidates_mean": 210.0
+    },
+    "normal/paraphrase/t3": {
+      "n": 1500,
+      "top1": 0.005333,
+      "mean_rank": 100.527,
+      "median_rank": 86.5,
+      "mean_rank_fraction": 0.479856,
+      "mean_margin": -4.812,
+      "candidates_mean": 210.0
+    },
+    "normal/test/t7": {
+      "n": 146,
+      "top1": 0.047945,
+      "mean_rank": 65.884,
+      "median_rank": 40.5,
+      "mean_rank_fraction": 0.30582,
+      "mean_margin": -1.7281,
+      "candidates_mean": 211.6
+    },
+    "normal/test/t9": {
+      "n": 144,
+      "top1": 0.055556,
+      "mean_rank": 56.438,
+      "median_rank": 39.0,
+      "mean_rank_fraction": 0.277306,
+      "mean_margin": -1.5932,
+      "candidates_mean": 206.9
+    },
+    "normal/test/t1": {
+      "n": 132,
+      "top1": 0.045455,
+      "mean_rank": 62.121,
+      "median_rank": 49.0,
+      "mean_rank_fraction": 0.288992,
+      "mean_margin": -1.7852,
+      "candidates_mean": 216.7
+    },
+    "normal/test/t2": {
+      "n": 144,
+      "top1": 0.034722,
+      "mean_rank": 61.715,
+      "median_rank": 49.0,
+      "mean_rank_fraction": 0.307088,
+      "mean_margin": -1.621,
+      "candidates_mean": 205.9
+    },
+    "normal/test/t15": {
+      "n": 147,
+      "top1": 0.034014,
+      "mean_rank": 60.633,
+      "median_rank": 40.0,
+      "mean_rank_fraction": 0.302683,
+      "mean_margin": -1.6992,
+      "candidates_mean": 201.4
+    },
+    "normal/test/t6": {
+      "n": 158,
+      "top1": 0.012658,
+      "mean_rank": 59.62,
+      "median_rank": 36.0,
+      "mean_rank_fraction": 0.287897,
+      "mean_margin": -1.6656,
+      "candidates_mean": 209.5
+    },
+    "normal/test/t14": {
+      "n": 139,
+      "top1": 0.028777,
+      "mean_rank": 60.144,
+      "median_rank": 40.0,
+      "mean_rank_fraction": 0.293808,
+      "mean_margin": -1.5649,
+      "candidates_mean": 201.1
+    },
+    "normal/test/t16": {
+      "n": 146,
+      "top1": 0.047945,
+      "mean_rank": 56.349,
+      "median_rank": 38.0,
+      "mean_rank_fraction": 0.284418,
+      "mean_margin": -1.5613,
+      "candidates_mean": 212.7
+    },
+    "normal/test/t17": {
+      "n": 151,
+      "top1": 0.0,
+      "mean_rank": 58.954,
+      "median_rank": 43.0,
+      "mean_rank_fraction": 0.2873,
+      "mean_margin": -1.6982,
+      "candidates_mean": 215.6
+    },
+    "rare/paraphrase/t0": {
+      "n": 1500,
+      "top1": 0.004,
+      "mean_rank": 101.901,
+      "median_rank": 90.0,
+      "mean_rank_fraction": 0.485049,
+      "mean_margin": -6.2087,
+      "candidates_mean": 210.0
+    },
+    "rare/paraphrase/t1": {
+      "n": 1500,
+      "top1": 0.004667,
+      "mean_rank": 103.516,
+      "median_rank": 92.0,
+      "mean_rank_fraction": 0.493612,
+      "mean_margin": -4.706,
+      "candidates_mean": 210.0
+    },
+    "rare/paraphrase/t2": {
+      "n": 1500,
+      "top1": 0.003333,
+      "mean_rank": 98.88,
+      "median_rank": 83.0,
+      "mean_rank_fraction": 0.469048,
+      "mean_margin": -2.8618,
+      "candidates_mean": 210.0
+    },
+    "rare/paraphrase/t3": {
+      "n": 1500,
+      "top1": 0.007333,
+      "mean_rank": 103.889,
+      "median_rank": 92.0,
+      "mean_rank_fraction": 0.494468,
+      "mean_margin": -4.8667,
+      "candidates_mean": 210.0
+    },
+    "rare/test/t9": {
+      "n": 146,
+      "top1": 0.0,
+      "mean_rank": 87.678,
+      "median_rank": 75.5,
+      "mean_rank_fraction": 0.42532,
+      "mean_margin": -2.0951,
+      "candidates_mean": 209.9
+    },
+    "rare/test/t18": {
+      "n": 150,
+      "top1": 0.006667,
+      "mean_rank": 105.547,
+      "median_rank": 86.5,
+      "mean_rank_fraction": 0.501687,
+      "mean_margin": -2.3872,
+      "candidates_mean": 206.7
+    },
+    "rare/test/t14": {
+      "n": 138,
+      "top1": 0.0,
+      "mean_rank": 86.428,
+      "median_rank": 77.0,
+      "mean_rank_fraction": 0.435536,
+      "mean_margin": -2.0761,
+      "candidates_mean": 203.3
+    },
+    "rare/test/t2": {
+      "n": 150,
+      "top1": 0.006667,
+      "mean_rank": 90.807,
+      "median_rank": 74.0,
+      "mean_rank_fraction": 0.431124,
+      "mean_margin": -2.0115,
+      "candidates_mean": 213.0
+    },
+    "rare/test/t10": {
+      "n": 157,
+      "top1": 0.0,
+      "mean_rank": 89.745,
+      "median_rank": 70.0,
+      "mean_rank_fraction": 0.425845,
+      "mean_margin": -1.9448,
+      "candidates_mean": 213.1
+    },
+    "rare/test/t17": {
+      "n": 153,
+      "top1": 0.019608,
+      "mean_rank": 94.359,
+      "median_rank": 72.0,
+      "mean_rank_fraction": 0.428847,
+      "mean_margin": -2.0398,
+      "candidates_mean": 219.0
+    },
+    "rare/test/t13": {
+      "n": 160,
+      "top1": 0.0,
+      "mean_rank": 90.938,
+      "median_rank": 83.5,
+      "mean_rank_fraction": 0.427252,
+      "mean_margin": -2.0851,
+      "candidates_mean": 217.2
+    },
+    "rare/test/t8": {
+      "n": 173,
+      "top1": 0.017341,
+      "mean_rank": 94.884,
+      "median_rank": 80.0,
+      "mean_rank_fraction": 0.462536,
+      "mean_margin": -2.0194,
+      "candidates_mean": 206.4
+    },
+    "rare/test/t7": {
+      "n": 164,
+      "top1": 0.006098,
+      "mean_rank": 84.555,
+      "median_rank": 69.0,
+      "mean_rank_fraction": 0.423057,
+      "mean_margin": -2.043,
+      "candidates_mean": 202.4
+    },
+    "rare/test/t6": {
+      "n": 135,
+      "top1": 0.007407,
+      "mean_rank": 98.104,
+      "median_rank": 83.0,
+      "mean_rank_fraction": 0.466874,
+      "mean_margin": -2.1275,
+      "candidates_mean": 210.7
+    },
+    "control/test/t15": {
+      "n": 143,
+      "top1": 0.0,
+      "mean_rank": 114.287,
+      "median_rank": 103.0,
+      "mean_rank_fraction": 0.547699,
+      "mean_margin": -2.4005,
+      "candidates_mean": 210.1
+    },
+    "control/test/t18": {
+      "n": 128,
+      "top1": 0.015625,
+      "mean_rank": 102.062,
+      "median_rank": 92.0,
+      "mean_rank_fraction": 0.48325,
+      "mean_margin": -2.3311,
+      "candidates_mean": 206.6
+    },
+    "control/test/t12": {
+      "n": 153,
+      "top1": 0.0,
+      "mean_rank": 111.758,
+      "median_rank": 103.0,
+      "mean_rank_fraction": 0.510111,
+      "mean_margin": -2.2879,
+      "candidates_mean": 223.2
+    },
+    "control/test/t5": {
+      "n": 147,
+      "top1": 0.006803,
+      "mean_rank": 107.701,
+      "median_rank": 86.0,
+      "mean_rank_fraction": 0.526222,
+      "mean_margin": -2.4207,
+      "candidates_mean": 205.4
+    },
+    "frequent/paraphrase/t0": {
+      "n": 1500,
+      "top1": 0.005333,
+      "mean_rank": 93.411,
+      "median_rank": 78.0,
+      "mean_rank_fraction": 0.442994,
+      "mean_margin": -6.0353,
+      "candidates_mean": 210.0
+    },
+    "frequent/paraphrase/t1": {
+      "n": 1500,
+      "top1": 0.012,
+      "mean_rank": 82.633,
+      "median_rank": 70.0,
+      "mean_rank_fraction": 0.395828,
+      "mean_margin": -4.4116,
+      "candidates_mean": 210.0
+    },
+    "frequent/paraphrase/t2": {
+      "n": 1500,
+      "top1": 0.044,
+      "mean_rank": 60.382,
+      "median_rank": 44.0,
+      "mean_rank_fraction": 0.282582,
+      "mean_margin": -2.1465,
+      "candidates_mean": 210.0
+    },
+    "frequent/paraphrase/t3": {
+      "n": 1500,
+      "top1": 0.007333,
+      "mean_rank": 85.84,
+      "median_rank": 72.0,
+      "mean_rank_fraction": 0.410903,
+      "mean_margin": -4.5588,
+      "candidates_mean": 210.0
+    },
+    "frequent/test/t18": {
+      "n": 160,
+      "top1": 0.3,
+      "mean_rank": 18.169,
+      "median_rank": 4.0,
+      "mean_rank_fraction": 0.091577,
+      "mean_margin": -0.5857,
+      "candidates_mean": 210.3
+    },
+    "frequent/test/t13": {
+      "n": 128,
+      "top1": 0.328125,
+      "mean_rank": 12.625,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.066805,
+      "mean_margin": -0.332,
+      "candidates_mean": 215.2
+    },
+    "frequent/test/t5": {
+      "n": 129,
+      "top1": 0.271318,
+      "mean_rank": 17.372,
+      "median_rank": 5.0,
+      "mean_rank_fraction": 0.08684,
+      "mean_margin": -0.5831,
+      "candidates_mean": 205.0
+    },
+    "frequent/test/t8": {
+      "n": 148,
+      "top1": 0.283784,
+      "mean_rank": 14.973,
+      "median_rank": 4.0,
+      "mean_rank_fraction": 0.076572,
+      "mean_margin": -0.4296,
+      "candidates_mean": 213.5
+    },
+    "frequent/test/t11": {
+      "n": 147,
+      "top1": 0.333333,
+      "mean_rank": 10.578,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.054755,
+      "mean_margin": -0.2565,
+      "candidates_mean": 195.9
+    },
+    "frequent/test/t12": {
+      "n": 151,
+      "top1": 0.304636,
+      "mean_rank": 11.629,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.058912,
+      "mean_margin": -0.3994,
+      "candidates_mean": 207.3
+    },
+    "frequent/test/t3": {
+      "n": 170,
+      "top1": 0.347059,
+      "mean_rank": 12.847,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.068843,
+      "mean_margin": -0.3259,
+      "candidates_mean": 213.8
+    },
+    "frequent/test/t1": {
+      "n": 149,
+      "top1": 0.375839,
+      "mean_rank": 9.315,
+      "median_rank": 2.0,
+      "mean_rank_fraction": 0.048662,
+      "mean_margin": -0.2815,
+      "candidates_mean": 216.4
+    },
+    "normal/test/t8": {
+      "n": 154,
+      "top1": 0.025974,
+      "mean_rank": 62.11,
+      "median_rank": 42.5,
+      "mean_rank_fraction": 0.301253,
+      "mean_margin": -1.5406,
+      "candidates_mean": 205.2
+    },
+    "normal/test/t19": {
+      "n": 156,
+      "top1": 0.012821,
+      "mean_rank": 58.256,
+      "median_rank": 38.0,
+      "mean_rank_fraction": 0.287761,
+      "mean_margin": -1.6045,
+      "candidates_mean": 208.0
+    },
+    "normal/test/t13": {
+      "n": 139,
+      "top1": 0.007194,
+      "mean_rank": 56.007,
+      "median_rank": 41.0,
+      "mean_rank_fraction": 0.284204,
+      "mean_margin": -1.6077,
+      "candidates_mean": 199.6
+    },
+    "normal/test/t18": {
+      "n": 140,
+      "top1": 0.042857,
+      "mean_rank": 62.107,
+      "median_rank": 44.5,
+      "mean_rank_fraction": 0.289929,
+      "mean_margin": -1.772,
+      "candidates_mean": 214.6
+    },
+    "normal/test/t10": {
+      "n": 160,
+      "top1": 0.0125,
+      "mean_rank": 58.35,
+      "median_rank": 43.0,
+      "mean_rank_fraction": 0.295719,
+      "mean_margin": -1.5046,
+      "candidates_mean": 202.2
+    },
+    "normal/test/t12": {
+      "n": 143,
+      "top1": 0.013986,
+      "mean_rank": 59.007,
+      "median_rank": 44.0,
+      "mean_rank_fraction": 0.287977,
+      "mean_margin": -1.5632,
+      "candidates_mean": 220.3
+    },
+    "frequent/test/t9": {
+      "n": 153,
+      "top1": 0.346405,
+      "mean_rank": 14.562,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.070972,
+      "mean_margin": -0.4063,
+      "candidates_mean": 208.5
+    },
+    "frequent/test/t14": {
+      "n": 153,
+      "top1": 0.339869,
+      "mean_rank": 10.869,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.059248,
+      "mean_margin": -0.385,
+      "candidates_mean": 210.1
+    },
+    "frequent/test/t19": {
+      "n": 149,
+      "top1": 0.288591,
+      "mean_rank": 14.966,
+      "median_rank": 5.0,
+      "mean_rank_fraction": 0.080857,
+      "mean_margin": -0.5068,
+      "candidates_mean": 212.1
+    },
+    "control/test/t7": {
+      "n": 161,
+      "top1": 0.012422,
+      "mean_rank": 111.745,
+      "median_rank": 102.0,
+      "mean_rank_fraction": 0.524557,
+      "mean_margin": -2.3789,
+      "candidates_mean": 213.0
+    },
+    "control/test/t8": {
+      "n": 152,
+      "top1": 0.013158,
+      "mean_rank": 105.783,
+      "median_rank": 93.5,
+      "mean_rank_fraction": 0.527311,
+      "mean_margin": -2.1578,
+      "candidates_mean": 202.6
+    },
+    "normal/test/t5": {
+      "n": 164,
+      "top1": 0.018293,
+      "mean_rank": 63.213,
+      "median_rank": 46.5,
+      "mean_rank_fraction": 0.30213,
+      "mean_margin": -1.7897,
+      "candidates_mean": 213.4
+    },
+    "normal/test/t3": {
+      "n": 160,
+      "top1": 0.0,
+      "mean_rank": 55.044,
+      "median_rank": 37.0,
+      "mean_rank_fraction": 0.255896,
+      "mean_margin": -1.6237,
+      "candidates_mean": 218.8
+    },
+    "normal/test/t4": {
+      "n": 163,
+      "top1": 0.02454,
+      "mean_rank": 62.012,
+      "median_rank": 50.0,
+      "mean_rank_fraction": 0.279481,
+      "mean_margin": -1.5526,
+      "candidates_mean": 218.4
+    },
+    "control/test/t16": {
+      "n": 148,
+      "top1": 0.0,
+      "mean_rank": 100.351,
+      "median_rank": 86.5,
+      "mean_rank_fraction": 0.477694,
+      "mean_margin": -2.1297,
+      "candidates_mean": 208.4
+    },
+    "control/test/t2": {
+      "n": 147,
+      "top1": 0.013605,
+      "mean_rank": 109.735,
+      "median_rank": 90.0,
+      "mean_rank_fraction": 0.515327,
+      "mean_margin": -2.3328,
+      "candidates_mean": 208.5
+    },
+    "control/test/t13": {
+      "n": 131,
+      "top1": 0.007634,
+      "mean_rank": 108.511,
+      "median_rank": 94.0,
+      "mean_rank_fraction": 0.51517,
+      "mean_margin": -2.262,
+      "candidates_mean": 214.5
+    },
+    "frequent/test/t0": {
+      "n": 153,
+      "top1": 0.339869,
+      "mean_rank": 14.163,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.075261,
+      "mean_margin": -0.3966,
+      "candidates_mean": 204.9
+    },
+    "frequent/test/t2": {
+      "n": 152,
+      "top1": 0.302632,
+      "mean_rank": 11.625,
+      "median_rank": 4.0,
+      "mean_rank_fraction": 0.062004,
+      "mean_margin": -0.3952,
+      "candidates_mean": 205.3
+    },
+    "frequent/test/t7": {
+      "n": 159,
+      "top1": 0.320755,
+      "mean_rank": 12.352,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.066438,
+      "mean_margin": -0.4076,
+      "candidates_mean": 220.4
+    },
+    "frequent/test/t15": {
+      "n": 146,
+      "top1": 0.321918,
+      "mean_rank": 16.192,
+      "median_rank": 4.0,
+      "mean_rank_fraction": 0.077984,
+      "mean_margin": -0.461,
+      "candidates_mean": 211.6
+    },
+    "frequent/test/t6": {
+      "n": 146,
+      "top1": 0.30137,
+      "mean_rank": 13.993,
+      "median_rank": 4.0,
+      "mean_rank_fraction": 0.076356,
+      "mean_margin": -0.4823,
+      "candidates_mean": 202.1
+    },
+    "frequent/test/t4": {
+      "n": 147,
+      "top1": 0.360544,
+      "mean_rank": 10.81,
+      "median_rank": 2.0,
+      "mean_rank_fraction": 0.055433,
+      "mean_margin": -0.3078,
+      "candidates_mean": 205.1
+    },
+    "frequent/test/t17": {
+      "n": 168,
+      "top1": 0.339286,
+      "mean_rank": 15.595,
+      "median_rank": 3.5,
+      "mean_rank_fraction": 0.082286,
+      "mean_margin": -0.4591,
+      "candidates_mean": 204.8
+    },
+    "frequent/test/t10": {
+      "n": 151,
+      "top1": 0.377483,
+      "mean_rank": 15.358,
+      "median_rank": 2.0,
+      "mean_rank_fraction": 0.076541,
+      "mean_margin": -0.3655,
+      "candidates_mean": 215.2
+    },
+    "rare/test/t0": {
+      "n": 131,
+      "top1": 0.007634,
+      "mean_rank": 92.344,
+      "median_rank": 86.0,
+      "mean_rank_fraction": 0.426061,
+      "mean_margin": -2.0325,
+      "candidates_mean": 216.0
+    },
+    "rare/test/t11": {
+      "n": 160,
+      "top1": 0.00625,
+      "mean_rank": 96.138,
+      "median_rank": 82.0,
+      "mean_rank_fraction": 0.45751,
+      "mean_margin": -2.0397,
+      "candidates_mean": 212.5
+    },
+    "rare/test/t1": {
+      "n": 145,
+      "top1": 0.006897,
+      "mean_rank": 90.724,
+      "median_rank": 80.0,
+      "mean_rank_fraction": 0.44651,
+      "mean_margin": -2.4188,
+      "candidates_mean": 207.2
+    },
+    "frequent/test/t16": {
+      "n": 141,
+      "top1": 0.382979,
+      "mean_rank": 9.305,
+      "median_rank": 3.0,
+      "mean_rank_fraction": 0.047466,
+      "mean_margin": -0.2576,
+      "candidates_mean": 222.3
+    },
+    "control/test/t10": {
+      "n": 152,
+      "top1": 0.006579,
+      "mean_rank": 105.441,
+      "median_rank": 88.5,
+      "mean_rank_fraction": 0.513618,
+      "mean_margin": -2.2096,
+      "candidates_mean": 201.3
+    },
+    "rare/test/t16": {
+      "n": 166,
+      "top1": 0.012048,
+      "mean_rank": 97.741,
+      "median_rank": 90.5,
+      "mean_rank_fraction": 0.463781,
+      "mean_margin": -2.105,
+      "candidates_mean": 208.4
+    },
+    "rare/test/t4": {
+      "n": 148,
+      "top1": 0.0,
+      "mean_rank": 95.412,
+      "median_rank": 84.0,
+      "mean_rank_fraction": 0.461025,
+      "mean_margin": -2.1016,
+      "candidates_mean": 207.4
+    },
+    "rare/test/t12": {
+      "n": 140,
+      "top1": 0.0,
+      "mean_rank": 81.364,
+      "median_rank": 72.5,
+      "mean_rank_fraction": 0.406755,
+      "mean_margin": -1.9429,
+      "candidates_mean": 208.9
+    },
+    "rare/test/t15": {
+      "n": 135,
+      "top1": 0.007407,
+      "mean_rank": 85.756,
+      "median_rank": 69.0,
+      "mean_rank_fraction": 0.408904,
+      "mean_margin": -2.1276,
+      "candidates_mean": 211.5
+    },
+    "normal/test/t11": {
+      "n": 147,
+      "top1": 0.047619,
+      "mean_rank": 55.259,
+      "median_rank": 37.0,
+      "mean_rank_fraction": 0.263578,
+      "mean_margin": -1.4469,
+      "candidates_mean": 209.9
+    },
+    "rare/test/t5": {
+      "n": 146,
+      "top1": 0.013699,
+      "mean_rank": 84.938,
+      "median_rank": 69.0,
+      "mean_rank_fraction": 0.424365,
+      "mean_margin": -2.1089,
+      "candidates_mean": 201.0
+    },
+    "rare/test/t3": {
+      "n": 154,
+      "top1": 0.0,
+      "mean_rank": 102.669,
+      "median_rank": 79.5,
+      "mean_rank_fraction": 0.478455,
+      "mean_margin": -2.3382,
+      "candidates_mean": 211.7
+    },
+    "normal/test/t0": {
+      "n": 167,
+      "top1": 0.023952,
+      "mean_rank": 60.371,
+      "median_rank": 42.0,
+      "mean_rank_fraction": 0.283311,
+      "mean_margin": -1.5378,
+      "candidates_mean": 207.5
+    },
+    "rare/test/t19": {
+      "n": 149,
+      "top1": 0.0,
+      "mean_rank": 86.121,
+      "median_rank": 75.0,
+      "mean_rank_fraction": 0.414515,
+      "mean_margin": -2.1061,
+      "candidates_mean": 214.1
+    }
+  }
+}

@@ -42,9 +42,15 @@ python -m pytest
   checked, not assumed — and every one of the 100,000 fact rows keeps its
   `fact_id`, `template_id`, `role` and `true_value`. Only sentence wording
   changed (§6).
-- **A1–A18 all PASS.** A18 was re-run on the new tokens with the same protocol
-  and **the same 1,200 evaluation people and 36,000 prompt rows, proven
-  identical by `fact_id`** (§8).
+- **A1–A18 all PASS** (§8). A18 was re-run on the new tokens with the same
+  protocol and **the same 1,200 evaluation people and 36,000 prompt rows, proven
+  identical by `fact_id`**: frequent-tier test top-1 **32.87% against a 0.57%
+  control floor, 58×**, monotone across tiers (§9). Paraphrase recall **rose**,
+  1.17% → 1.72% on the frequent tier, which was not expected — and the per-frame
+  split says the rise is in the *"is on record as"* frame (4.40%), not in the
+  question frame the grammar fix repaired (0.53%), which is what the relation fix
+  predicts (§9.3).
+- **190 tests pass** (§10), 11 of them new.
 - `train.bin` sha256
   `fb29702d8171fc45e209e94d3aacaf4f0a3d81479a5b40860952178f3d6d5ec4`;
   bundle `data_sha256`
@@ -109,7 +115,7 @@ list:
    attribute's twenty training templates (the across-pool version was already
    enforced; this is the within-attribute one the prompt asked for).
 
-Twelve tests cover them, including the two the prompt named: one that fails on
+Eleven new test cases cover them, including the two the prompt named: one that fails on
 `"Question: what did {obj} study? Answer: {v}."` and one that renders all 120
 templates for both genders, by name and by pronoun (480 renderings).
 
@@ -252,19 +258,19 @@ gives the pre-data-5 set exactly 5 and data 5 exactly 0.
 | answer leak: value verbatim in its own prompt | 0 | **0** | **PASS** |
 | answer leak: ranking key in the person's own name | 0 | **0** | **PASS** |
 | answer leak: ranking key in another of the person's values | 0 | **0** | **PASS** |
-| template-word ranking-key rows (observation, must not rise) | 48 | **PENDING** | **PENDING** |
+| template-word ranking-key rows (observation, must not rise) | 48 | **48** | **PASS** |
 | values whose ranking key a template word hits | 4 | **4, the same four** | **PASS** |
 | interrupting-comma asides, of 100 training templates | 16 | **13** | **PASS** |
 | verb/object splits | 0 | **0** | **PASS** |
 | "birthday … every year on *March 4, 1987*" wording | 0 | **0** | **PASS** |
-| date wording that leaves the kind of date unnamed | 4 | **0** | **PASS** |
+| date wording that leaves the kind of date unnamed | 4 | **0** [^date] | **PASS** |
 | contradictions across a person's four rewordings | 0 | **0** | **PASS** |
 | British spellings | 0 | **0** | **PASS** |
 | openers: person / possessive / other | 45/34/21 | **45/34/21** | **PASS** |
 | new sentence-initial "The"/"A"/"An" openers | — | **0** (7 → 6) | **PASS** |
 | shortest frame, GPT-2 tokens | 9 | **9** | **PASS** |
 | biography share of the training budget (target 10%) | 9.71% | **10.05%** | **PASS** |
-| biographies crossing a 512-token boundary | 0 | **PENDING** | **PENDING** |
+| biographies crossing a 512-token boundary | 0 | **0** | **PASS** |
 | pre-value wording distinct within each attribute | not enforced | **enforced, 0 collisions** | **PASS** |
 | pre-value wording of a held-out frame equals a training one | 0 | **0** | **PASS** |
 | held-out marker inside training text | 0 | **0** | **PASS** |
@@ -272,8 +278,8 @@ gives the pre-data-5 set exactly 5 and data 5 exactly 0.
 | one person placeholder per template, `{subj}` recognized | yes | **yes** | **PASS** |
 | every template opens with a capital or `{Subj}`/`{Poss}` | yes | **yes** | **PASS** |
 | `{obj}` after a question word or auxiliary | 5 | **0** | **PASS** |
-| A12 chi-square | PASS | **PENDING** | **PENDING** |
-| A1 rebuild byte-identical | PASS | **PENDING** | **PENDING** |
+| A12 chi-square | PASS | **PASS**, p identical to data 5 to 3 d.p. | **PASS** |
+| A1 rebuild byte-identical | PASS | **PASS**, 59 files, 0 changed | **PASS** |
 
 ### How each measure is defined
 
@@ -298,6 +304,18 @@ gives the pre-data-5 set exactly 5 and data 5 exactly 0.
 - **Template-word rows.** A13's own observation counter: rows where the value's
   ranking key appears in the prompt's tokens but not via the person's name or
   another of their values.
+- **Biography share.** The config sets `targets.bio_share: 0.10` and no check
+  enforces a band around it, so "within tolerance" is read as the distance from
+  the target: data 5 was 0.29 points under it, data 6 is **0.05 points over**.
+  Nothing downstream depends on the exact share — the Pile side is pinned at
+  27,000,000 tokens per subject either way.
+
+[^date]: One template still contains the words "the date": *"A registrar's
+    ledger enters {poss} birth under the date {v}."* It names the kind of date
+    through its object — the date **the birth** is entered under — which is what
+    the rule asks for; data 5's four hits (*"repeats the date"*, *"shows the
+    date"*, *"disputed the date"*, *"carries {poss} name against the date"*) named
+    nothing. Counted as 0 unnamed, 1 named-by-object.
 
 ### Template words: the same four values, no new ranking key
 
@@ -410,16 +428,292 @@ reader is most likely to stumble on.
 
 ---
 
-## 8. Validation — PENDING
+## 8. Validation — all 18 pass
+
+Read out of `data/v1/validation_report.json` by
+`python -m data.report_tables --config configs/data/v1.yaml --stage validate`.
+
+|check|what|result|measured|
+|---|---|---|:---:|
+|**A1**|Rebuild is byte-identical|**PASS**|59 files hashed; 0 changed, 0 added, 0 removed|
+|**A2**|`data.fetch --verify-only` passes|**PASS**|59/59 files verified against v1.json (0 mismatched, 0 missing)|
+|**A3**|Token counts per subject and half|**PASS**|every Pile subject exactly 27,000,000 in train.bin; every held-out half within 1% of 2,500,000 per subject|
+|**A4**|Shares in every 1,000,000-token window|**PASS**|worst deviation 0.429 points across 598 overlapping windows (stride 250,000), tolerance 2.0|
+|**A5**|Format: dtype, vocab bound, EOT, index tiling|**PASS**|train.bin: 150,395,392 tokens, 332,781 segments, 333,140 EOT separator/pad tokens, max id 50256 \| label.bin: 15,021,806 tokens, 13,306 segments, 13,305 EOT separator/pad tokens, max id 50256 \| test.bin: 15,023,952 tokens, 13,381 segments, 13,380 EOT separator/pad tokens, max id 50256|
+|**A6**|Decoding index segments reproduces the source|**PASS**|1,000 random segments checked token for token (838 of them whole documents, also compared as text); 0 mismatches|
+|**A7**|Leaks: ids, exact hashes, 13-gram overlap|**PASS**|ids disjoint across train/label/test; 0 exact-hash matches; 0 documents over 50%; worst single document 50.0%; aggregates Pile-CC=0.64%, Github=14.35%, PubMed=2.93%, FreeLaw=9.21%, Wikipedia=2.14%, USPTO=0.00%|
+|**A8**|Halves: disjoint, >=500 docs, <=4096 tokens|**PASS**|halves share 0 documents; smallest half/subject is 708 documents (minimum 500); longest document 4096 tokens (cap 4096)|
+|**A9**|No held-out-only subject in train.bin|**PASS**|['USPTO Backgrounds'] appear in 0 train.bin segments by document id and 0 by subject label; train.bin carries ['FreeLaw', 'Github', 'Pile-CC', 'PubMed Central', 'Wikipedia (en)', 'bio']|
+|**A10**|Subject labels agree with the source|**PASS**|142,781 Pile segments: index subject == raw-archive meta.pile_set_name == the document id's slug; 190,000 biography segments all labelled `bio` with a known person id|
+|**A11**|Bag-of-words subject classifier (sanity)|**PASS**|accuracy 94.87% on 13,381 test-half documents (threshold 90%); per subject Pile-CC=89.7%, Github=97.8%, PubMed=97.6%, FreeLaw=99.1%, Wikipedia=95.0%, USPTO=96.2%|
+|**A12**|Biography facts|**PASS**|2,500 people, names unique and absent from the Pile, genders {'female': 1250, 'male': 1250}, 5 facts each; first-token uniqueness holds per list (first two for birth_date, which has only 12 distinct first tokens); **chi-square p birth_date=0.124, birth_city=0.877, university=0.183, major=0.940, employer=0.347** — identical to data 5, as they must be: no fact moved|
+|**A13**|Fact prompts: no answer leaks|**PASS**|100,000 rows: **0** leak the value verbatim (0), **0** via the person's name (0), **0** via another of the person's values (0); 50,000 training prompts are exact prefixes of their biography; 50,000 paraphrase prompts, 200 of them searched in full against train.bin and absent; held-out markers inside biography text: 'Question:'=0, 'When it comes to'=0, 'is on record as'=0, 'reads as follows'=0 (the same markers occur 570 times in ordinary Pile text, which is not a leak); REPORTED: **48 rows** whose ranking key is a TEMPLATE word (birth_city=Thessaloniki, Greece, employer=Heineken, major=Theology, university=Aalborg University)|
+|**A14**|Exposure counts and control isolation|**PASS**|190,000 copies over 2,000 trained people, every count equal to its tier target and spread over the 4 rewordings; **0 cross a 512-token boundary**; 0 of 500 control names appear in train text|
+|**A15**|Probe floor: random and untrained sit mid-list|**PASS**|random scorer: mean rank fraction 0.502, top-1 0.558% over 36,000 prompts; untrained model: 0.500, top-1 0.575% over 4,000; mean candidate list 210|
+|**A16**|Loader: order, resume, shapes|**PASS**|293,740 sequences of 512; same seed reproduces the order, a different seed does not, the order is a permutation, and a resume from (seed, position) matches an unbroken run|
+|**A17**|Model beats the per-subject unigram baseline|**PASS**|Pile-CC: model 6.7886 vs unigram 7.559; Github: model 5.7371 vs unigram 6.3888; PubMed: model 6.5792 vs unigram 7.4554; FreeLaw: model 5.8735 vs unigram 6.8493; Wikipedia: model 7.0163 vs unigram 7.72; USPTO: model 7.0021 vs unigram 7.9605|
+|**A18**|Biography facts are learnable|**PASS**|5,830 steps / 96M tokens in 2.22 h of training. test top-1: frequent 32.9%, normal 2.6%, rare 0.6%, control 0.6% (frequent/control = 57.997x, needs 2x; monotone yes). paraphrase top-1: frequent 1.7%, control 0.4%|
+
+**A13's observation count is 48 — exactly data 5's, not above it.** The same four
+values, the same ` The` / ` A` / ` He` keys (§5).
+
+**A12's chi-square is identical to data 5** down to the third decimal, which is
+the check that the facts really did not move: the test is over the realised
+value counts, and those are the same 12,500 draws.
+
+A17 still compares against the prompt-3 smoke run, as in data 5: the Pile side
+of `train.bin` is unchanged (same documents, same selection, same 27,000,000
+tokens per subject), so the per-subject unigram baselines and the comparison
+hold. The sharper numbers are §9's full-test-half losses.
 
 ---
 
-## 9. A18 — PENDING
+## 9. A18 — re-run on the new tokens
+
+Same protocol as data 5: T1-pkm, seed 0, `data.source: real`, 5,830 steps =
+95.5M tokens, evaluation at step 0 and every 972 steps.
+
+**The evaluation set is provably the same.** `select_eval_rows` depends only on
+`people.jsonl` and the data seed, both unchanged, and the check was run rather
+than assumed: the same **1,200 people** (all 300 `frequent`, 300 random each of
+`normal`, `rare`, `control`), the same **36,000 rows in the same order by
+`fact_id`**, the same `true_value` on every row. 26,182 of the 36,000 prompts
+are reworded; nothing else about the evaluation differs.
+
+| | data 5 run 3 | **data 6** |
+|---|---|---|
+| verdict | PASS | **PASS** |
+| frequent test top-1 ÷ control | 53.67× | **58.00×** |
+| monotone frequent ≥ normal ≥ rare | 32.20 ≥ 2.50 ≥ 0.70 | **32.87 ≥ 2.63 ≥ 0.60** |
+| training time | 2.00 h | 2.22 h (wall 2.44 h) |
+
+The extra 13% of training time is wall-clock on a machine that was not idle —
+this report and the template checks were being written while it ran. Tokens per
+step, batch size and step count are identical.
+
+### 9.1 Test prompts (rewordings 2–3)
+
+| tier | top-1 data 5 | **top-1 data 6** | mean rank data 5 | **mean rank data 6** | rank fraction data 6 |
+|---|---:|---:|---:|---:|---:|
+| `frequent` | 32.200% | **32.867%** | 13.12 | **13.38** | 0.069 |
+| `normal` | 2.500% | **2.633%** | 59.88 | **59.68** | 0.288 |
+| `rare` | 0.700% | **0.600%** | 90.59 | **91.92** | 0.441 |
+| `control` | 0.600% | **0.567%** | 104.90 | **106.68** | 0.508 |
+
+`control` sits at the middle of a candidate list averaging 210, where A15's
+random scorer and untrained model also sit, and where a person the model has
+never seen has to sit.
+
+### 9.2 Paraphrase prompts (held-out frames)
+
+| tier | top-1 data 5 | **top-1 data 6** | mean rank data 5 | **mean rank data 6** |
+|---|---:|---:|---:|---:|
+| `frequent` | 1.167% | **1.717%** | 82.12 | **80.57** |
+| `normal` | 0.433% | **0.683%** | 99.11 | **99.06** |
+| `rare` | 0.483% | **0.483%** | 102.71 | **102.05** |
+| `control` | 0.367% | **0.433%** | 105.64 | **106.25** |
+
+### 9.3 Per held-out frame — what I see
+
+Measured from the run's own final checkpoint by `bench/a18_frames.py`, which
+reproduces the aggregate numbers above exactly (32.867% / 1.717% / …), so this
+is the same measurement split four ways rather than a second experiment.
+
+| frame | template (`employer`) | frequent top-1 | frequent mean rank | all tiers pooled, top-1 |
+|---|---|---:|---:|---:|
+| **record** | `{Subj} is on record as an employee of {v}.` | **4.400%** | **60.4** | 1.583% |
+| **topic** | `When it comes to {poss} employer, the register says {v}.` | 1.200% | 82.6 | 0.683% |
+| **profile line** | `{Poss} profile reads as follows -- current employer: {v}.` | 0.733% | 85.8 | 0.567% |
+| **question** | `Question: where does {subj} work? Answer: {v}.` | 0.533% | 93.4 | 0.483% |
+
+**A rise was not expected, and there is one: frequent-tier paraphrase top-1 went
+1.167% → 1.717%, and the mean rank came in from 82.12 to 80.57.** What the split
+shows is where it is not coming from: **the question frame, the one this step
+made grammatical, is the weakest of the four** (0.533% frequent), while the
+`is on record as` frame carries most of the recall (4.400%, mean rank 60.4
+against the control's ~107).
+
+That is the shape the relation fix predicts. "Is on record as **an employee
+of**" asks exactly the relation the training sentences now state, so a fact
+stored from *"after a few earlier jobs she now works for Ericsson"* is reachable
+from it; it was not reachable from *"her office is four floors up in a building
+owned by Ericsson"*. Fixing `her` → `she` removes an ungrammaticality but does
+not change which relation the frame asks, and the numbers agree: that frame
+moved least.
+
+Two honest caveats:
+
+1. **The per-frame numbers have no data-5 counterpart.** data 5's probe did not
+   group by template, and this run's checkpoint overwrote the previous one, so
+   the only before/after comparison available is the aggregate.
+2. **0.55 points on a ~1% baseline is small**, and `rare` and `control` did not
+   move. The result that is solid is the *ordering across frames within this
+   run*, where the record frame beats the question frame by 8× on 6,000 prompts
+   each. Paraphrase recall remains close to the floor, which is still the
+   interesting negative from prompts 4 and 5: the fact is demonstrably in there
+   (frequent paraphrase mean rank 80.6 against control 106.3) but a
+   structurally new wording returns it as the top answer under 2% of the time.
+   The exposure budget is the lever, and that is a training-plan decision.
+
+### 9.4 Frequent tier, test prompts, per attribute
+
+| attribute | candidates | data 5 | **data 6** |
+|---|---:|---:|---:|
+| `university` | 300 | 43.00% | **44.67%** |
+| `major` | 100 | 27.00% | **37.33%** |
+| `employer` | 250 | 48.00% | **35.83%** |
+| `birth_city` | 200 | 26.33% | **27.83%** |
+| `birth_date` | 200 | 16.67% | **18.67%** |
+
+Unlike data 5's three runs, **this comparison has only one difference**: the
+people, the facts and the evaluation rows are identical, so the whole of the
+movement is the sentence wording (plus whatever MPS nondeterminism the
+determinism checks do not cover). Read it as one sample all the same: `major`
+up 10 points and `employer` down 12 on 600 prompts each is well inside what a
+single run can do. `birth_date` stays hardest, as the two-token scoring
+predicts — a date counts only when month *and* day are right.
+
+### 9.5 Held-out loss on the test half, all documents
+
+| subject | data 5 | **data 6** | documents |
+|---|---:|---:|---:|
+| `Github` | 2.6820 | **2.6986** | 1,815 |
+| `FreeLaw` | 3.6294 | **3.6362** | 995 |
+| `PubMed Central` | 3.8360 | **3.8476** | 713 |
+| `Wikipedia (en)` | 4.7194 | **4.7297** | 3,687 |
+| `USPTO Backgrounds` | 4.8162 | **4.8273** | 3,084 |
+| `Pile-CC` | 5.0916 | **5.1015** | 3,087 |
+
+Every subject is 0.007–0.017 nats worse, consistently, which is what spending
+0.3 points more of the stream on biographies (9.72% → 10.02%) does to the Pile
+side at a fixed token budget. `USPTO Backgrounds` — never trained on — still
+tracks the others down, and every subject still beats its A17 unigram baseline
+by 2.5–3.7 nats.
+
+![fact recall per tier](../bench/results/learnability_t1_pkm.png)
 
 ---
 
-## 10. Tests — PENDING
+## 10. Tests
+
+**190 passed** (data 5: 179). The 11 new cases, all in `tests/test_bios.py`:
+
+| test | what would break it |
+|---|---|
+| `test_relations_name_every_attribute` | `RELATIONS` missing an attribute or a `{v}` |
+| `test_obj_where_the_subject_belongs_is_rejected` (4 cases) | the guard not firing on `"Question: what did {obj} study? Answer: {v}."` — the exact bug, plus the other three question frames |
+| `test_the_shipped_templates_have_no_obj_as_subject` | the bug coming back into the shipped set |
+| `test_every_template_renders_for_both_genders_by_name_and_pronoun` | any of the 120 templates × {female, male} × {name, pronoun} leaving a placeholder, losing its value offset, or not opening with a capital — 480 renderings |
+| `test_a_template_that_leaves_a_placeholder_behind_is_rejected` | the render guard not catching a brace that survives formatting |
+| `test_an_unknown_placeholder_is_rejected` | a template using a placeholder `mention()` does not provide |
+| `test_pre_value_wording_is_distinct_inside_each_attribute` | two of an attribute's twenty frames reading alike in the last three words before the value |
+| `test_two_training_templates_with_the_same_pre_value_wording_are_rejected` | the new `check_templates` guard not firing on that |
 
 ---
 
-## 11. Ready to freeze — PENDING
+## 11. Ready to freeze
+
+| | |
+|---|---|
+| `train.bin` | 150,395,392 tokens / 293,741 sequences, sha256 `fb29702d8171fc45e209e94d3aacaf4f0a3d81479a5b40860952178f3d6d5ec4` |
+| bundle `data_sha256` | `58ed83dd46ec985fac43f406705e1db9d1d9b0e6a1aceaa2dfea15f5c739e304` — **the freeze hash**, over the file list alone (data 5 §8.1) |
+| bundle | 59 files, 1,151,392,587 bytes = 1,098.0 MiB (718.5 MiB / 753,381,862 bytes without `raw/`) |
+| `data/v1_sample/` | 49 files, 8.5 MB, verifies 47/47 against its own manifest |
+| config fingerprints | pile `3f4303d9b926b730`, bios `7a8c48a96792d725`, pack `15643c90477c31a7` |
+| Pile revision | `3be90335b66f24456a5d6659d9c8d208c0357119` |
+| checks | **A1–A18 all PASS** |
+| tests | **190 passed** |
+| `distribution.hf_repo` | still the `<owner>` placeholder — Part B fills it in |
+
+The manifest was regenerated from a clean tree (`git.dirty: false`, stamped
+`de8356f`). `data_sha256` covers `files` alone, so the commits after it — this
+report included — cannot move it, and that was checked rather than assumed:
+regenerating after the validation run gives a manifest stamped `26f22f5`,
+`dirty: true`, with an **identical `data_sha256` and an identical file list**.
+The committed copy is the clean-tree one.
+
+The A18 run above trained on `train.bin` sha256 `fb29702d…`, the tokens this
+bundle holds now, so its result stands as the bundle's learnability evidence.
+
+**Part A is done. Part B (freeze, tag, publish) is on hold for the go-ahead and
+the Hugging Face username, and will report `data_sha256` as the freeze hash.**
+
+---
+
+## 12. What could not be followed as written
+
+1. **Four of the prescribed templates needed a word changed** (§4.1): three were
+   8-token frames against the 9-token floor, and one contradicted an unchanged
+   template. Raised before the rebuild and settled by you; the built wording is
+   in §4.1 and §4.2–4.6.
+2. **48 template-word rows remain, by instruction** — the same four values as
+   data 5 (`Thessaloniki, Greece`, `Theology`, `Aalborg University`,
+   `Heineken`). Reported, not failed, as the design says. Dropping those four
+   values would close them without touching a template.
+3. **Six unchanged templates I think still fail the relation rule** (§7.2), led
+   by `university[18]` *"completed every requirement and then some at"*. Not
+   edited — they are outside the tables, and the call is yours.
+4. **The pull request description could not be updated from here.** There is no
+   `gh` CLI on this machine and no GitHub token in the environment, and reading
+   the git credential store was refused. The section to paste is in §13.
+5. **No per-frame paraphrase numbers exist for data 5** (§9.3), so that
+   comparison is aggregate-only.
+
+---
+
+## 13. Pull request section (to paste into PR #1)
+
+PR #1 (`data/step1-bios` → `main`) is still open, so this work continued on that
+branch and no new pull request was opened. The section below is the one to add
+to its description; it is also saved alongside this report as the text actually
+intended for the PR body.
+
+## Data prompt 6 — the templates state the fact they carry
+
+Report: `reports/data6_template_fix_report.md` (now the current source for data v1;
+`data5_fix_report.md` is marked historical for the final figures).
+
+**Two problems fixed.**
+
+1. **Relation mismatch.** 53 of the 100 training templates asserted something
+   adjacent to the fact rather than the fact: *"was offered a place at"* instead
+   of a degree, *"every essay she wrote that year was about"* instead of the
+   degree subject, *"a building owned by"* instead of an employer, *"shows the
+   date"* with no word for which date. The held-out probes ask the strict
+   relation (*"a graduate of"*, *"an employee of"*, *"born on"*), so the old text
+   could score a model wrong for not inferring something it was never told. The
+   rule now lives in the code: `RELATIONS` in `data/bios_data.py`, next to the
+   templates, with what is **not** enough spelled out.
+2. **Grammar bug.** All five held-out question frames used `{obj}` where the
+   subject belongs, so a pronoun biography read *"Question: what did **her**
+   study?"*. They take `{subj}` now.
+
+**59 templates replaced in place** — 53 training, 6 held out — at the same list
+index, so `template_id`s, every person's template picks and the held-out ids do
+not move. The university profile line also changed from *"university
+attended:"* to *"degree awarded by:"*, since the other three university probes
+ask about graduation.
+
+**Nothing about any person moved.** Person ids, names, genders, tiers, target
+exposures and all five facts are identical for all 2,500 people (checked), and
+every one of the 100,000 fact rows keeps its `fact_id`, `template_id`, `role`
+and `true_value`. 9,847 of 10,000 biographies changed text.
+
+**Guards and tests.** `check_templates()` now rejects `{obj}` after a question
+word or auxiliary, requires every template to render for both pronoun sets and
+for a name with no placeholder left behind, and requires the last three words
+before the value to be distinct inside each attribute's twenty training
+templates. Twelve new tests, including one that fails on
+`"Question: what did {obj} study? Answer: {v}."` and one that renders all 120
+templates for both genders, by name and by pronoun.
+
+**Every problem from prompts 2–5 is still fixed** (full table in the report):
+0 answer leaks on all three channels, asides 16 → 13 of 100, verb/object splits
+0, openers still 45/34/21, no British spelling, shortest frame still 9 GPT-2
+tokens, no contradictions across a person's four rewordings, and the same four
+values (no new ones) whose ranking key a template word hits.
+
+**New in the hand-check pack:** `data/v1/samples/templates_rendered.md` — all 120
+frames rendered with a female pronoun and with a male name against a fixed
+example value, with the data-5 wording beside every changed one.
+
