@@ -48,6 +48,7 @@ class ProbeRow:
     true_value: str
     prompt_ids: List[int]
     true_index: int          # index of the true value in the candidate list
+    template_id: int = -1    # which frame worded this prompt
 
 
 @dataclass
@@ -124,7 +125,8 @@ class ProbeSet:
             out.append(ProbeRow(
                 fact_id=r["fact_id"], person_id=r["person_id"], split=r["split"],
                 tier=r["tier"], attribute=attr, role=r["role"],
-                true_value=r["true_value"], prompt_ids=list(ids), true_index=ti))
+                true_value=r["true_value"], prompt_ids=list(ids), true_index=ti,
+                template_id=int(r["template_id"])))
         return cls(out, cand)
 
     def __len__(self) -> int:
@@ -249,12 +251,18 @@ class ProbeSet:
             "by_tier_role": {},
             "by_attribute": {},
             "by_tier_role_attribute": {},
+            # Per held-out frame: the four paraphrase frames are structurally
+            # different questions, so one of them lagging is worth seeing.
+            "by_role_template": {},
+            "by_tier_role_template": {},
         }
         groups: Dict[Tuple, List[int]] = defaultdict(list)
         for i, r in enumerate(self.rows):
             groups[("tier_role", r.tier, r.role)].append(i)
             groups[("attribute", r.attribute)].append(i)
             groups[("full", r.tier, r.role, r.attribute)].append(i)
+            groups[("role_template", r.role, r.template_id)].append(i)
+            groups[("tier_role_template", r.tier, r.role, r.template_id)].append(i)
         for key, idx in groups.items():
             sizes = [self.candidates[self.rows[i].attribute].n for i in idx]
             agg = _agg(rank[idx], top1[idx], margin[idx], sizes)
@@ -262,6 +270,10 @@ class ProbeSet:
                 out["by_tier_role"][f"{key[1]}/{key[2]}"] = agg
             elif key[0] == "attribute":
                 out["by_attribute"][key[1]] = agg
+            elif key[0] == "role_template":
+                out["by_role_template"][f"{key[1]}/t{key[2]}"] = agg
+            elif key[0] == "tier_role_template":
+                out["by_tier_role_template"][f"{key[1]}/{key[2]}/t{key[3]}"] = agg
             else:
                 out["by_tier_role_attribute"][f"{key[1]}/{key[2]}/{key[3]}"] = agg
         out["_rank"] = rank

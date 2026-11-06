@@ -302,6 +302,8 @@ def main(argv=None) -> int:
         "final_by_tier_role": final["by_tier_role"],
         "final_by_attribute": final["by_attribute"],
         "final_by_tier_role_attribute": final["by_tier_role_attribute"],
+        "final_by_role_template": final.get("by_role_template", {}),
+        "final_by_tier_role_template": final.get("by_tier_role_template", {}),
         "heldout_test": evals[-1]["heldout"],
         "heldout_test_all_documents": heldout_all,
         "heldout_cap_in_loop": args.max_heldout_docs,
