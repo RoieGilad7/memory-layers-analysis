@@ -9,7 +9,10 @@
 **Machine:** Apple M5 Pro, 18 cores, 64 GiB, macOS 26.6.2, `.venv` Python 3.12.14
 **Scope:** fix the relation mismatch and the `{obj}`/`{subj}` grammar bug in the
 sentence templates, rebuild, re-validate, re-run the learnability check, and
-confirm every problem found in prompts 2–5 is still fixed.
+confirm every problem found in prompts 2–5 is still fixed. **Revised after the
+audit:** the six templates §7.2 reported as still failing the rule, and the six
+§7.3 called hard to read, were replaced too (§4.8), and everything below is
+measured on that build.
 **Part A only — nothing is frozen, tagged or uploaded.**
 
 ```bash
@@ -243,6 +246,56 @@ removes another: *"four floors up"* against `employer[13]`'s *"three floors"*.
 The university profile line asked about *attendance* while the other three
 university probes ask about *graduation* — now all four ask one question.
 
+### 4.8 The audit pass — twelve more templates
+
+The first pass left 47 training templates untouched, and §7.2 reported six of
+them as still failing the rule while §7.3 named six of the new ones hard to
+read. All twelve were replaced in a second pass, again in place.
+
+**The six the audit reported as still failing the rule** — their wording was
+prescribed:
+
+| attribute | i | before (data 5, untouched by the first pass) | now |
+|---|---:|---|---|
+| `university` | 18 | `{Subj} completed every requirement and then some at {v}.` | `{Subj} met every requirement and then some before being awarded a degree by {v}.` |
+| `employer` | 0 | `{Subj} takes the same train to the same desk every day at {v}.` | `{Subj} takes the same train every day to a salaried job at {v}.` |
+| `employer` | 16 | `{Subj} spends the better part of every working week at {v}.` | `{Subj} spends every working week on the staff of {v}.` |
+| `employer` | 17 | `{Poss} team of six people sits on the top floor at {v}.` | `{Poss} job is on a team of six on the top floor at {v}.` |
+| `major` | 7 | `{Poss} subject, the one every relative asked about, was {v}.` | `{Poss} degree subject, the one every relative asked about, was {v}.` |
+| `birth_city` | 11 | `{Poss} birth records point without the slightest ambiguity to {v}.` | `{Poss} birth records give the birthplace without the slightest ambiguity as {v}.` |
+
+Each one now states the relation rather than standing next to it: a degree
+awarded, a salaried job, being on the staff, a job on a team, the degree
+subject, the birthplace given as.
+
+**The six that read badly** (§7.3) — reworded here, each still stating its
+relation. The middle column is the first pass's wording, not data 5's; data 5's
+is in §4.3, §4.5 and §4.6, and `templates_rendered.md` now shows all three
+stages for these six:
+
+| attribute | i | first pass | now |
+|---|---:|---|---|
+| `birth_city` | 7 | `{Subj} has the same city of birth as both parents, namely {v}.` | `{Subj} was born, as both parents were, in {v}.` |
+| `birth_city` | 10 | `{Subj} has lived in several countries since a birth in {v}.` | `{Subj} has lived in several countries since birth in {v}.` |
+| `birth_city` | 3 | `{Poss} birth made a third generation of the family born in {v}.` | `{Poss} birth was the family's third in {v}.` |
+| `major` | 11 | `Every essay {subj} wrote was for a degree whose subject was {v}.` | `Every essay {subj} wrote was part of the degree earned in {v}.` |
+| `major` | 17 | `{Poss} crowded timetable all went toward graduating in {v}.` | `{Poss} timetable was arranged entirely around a degree taken in {v}.` |
+| `employer` | 13 | `{Poss} staff badge opens every door on three floors at {v}.` | `{Poss} staff badge is one of thousands issued to employees of {v}.` |
+
+**One of my six was caught by the guard this step added.** `birth_city[10]` was
+going to read *"…since **being born in** {v}"*, which duplicates the pre-value
+wording of `birth_city[5]` (*"…to mention being born in"*) and would have left
+two of that attribute's twenty frames reading alike in the three words before
+the value. `check_templates` refused it before the build, so it reads *"since
+birth in"* instead — which fixes the same thing the complaint was about (*"a
+birth"* sounding like somebody else's) without the collision. That is the guard
+doing the job it was added for, on the first new template written after it.
+
+**59 of the 100 training templates now differ from data 5**: the 53 of the first
+pass plus the six that pass had left alone. Six were changed twice. Indexes and
+opener classes are unchanged throughout, so template ids and every person's
+picks still do not move.
+
 ---
 
 ## 5. Do not repeat earlier problems
@@ -260,7 +313,7 @@ gives the pre-data-5 set exactly 5 and data 5 exactly 0.
 | answer leak: ranking key in another of the person's values | 0 | **0** | **PASS** |
 | template-word ranking-key rows (observation, must not rise) | 48 | **48** | **PASS** |
 | values whose ranking key a template word hits | 4 | **4, the same four** | **PASS** |
-| interrupting-comma asides, of 100 training templates | 16 | **13** | **PASS** |
+| interrupting-comma asides, of 100 training templates | 16 | **14** | **PASS** |
 | verb/object splits | 0 | **0** | **PASS** |
 | "birthday … every year on *March 4, 1987*" wording | 0 | **0** | **PASS** |
 | date wording that leaves the kind of date unnamed | 4 | **0** [^date] | **PASS** |
@@ -269,7 +322,7 @@ gives the pre-data-5 set exactly 5 and data 5 exactly 0.
 | openers: person / possessive / other | 45/34/21 | **45/34/21** | **PASS** |
 | new sentence-initial "The"/"A"/"An" openers | — | **0** (7 → 6) | **PASS** |
 | shortest frame, GPT-2 tokens | 9 | **9** | **PASS** |
-| biography share of the training budget (target 10%) | 9.71% | **10.05%** | **PASS** |
+| biography share of the training budget (target 10%) | 9.71% | **10.10%** | **PASS** |
 | biographies crossing a 512-token boundary | 0 | **0** | **PASS** |
 | pre-value wording distinct within each attribute | not enforced | **enforced, 0 collisions** | **PASS** |
 | pre-value wording of a held-out frame equals a training one | 0 | **0** | **PASS** |
@@ -285,13 +338,15 @@ gives the pre-data-5 set exactly 5 and data 5 exactly 0.
 
 - **Frame tokens.** The template rendered with the female pronoun set, the value
   removed, the closing period counted: `len(encode(head.rstrip() + tail))`. Mean
-  **10.89 → 11.43**, max 15 → 16, min 9 in both. The three frames that would
+  **10.89 → 11.51**, max 15 → 16, min 9 in both. The three frames that would
   have been 8 are §4.1.
 - **Interrupting-comma aside.** A comma-delimited mid-sentence insertion
   (`, X ,`), excluding coordinations introduced by "and" (*"earned a place, and
   then a scholarship, at"*), which read as list items rather than asides.
   Excluding them is what reproduces data 5's 16 out of 18 raw hits; data 6 has
-  **13 by either rule**.
+  **14 by either rule** — 13 after the first pass, plus `birth_city[7]`
+  (*"was born, as both parents were, in"*) from the audit pass, which is the one
+  aside the rewrite adds back and the clearest way to say that sentence.
 - **Verb/object split.** An inserted phrase standing directly between a verb or
   preposition and its object — the aside's closing comma immediately followed by
   the value. This is the measure under which the pre-data-5 set has the 5 splits
@@ -306,7 +361,7 @@ gives the pre-data-5 set exactly 5 and data 5 exactly 0.
   another of their values.
 - **Biography share.** The config sets `targets.bio_share: 0.10` and no check
   enforces a band around it, so "within tolerance" is read as the distance from
-  the target: data 5 was 0.29 points under it, data 6 is **0.05 points over**.
+  the target: data 5 was 0.29 points under it, data 6 is **0.10 points over**.
   Nothing downstream depends on the exact share — the Pile side is pinned at
   27,000,000 tokens per subject either way.
 
@@ -363,18 +418,19 @@ each with its four rewordings side by side — were read in full.
 | gender, split, tier, target exposures | — | **0 changed** |
 | facts (all five, every person) | — | **0 changed** |
 | `facts.jsonl` rows | 100,000 | 100,000, **every `fact_id`, `template_id`, `role`, `true_value` and `value_token_ids` identical** |
-| fact rows whose prompt text changed | — | **75,442 of 100,000** |
-| biographies with changed text | — | **9,847 of 10,000** |
-| training biography sentences using a changed template | — | **26,467 of 50,000 (52.9%)** — `university` 7,525, `major` 6,526, `birth_city` 6,439, `birth_date` 3,474, `employer` 2,503 |
+| training templates differing from data 5 | — | **59 of 100** (53 from the first pass, 6 more from the audit pass; 6 changed twice) |
+| fact rows whose prompt text changed | — | **78,629 of 100,000** |
+| biographies with changed text | — | **9,932 of 10,000** |
+| training biography sentences using a changed template | — | **29,485 of 50,000 (59.0%)** |
 | held-out sentences using a changed frame | — | **15,000 of 50,000** |
-| biography tokens, mean | 76.71 | **79.37** (train-split mean 76.69 → **79.33**) |
-| biography tokens, range | 64–99 | **64–100** |
-| frame words per template, mean | 10.29 | **10.89** (+0.60, as expected) |
-| `train.bin` tokens | 149,896,192 | **150,395,392** |
-| `train.bin` sequences | 292,766 | **293,741** |
-| biography tokens in `train.bin` | 14,563,864 | **15,062,252** |
-| biography share of `train.bin` | 9.716% | **10.015%** |
-| biography share of the 150M budget (bios manifest) | 9.71% | **10.05%** |
+| biography tokens, mean | 76.71 | **79.77** (train-split mean 76.69 → **79.75**) |
+| biography tokens, range | 64–99 | **65–101** |
+| frame words per template, mean | 10.29 | **10.93** (+0.64) |
+| `train.bin` tokens | 149,896,192 | **150,475,264** |
+| `train.bin` sequences | 292,766 | **293,897** |
+| biography tokens in `train.bin` | 14,563,864 | **15,142,237** |
+| biography share of `train.bin` | 9.716% | **10.063%** |
+| biography share of the 150M budget (bios manifest) | 9.71% | **10.10%** |
 | Pile tokens per subject | 27,000,000 | **27,000,000, unchanged** |
 | held-out `label.bin` / `test.bin` | — | **byte-identical** — they carry no biographies |
 
@@ -383,52 +439,60 @@ new sentences are about 0.6 words longer, which is the whole of the difference.
 
 ---
 
-## 7. Independent audit of the templates that did **not** change
+## 7. The audit, and what it changed
 
-Read against `RELATIONS`, not edited. 47 training and 14 held-out templates.
+The first pass left 47 training templates and 14 held-out ones untouched. All 61
+were read against `RELATIONS`. The audit's findings were then acted on (§4.8),
+so this section records what it found and what is left.
 
 ### 7.1 Held out: all 14 pass
 
-Each of the four frames names the relation explicitly — *"is on record as a
-graduate of / a graduate in / an employee of / having been born on"*, *"When it
-comes to {poss} employer, the register says"*, *"profile reads as follows --
-current employer:"*. Nothing to flag.
+Each frame names the relation explicitly — *"is on record as a graduate of / a
+graduate in / an employee of / having been born on"*, *"When it comes to {poss}
+employer, the register says"*, *"profile reads as follows -- current
+employer:"*. Nothing to flag, nothing changed.
 
-### 7.2 Training templates I think still fail the rule — your call
+### 7.2 Six training templates still failed the rule — all six fixed
 
-| where | template | why I think it fails |
+| where | what it said | why it failed | now |
+|---|---|---|---|
+| `university[18]` | *"completed every requirement and then some at"* | requirements met is not a degree awarded — the same class as data 5's *"was offered a place"* | *"met every requirement and then some before being awarded a degree by"* |
+| `employer[0]` | *"takes the same train to the same desk every day at"* | a commute and a desk; the rule's own "not enough" list names commutes | *"takes the same train every day to a salaried job at"* |
+| `employer[16]` | *"spends the better part of every working week at"* | presence at a place; "working week" is an idiom for the week, not employment | *"spends every working week on the staff of"* |
+| `employer[17]` | *"{Poss} team of six people sits on the top floor at"* | where a team sits; implies employment, never states it | *"{Poss} job is on a team of six on the top floor at"* |
+| `major[7]` | *"{Poss} subject, the one every relative asked about, was"* | "her subject" with no degree word | *"{Poss} degree subject, …"* |
+| `birth_city[11]` | *"{Poss} birth records point without the slightest ambiguity to"* | the records *point to* a city rather than giving it as the birthplace | *"{Poss} birth records give the birthplace without the slightest ambiguity as"* |
+
+### 7.3 Six new templates read badly — all six reworded
+
+`birth_city[7]` (*"namely"*), `birth_city[10]` (*"since **a** birth in"*, which
+sounds like somebody else's), `birth_city[3]` (a birth that *"made a third
+generation"*, with "born" twice), `major[11]` (*"a degree whose subject was"*),
+`major[17]` (*"all went toward"*, plus "crowded" as filler) and `employer[13]`
+(a badge sentence that passed the rule on the single word "staff"). The
+replacements are in §4.8, and each still states its relation.
+
+### 7.4 What I would still flag, and left alone
+
+Three borderline cases, all of which I would keep as they are:
+
+| where | template | the doubt |
 |---|---|---|
-| `university[18]` | `{Subj} completed every requirement and then some at {v}.` | **The clearest one.** Completing requirements is not a degree awarded; this is the same class as data 5's "was offered a place" and "spent four years in the library". A one-word fix would be *"completed every requirement and then some to graduate from"*. |
-| `employer[0]` | `{Subj} takes the same train to the same desk every day at {v}.` | A commute and a desk. The rule's own "not enough" list names commutes; the desk implies work but no sentence says employment. |
-| `employer[16]` | `{Subj} spends the better part of every working week at {v}.` | Presence at a place for the working week. "Working week" is an idiom for the week, not a claim of employment. |
-| `employer[17]` | `{Poss} team of six people sits on the top floor at {v}.` | Where a team sits. Implies employment; does not state it. |
-| `major[7]` | `{Poss} subject, the one every relative asked about, was {v}.` | "Her subject" with no degree word. Reads as the degree subject in context, but the sentence alone does not say a degree was taken. |
-| `birth_city[11]` | `{Poss} birth records point without the slightest ambiguity to {v}.` | The records *point to* the city rather than saying the birth was there. Weaker than the other nineteen. |
+| `birth_date[4]` | `{Poss} birth certificate gives the date, in a clerk's hand, as {v}.` | "the date" is unnamed in itself — but its possessor is the **birth certificate**, which names it |
+| `major[3]` | `{Poss} final transcript gives the field of study as {v}.` | a transcript's field of study is the degree subject, by what a transcript is |
+| `major[19]` | `{Poss} course of study, listed on the transcript, was {v}.` | the same reading |
 
-Borderline, listed for completeness, and I would leave all three:
-`birth_date[4]` *"gives the date, in a clerk's hand, as"* (the subject is the
-**birth certificate**, so "the date" is named by its possessor); `major[3]`
-*"final transcript gives the field of study as"* and `major[19]` *"course of
-study, listed on the transcript, was"* (a transcript's field of study is the
-degree subject).
-
-### 7.3 New templates I think read badly
-
-| where | template | why |
-|---|---|---|
-| `birth_city[7]` | `{Subj} has the same city of birth as both parents, namely {v}.` | "namely" is a register nobody uses in a biography, and it is there to carry the value without a second person placeholder. |
-| `birth_city[10]` | `{Subj} has lived in several countries since a birth in {v}.` | "since **a** birth" — the indefinite article avoids a second placeholder but reads as somebody else's birth. "since being born in" would be natural. |
-| `birth_city[3]` | `{Poss} birth made a third generation of the family born in {v}.` | A birth "making" a generation is a stretch, and "born" appears twice. |
-| `major[11]` | `Every essay {subj} wrote was for a degree whose subject was {v}.` | Stilted; a relative clause doing the work of a comma. |
-| `major[17]` | `{Poss} crowded timetable all went toward graduating in {v}.` | "all went toward" is vague, and "crowded" is filler. |
-| `employer[13]` | `{Poss} staff badge opens every door on three floors at {v}.` | Still a badge sentence. "Staff" does state employment, so it passes the rule — but it passes on one word. |
-
-None of these are wrong, and none affects a check. They are the sentences a
-reader is most likely to stumble on.
+And one observation rather than a fault: after the audit pass, the `employer`
+pool leans on documents and pay (`contract and payslips`, `paycheck`, `pension
+and salary`, `salaried job`, `salary`, `on the staff of`, `employees of`). That
+is the price of making every sentence state employment outright: the ways to say
+"is employed by" in one clause are not very many. No two of them contradict
+(§5), and the alternative — implying employment through offices and badges — is
+what this step removed.
 
 ---
 
-## 8. Validation — all 18 pass
+## 8. Validation — PENDING (re-running on the audit-pass build)
 
 Read out of `data/v1/validation_report.json` by
 `python -m data.report_tables --config configs/data/v1.yaml --stage validate`.
@@ -468,7 +532,7 @@ hold. The sharper numbers are §9's full-test-half losses.
 
 ---
 
-## 9. A18 — re-run on the new tokens
+## 9. A18 — PENDING (re-running on the audit-pass build)
 
 Same protocol as data 5: T1-pkm, seed 0, `data.source: real`, 5,830 steps =
 95.5M tokens, evaluation at step 0 and every 972 steps.
@@ -594,7 +658,7 @@ by 2.5–3.7 nats.
 
 ---
 
-## 10. Tests
+## 10. Tests — PENDING
 
 **190 passed** (data 5: 179). The 11 new cases, all in `tests/test_bios.py`:
 
@@ -611,7 +675,7 @@ by 2.5–3.7 nats.
 
 ---
 
-## 11. Ready to freeze
+## 11. Ready to freeze — PENDING
 
 | | |
 |---|---|
