@@ -4,6 +4,7 @@ Follows karpathy/nanoGPT: pre-LayerNorm blocks, causal self-attention, 4x GELU M
 weight-tied token embedding and output head, normal(0, 0.02) init with the residual
 projections scaled by 1/sqrt(2 * n_layer).
 """
+
 from __future__ import annotations
 
 import math
@@ -46,7 +47,8 @@ class GPTConfig:
             self.ffn_types = kinds
         if len(self.ffn_types) != self.n_layer:
             raise ValueError(
-                f"ffn_types has {len(self.ffn_types)} entries for {self.n_layer} layers")
+                f"ffn_types has {len(self.ffn_types)} entries for {self.n_layer} layers"
+            )
         bad = set(self.ffn_types) - {"dense", "pkm", "peer"}
         if bad:
             raise ValueError(f"unknown ffn types {sorted(bad)}")
@@ -69,7 +71,8 @@ class CausalSelfAttention(nn.Module):
         shape = (B, T, self.n_head, C // self.n_head)
         q, k, v = (t.view(shape).transpose(1, 2) for t in (q, k, v))
         y = F.scaled_dot_product_attention(
-            q, k, v, dropout_p=self.dropout if self.training else 0.0, is_causal=True)
+            q, k, v, dropout_p=self.dropout if self.training else 0.0, is_causal=True
+        )
         y = y.transpose(1, 2).contiguous().view(B, T, C)
         return self.resid_dropout(self.c_proj(y))
 
@@ -116,13 +119,15 @@ class GPT(nn.Module):
     def __init__(self, cfg: GPTConfig):
         super().__init__()
         self.config = cfg
-        self.transformer = nn.ModuleDict(dict(
-            wte=nn.Embedding(cfg.vocab_size, cfg.n_embd),
-            wpe=nn.Embedding(cfg.block_size, cfg.n_embd),
-            drop=nn.Dropout(cfg.dropout),
-            h=nn.ModuleList([Block(cfg, i) for i in range(cfg.n_layer)]),
-            ln_f=nn.LayerNorm(cfg.n_embd, bias=cfg.bias),
-        ))
+        self.transformer = nn.ModuleDict(
+            dict(
+                wte=nn.Embedding(cfg.vocab_size, cfg.n_embd),
+                wpe=nn.Embedding(cfg.block_size, cfg.n_embd),
+                drop=nn.Dropout(cfg.dropout),
+                h=nn.ModuleList([Block(cfg, i) for i in range(cfg.n_layer)]),
+                ln_f=nn.LayerNorm(cfg.n_embd, bias=cfg.bias),
+            )
+        )
         self.lm_head = nn.Linear(cfg.n_embd, cfg.vocab_size, bias=False)
         if cfg.tie_embeddings:
             self.transformer.wte.weight = self.lm_head.weight
@@ -166,8 +171,11 @@ class GPT(nn.Module):
             mems[i].set_mask_slots(ids, renormalize)
 
     def read_logs(self) -> Dict[int, Any]:
-        return {i: m.last_read() for i, m in self.memory_layers.items()
-                if m.last_read() is not None}
+        return {
+            i: m.last_read()
+            for i, m in self.memory_layers.items()
+            if m.last_read() is not None
+        }
 
     def freeze_memory_keys(self) -> None:
         for m in self.memory_layers.values():
@@ -193,7 +201,9 @@ class GPT(nn.Module):
             mem_params |= {id(p) for p in m.parameters()}
 
         emb = {id(self.transformer.wte.weight), id(self.transformer.wpe.weight)}
-        emb_n = self.transformer.wte.weight.numel() + self.transformer.wpe.weight.numel()
+        emb_n = (
+            self.transformer.wte.weight.numel() + self.transformer.wpe.weight.numel()
+        )
         if not self.config.tie_embeddings:
             emb.add(id(self.lm_head.weight))
             emb_n += self.lm_head.weight.numel()
@@ -223,8 +233,9 @@ class GPT(nn.Module):
     def forward(self, idx, targets=None):
         B, T = idx.shape
         if T > self.config.block_size:
-            raise ValueError(f"sequence length {T} exceeds block_size "
-                             f"{self.config.block_size}")
+            raise ValueError(
+                f"sequence length {T} exceeds block_size " f"{self.config.block_size}"
+            )
         pos = torch.arange(T, device=idx.device)
         x = self.transformer.drop(self.transformer.wte(idx) + self.transformer.wpe(pos))
         for block in self.transformer.h:

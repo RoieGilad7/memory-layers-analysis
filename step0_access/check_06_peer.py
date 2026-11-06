@@ -4,6 +4,7 @@ read the selected expert indices, and freeze only the product keys.
 Package: PEER-pytorch (lucidrains). num_experts must be a perfect square (product key),
 so 65,536 = 256 x 256 sub-keys.
 """
+
 import json, time
 
 import torch
@@ -11,7 +12,7 @@ from PEER_pytorch import PEER
 
 from _common import best_device, jdump
 
-NUM_EXPERTS = 65_536     # 256 x 256
+NUM_EXPERTS = 65_536  # 256 x 256
 DIM = 512
 HEADS = 8
 EXPERTS_PER_HEAD = 16
@@ -20,9 +21,14 @@ B, T = 2, 128
 
 
 def build():
-    return PEER(dim=DIM, heads=HEADS, num_experts=NUM_EXPERTS,
-                num_experts_per_head=EXPERTS_PER_HEAD, dim_key=DIM_KEY,
-                pre_rmsnorm=True)
+    return PEER(
+        dim=DIM,
+        heads=HEADS,
+        num_experts=NUM_EXPERTS,
+        num_experts_per_head=EXPERTS_PER_HEAD,
+        dim_key=DIM_KEY,
+        pre_rmsnorm=True,
+    )
 
 
 def capture_indices(peer):
@@ -43,13 +49,24 @@ def capture_indices(peer):
 
 def main():
     dev, dev_note = best_device()
-    res = {"device": dev, "device_note": dev_note, "config": dict(
-        dim=DIM, heads=HEADS, num_experts=NUM_EXPERTS,
-        num_experts_per_head=EXPERTS_PER_HEAD, dim_key=DIM_KEY, batch=B, seq=T)}
+    res = {
+        "device": dev,
+        "device_note": dev_note,
+        "config": dict(
+            dim=DIM,
+            heads=HEADS,
+            num_experts=NUM_EXPERTS,
+            num_experts_per_head=EXPERTS_PER_HEAD,
+            dim_key=DIM_KEY,
+            batch=B,
+            seq=T,
+        ),
+    }
     res["load_code"] = (
         "from PEER_pytorch import PEER\n"
         f"peer = PEER(dim={DIM}, heads={HEADS}, num_experts={NUM_EXPERTS}, "
-        f"num_experts_per_head={EXPERTS_PER_HEAD}, dim_key={DIM_KEY}, pre_rmsnorm=True)")
+        f"num_experts_per_head={EXPERTS_PER_HEAD}, dim_key={DIM_KEY}, pre_rmsnorm=True)"
+    )
 
     peer = build()
     res["num_keys_per_half"] = int(peer.num_keys)
@@ -89,14 +106,17 @@ def main():
                 grads[n] = {"grad": None}
             else:
                 gd = g.to_dense() if g.is_sparse else g
-                grads[n] = {"grad_norm": round(gd.float().norm().item(), 8),
-                            "nonzero": int((gd != 0).sum().item()),
-                            "is_sparse": bool(g.is_sparse)}
+                grads[n] = {
+                    "grad_norm": round(gd.float().norm().item(), 8),
+                    "nonzero": int((gd != 0).sum().item()),
+                    "is_sparse": bool(g.is_sparse),
+                }
         res["grads"] = grads
         res["grad_reaches_keys"] = grads["keys"].get("grad_norm", 0) > 0
         res["grad_reaches_values"] = (
             grads["weight_down_embed.weight"].get("grad_norm", 0) > 0
-            and grads["weight_up_embed.weight"].get("grad_norm", 0) > 0)
+            and grads["weight_up_embed.weight"].get("grad_norm", 0) > 0
+        )
 
         idx = box.get("indices")
         res["index_readout"] = {
@@ -108,15 +128,25 @@ def main():
             "min": int(idx.min()) if idx is not None else None,
             "max": int(idx.max()) if idx is not None else None,
             "in_range": bool(idx.max() < NUM_EXPERTS) if idx is not None else None,
-            "unique_experts_this_batch": int(idx.unique().numel()) if idx is not None else None,
+            "unique_experts_this_batch": (
+                int(idx.unique().numel()) if idx is not None else None
+            ),
             "exposed_by_package": False,
             "smallest_source_change": (
                 "PEER_pytorch/PEER.py, PEER.forward: add a `return_indices = False` kwarg "
                 "and `if return_indices: return out, indices, scores` at the end. "
-                "One kwarg + one branch. The hook above avoids even that."),
+                "One kwarg + one branch. The hook above avoids even that."
+            ),
         }
-        res["c2_status"] = "PASS" if (res["grad_reaches_keys"] and res["grad_reaches_values"]
-                                     and res["index_readout"]["captured"]) else "FAIL"
+        res["c2_status"] = (
+            "PASS"
+            if (
+                res["grad_reaches_keys"]
+                and res["grad_reaches_values"]
+                and res["index_readout"]["captured"]
+            )
+            else "FAIL"
+        )
     except Exception as e:
         res["c2_status"] = "FAIL"
         res["c2_error"] = f"{type(e).__name__}: {e}"
@@ -129,14 +159,19 @@ def main():
         res["c3_freeze_code"] = (
             "peer.keys.requires_grad_(False)   # product-key table frozen\n"
             "# weight_down_embed / weight_up_embed (the experts) still train\n"
-            "opt = torch.optim.Adam([p for p in peer.parameters() if p.requires_grad], lr=1e-2)")
-        res["c3_requires_grad"] = {n: bool(p.requires_grad) for n, p in frozen.named_parameters()}
+            "opt = torch.optim.Adam([p for p in peer.parameters() if p.requires_grad], lr=1e-2)"
+        )
+        res["c3_requires_grad"] = {
+            n: bool(p.requires_grad) for n, p in frozen.named_parameters()
+        }
 
         keys_before = frozen.keys.detach().clone()
         down_before = frozen.weight_down_embed.weight.detach().clone()
         up_before = frozen.weight_up_embed.weight.detach().clone()
 
-        opt = torch.optim.Adam([p for p in frozen.parameters() if p.requires_grad], lr=1e-2)
+        opt = torch.optim.Adam(
+            [p for p in frozen.parameters() if p.requires_grad], lr=1e-2
+        )
         frozen(torch.randn(B, T, DIM, device=dev)).square().mean().backward()
         opt.step()
         if dev == "mps":

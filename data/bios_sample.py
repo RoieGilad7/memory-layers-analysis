@@ -7,6 +7,7 @@ writes every rewording, every fact prompt and the held-out-template prompts to
 `<root>/samples/bios_sample.md`. The point is to be read: if a pronoun is wrong,
 a sentence does not parse, or a prompt stops in the wrong place, it shows here.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,8 +21,7 @@ from data.bios import _rng
 from data.common import DataConfig, load_config, read_jsonl
 
 
-def write_sample(cfg: DataConfig, n: int = 20,
-                 out: Optional[Path] = None) -> Path:
+def write_sample(cfg: DataConfig, n: int = 20, out: Optional[Path] = None) -> Path:
     bios_dir = cfg.bios_dir
     people = list(read_jsonl(bios_dir / "people.jsonl"))
     if not people:
@@ -32,8 +32,9 @@ def write_sample(cfg: DataConfig, n: int = 20,
     trained = [p for p in people if p["split"] == "train"]
     control = [p for p in people if p["split"] == "control"]
     n_ctrl = max(1, min(len(control), n // 5))
-    picked = (rng.sample(trained, min(len(trained), n - n_ctrl))
-              + rng.sample(control, n_ctrl))
+    picked = rng.sample(trained, min(len(trained), n - n_ctrl)) + rng.sample(
+        control, n_ctrl
+    )
     picked.sort(key=lambda p: p["person_id"])
     wanted = {p["person_id"] for p in picked}
 
@@ -78,7 +79,8 @@ def write_sample(cfg: DataConfig, n: int = 20,
         lines += [
             f"## {p['name']} (`{pid}`)",
             "",
-            f"| | |", "|---|---|",
+            f"| | |",
+            "|---|---|",
             f"| gender | {p['gender']} |",
             f"| split | **{p['split']}** |",
             f"| tier | {p['tier']} |",
@@ -86,7 +88,8 @@ def write_sample(cfg: DataConfig, n: int = 20,
             "",
             "**Facts**",
             "",
-            "| attribute | value |", "|---|---|",
+            "| attribute | value |",
+            "|---|---|",
         ]
         for attr, val in p["facts"].items():
             lines.append(f"| `{attr}` | {val} |")
@@ -95,21 +98,33 @@ def write_sample(cfg: DataConfig, n: int = 20,
             role = "discovery" if r in cfg.bio_discovery_rewordings else "test"
             lines += [f"{r}. *({role})* {bios[pid][r]}", ""]
 
-        rows = sorted(facts[pid], key=lambda r: (
-            r["held_out_template"], r["rewording_id"] if r["rewording_id"] is not None
-            else -1, r["attribute"]))
-        lines += ["**Fact prompts** (`prompt` | expected `continuation`)", "",
-                  "| role | rewording / template | attribute | prompt (tail shown) | continuation |",
-                  "|---|---|---|---|---|"]
+        rows = sorted(
+            facts[pid],
+            key=lambda r: (
+                r["held_out_template"],
+                r["rewording_id"] if r["rewording_id"] is not None else -1,
+                r["attribute"],
+            ),
+        )
+        lines += [
+            "**Fact prompts** (`prompt` | expected `continuation`)",
+            "",
+            "| role | rewording / template | attribute | prompt (tail shown) | continuation |",
+            "|---|---|---|---|---|",
+        ]
         for row in rows:
-            which = (f"r{row['rewording_id']}, t{row['template_id']}"
-                     if row["rewording_id"] is not None
-                     else f"held-out t{row['template_id']}")
+            which = (
+                f"r{row['rewording_id']}, t{row['template_id']}"
+                if row["rewording_id"] is not None
+                else f"held-out t{row['template_id']}"
+            )
             tail = row["prompt"]
             if len(tail) > 90:
                 tail = "..." + tail[-87:]
-            lines.append(f"| {row['role']} | {which} | `{row['attribute']}` | "
-                         f"{tail.replace('|', '\\|')} | **{row['continuation']}** |")
+            lines.append(
+                f"| {row['role']} | {which} | `{row['attribute']}` | "
+                f"{tail.replace('|', '\\|')} | **{row['continuation']}** |"
+            )
         lines += ["", "---", ""]
 
     out = out or (cfg.samples_dir / "bios_sample.md")

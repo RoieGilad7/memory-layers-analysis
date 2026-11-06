@@ -1,4 +1,5 @@
 """Cleaning and the 4096-token cap. No network: everything is synthetic."""
+
 import sys
 from pathlib import Path
 
@@ -6,8 +7,14 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from data.common import (CHARS_PER_TOKEN_BOUND, cap_to_max_tokens, clean_text,
-                         get_encoder, load_config, text_sha256)
+from data.common import (
+    CHARS_PER_TOKEN_BOUND,
+    cap_to_max_tokens,
+    clean_text,
+    get_encoder,
+    load_config,
+    text_sha256,
+)
 
 CONFIG = Path(__file__).resolve().parent.parent / "configs" / "data" / "v1.yaml"
 
@@ -54,7 +61,7 @@ def test_newlines_are_kept_and_long_runs_collapse():
 
 
 def test_nfc_normalization():
-    decomposed = "école"          # e + combining acute
+    decomposed = "école"  # e + combining acute
     assert clean_text(decomposed) == "école"
 
 
@@ -93,8 +100,9 @@ def test_cap_is_applied_at_4096(enc):
 
 def test_cap_holds_for_a_document_longer_than_the_char_prefix(enc):
     long = "x " * (CHARS_PER_TOKEN_BOUND * 4096)
-    text, n, truncated = cap_to_max_tokens(enc, long[:CHARS_PER_TOKEN_BOUND * 4096],
-                                           4096)
+    text, n, truncated = cap_to_max_tokens(
+        enc, long[: CHARS_PER_TOKEN_BOUND * 4096], 4096
+    )
     assert truncated and n <= 4096 and len(enc.encode_ordinary(text)) <= 4096
 
 
@@ -118,8 +126,13 @@ def test_config_targets_scale_with_small():
 
 def test_config_subject_labels_are_the_fixed_five_plus_one():
     cfg = load_config(CONFIG)
-    assert cfg.train_subjects == ["Pile-CC", "Github", "PubMed Central",
-                                  "FreeLaw", "Wikipedia (en)"]
+    assert cfg.train_subjects == [
+        "Pile-CC",
+        "Github",
+        "PubMed Central",
+        "FreeLaw",
+        "Wikipedia (en)",
+    ]
     assert cfg.heldout_only_subjects == ["USPTO Backgrounds"]
     assert cfg.doc_id("Pile-CC", "train/00.jsonl.zst", 7) == "pile_cc-train00-7"
 
@@ -175,6 +188,7 @@ def test_the_config_on_disk_matches_the_frozen_bundle():
     """
     import json
     from data.fetch import manifest_path
+
     cfg = load_config(CONFIG)
     path = manifest_path(cfg, cfg.version)
     if not path.exists():
@@ -184,4 +198,5 @@ def test_the_config_on_disk_matches_the_frozen_bundle():
         assert cfg.fingerprint(scope) == recorded[f"fingerprint_{scope}"], (
             f"configs/data/v1.yaml no longer matches the {scope} fingerprint in "
             f"{path.name}. Rebuild the affected stage and re-run "
-            "`python -m data.manifest --config configs/data/v1.yaml`.")
+            "`python -m data.manifest --config configs/data/v1.yaml`."
+        )

@@ -4,6 +4,7 @@ separate shards we could fetch on their own.
 
 Only the index JSONs and small .py files are downloaded (a few MB); no shard is fetched.
 """
+
 import json, re
 from collections import defaultdict
 
@@ -12,7 +13,8 @@ from _common import jdump, human
 REPOS = ["meituan-longcat/LongCat-Flash-Lite", "deepseek-ai/DeepSeek-V4.1-Flash"]
 MEM_PAT = re.compile(
     r"ngram|n_gram|engram|memory|mem_|lookup|lut|\bkv_table\b|codon|expert_table|pkm",
-    re.IGNORECASE)
+    re.IGNORECASE,
+)
 
 
 def main():
@@ -30,12 +32,15 @@ def main():
             r["total_size"] = human(sum(files.values()))
             r["largest_files"] = [
                 {"file": k, "size": human(v)}
-                for k, v in sorted(files.items(), key=lambda kv: -kv[1])[:8]]
+                for k, v in sorted(files.items(), key=lambda kv: -kv[1])[:8]
+            ]
             r["small_files"] = sorted(k for k, v in files.items() if v < 1e6)
 
             # the index maps every tensor name to its shard; that is what tells us whether
             # the memory table is separable
-            idx_name = next((k for k in files if k.endswith(".safetensors.index.json")), None)
+            idx_name = next(
+                (k for k in files if k.endswith(".safetensors.index.json")), None
+            )
             if not idx_name:
                 r["index_json"] = None
                 out[repo] = r
@@ -56,16 +61,24 @@ def main():
 
             hit_shards = sorted({wmap[t] for t in hits})
             r["shards_containing_memory_tensors"] = [
-                {"shard": s, "size": human(files.get(s, 0)), "bytes": files.get(s, 0),
-                 "n_tensors_in_shard": len(per_shard_tensors[s]),
-                 "n_memory_tensors_in_shard": sum(1 for t in hits if wmap[t] == s),
-                 "shard_is_memory_only": len(per_shard_tensors[s]) == sum(
-                     1 for t in hits if wmap[t] == s)}
-                for s in hit_shards]
+                {
+                    "shard": s,
+                    "size": human(files.get(s, 0)),
+                    "bytes": files.get(s, 0),
+                    "n_tensors_in_shard": len(per_shard_tensors[s]),
+                    "n_memory_tensors_in_shard": sum(1 for t in hits if wmap[t] == s),
+                    "shard_is_memory_only": len(per_shard_tensors[s])
+                    == sum(1 for t in hits if wmap[t] == s),
+                }
+                for s in hit_shards
+            ]
             r["memory_shards_total_bytes"] = sum(files.get(s, 0) for s in hit_shards)
-            r["memory_shards_total_size"] = human(sum(files.get(s, 0) for s in hit_shards))
+            r["memory_shards_total_size"] = human(
+                sum(files.get(s, 0) for s in hit_shards)
+            )
             r["separately_downloadable"] = bool(hit_shards) and all(
-                d["shard_is_memory_only"] for d in r["shards_containing_memory_tensors"])
+                d["shard_is_memory_only"] for d in r["shards_containing_memory_tensors"]
+            )
 
             # tensor-name prefixes, to see the overall layout at a glance
             pref = defaultdict(int)
@@ -73,14 +86,19 @@ def main():
                 parts = t.split(".")
                 pref[".".join(parts[:2]) if len(parts) > 2 else t] += 1
             r["tensor_name_prefixes_top"] = dict(
-                sorted(pref.items(), key=lambda kv: -kv[1])[:12])
+                sorted(pref.items(), key=lambda kv: -kv[1])[:12]
+            )
 
             # biggest shards, which is where a huge table would hide
             r["biggest_shards_with_tensor_counts"] = [
-                {"shard": s, "size": human(files.get(s, 0)),
-                 "n_tensors": len(per_shard_tensors[s]),
-                 "sample_tensors": sorted(per_shard_tensors[s])[:6]}
-                for s in sorted(per_shard_tensors, key=lambda s: -files.get(s, 0))[:4]]
+                {
+                    "shard": s,
+                    "size": human(files.get(s, 0)),
+                    "n_tensors": len(per_shard_tensors[s]),
+                    "sample_tensors": sorted(per_shard_tensors[s])[:6],
+                }
+                for s in sorted(per_shard_tensors, key=lambda s: -files.get(s, 0))[:4]
+            ]
             r["status"] = "PASS"
         except Exception as e:
             r["status"] = "FAIL"

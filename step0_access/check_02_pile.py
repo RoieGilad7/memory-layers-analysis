@@ -3,6 +3,7 @@
 Streaming only: nothing is written to the HF cache except the dataset script/metadata.
 Saves at most SAVE_PER_SUBJECT documents per subject to data_samples/pile_sample.jsonl.
 """
+
 import argparse, json, time
 from collections import Counter, defaultdict
 
@@ -10,7 +11,9 @@ from _common import SAMPLES, jdump, finish
 
 REPO = "monology/pile-uncopyrighted"
 SAVE_PER_SUBJECT = 200
-SAVE_CHARS_CAP = 5_000  # truncate very long docs in the sample file so it stays a few MB
+SAVE_CHARS_CAP = (
+    5_000  # truncate very long docs in the sample file so it stays a few MB
+)
 
 
 def main(n_docs):
@@ -39,12 +42,18 @@ def main(n_docs):
         # tiktoken on the full 50k docs is the dominant cost; it is also the number we need
         toks[subj] += len(enc.encode(text, disallowed_special=()))
         if saved[subj] < SAVE_PER_SUBJECT:
-            out.write(json.dumps({"pile_set_name": subj, "text": text[:SAVE_CHARS_CAP]}) + "\n")
+            out.write(
+                json.dumps({"pile_set_name": subj, "text": text[:SAVE_CHARS_CAP]})
+                + "\n"
+            )
             saved[subj] += 1
         n += 1
         if n % 5000 == 0:
-            print(f"  {n:7d} docs  {n/(time.perf_counter()-t0):7.1f} docs/s  "
-                  f"{sum(toks.values())/1e6:7.2f}M tok  {len(docs)} subjects", flush=True)
+            print(
+                f"  {n:7d} docs  {n/(time.perf_counter()-t0):7.1f} docs/s  "
+                f"{sum(toks.values())/1e6:7.2f}M tok  {len(docs)} subjects",
+                flush=True,
+            )
         if n >= n_docs:
             break
     dt = time.perf_counter() - t0

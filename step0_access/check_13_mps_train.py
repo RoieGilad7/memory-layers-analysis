@@ -8,6 +8,7 @@ Runs the same 20 steps three ways:
 
 If loss decreases and no step raises, the step-1 training code has a working substrate.
 """
+
 import json, time
 
 import torch
@@ -25,8 +26,13 @@ class Block(nn.Module):
         self.attn = nn.MultiheadAttention(dim, heads, batch_first=True)
         self.n2 = nn.LayerNorm(dim)
         self.memory = memory
-        self.ff = None if memory is not None else nn.Sequential(
-            nn.Linear(dim, 4 * dim), nn.GELU(), nn.Linear(4 * dim, dim))
+        self.ff = (
+            None
+            if memory is not None
+            else nn.Sequential(
+                nn.Linear(dim, 4 * dim), nn.GELU(), nn.Linear(4 * dim, dim)
+            )
+        )
 
     def forward(self, x, causal):
         h = self.n1(x)
@@ -40,9 +46,16 @@ class TinyLM(nn.Module):
         super().__init__()
         self.emb = nn.Embedding(VOCAB, DIM)
         self.pos = nn.Embedding(SEQ, DIM)
-        self.blocks = nn.ModuleList([
-            Block(DIM, HEADS, memory_factory() if (memory_factory and i == 1) else None)
-            for i in range(2)])
+        self.blocks = nn.ModuleList(
+            [
+                Block(
+                    DIM,
+                    HEADS,
+                    memory_factory() if (memory_factory and i == 1) else None,
+                )
+                for i in range(2)
+            ]
+        )
         self.norm = nn.LayerNorm(DIM)
         self.head = nn.Linear(DIM, VOCAB, bias=False)
 
@@ -105,29 +118,55 @@ def run(name, factory, dev):
 
 def main():
     dev, dev_note = best_device()
-    res = {"device": dev, "device_note": dev_note,
-           "model": dict(vocab=VOCAB, dim=DIM, heads=HEADS, layers=2, seq=SEQ,
-                         batch=BATCH, steps=STEPS),
-           "note": ("Smoke test only. One fixed batch of random tokens is repeated for 20 "
-                    "steps, i.e. a deliberate overfit: the loss should fall well below "
-                    "ln(512)=6.24. This proves fwd/bwd/optimizer work on MPS for all three "
-                    "arms; it says nothing about generalization. Timed benchmark = step 1.")}
+    res = {
+        "device": dev,
+        "device_note": dev_note,
+        "model": dict(
+            vocab=VOCAB,
+            dim=DIM,
+            heads=HEADS,
+            layers=2,
+            seq=SEQ,
+            batch=BATCH,
+            steps=STEPS,
+        ),
+        "note": (
+            "Smoke test only. One fixed batch of random tokens is repeated for 20 "
+            "steps, i.e. a deliberate overfit: the loss should fall well below "
+            "ln(512)=6.24. This proves fwd/bwd/optimizer work on MPS for all three "
+            "arms; it says nothing about generalization. Timed benchmark = step 1."
+        ),
+    }
 
     from product_key_memory import PKM
     from PEER_pytorch import PEER
 
     variants = [
         ("plain", None),
-        ("pkm_65536", lambda: PKM(dim=DIM, heads=4, dim_head=32, num_keys=256, topk=16)),
-        ("peer_65536", lambda: PEER(dim=DIM, heads=4, num_experts=65_536,
-                                    num_experts_per_head=16, dim_key=64,
-                                    pre_rmsnorm=True)),
+        (
+            "pkm_65536",
+            lambda: PKM(dim=DIM, heads=4, dim_head=32, num_keys=256, topk=16),
+        ),
+        (
+            "peer_65536",
+            lambda: PEER(
+                dim=DIM,
+                heads=4,
+                num_experts=65_536,
+                num_experts_per_head=16,
+                dim_key=64,
+                pre_rmsnorm=True,
+            ),
+        ),
     ]
     res["runs"] = [run(n, f, dev) for n, f in variants]
     if dev == "mps":
         res["mps_driver_alloc_GB"] = round(torch.mps.driver_allocated_memory() / 1e9, 2)
-    res["status"] = "PASS" if all(r["status"] == "PASS" and r["loss_decreased"]
-                                  for r in res["runs"]) else "PARTIAL"
+    res["status"] = (
+        "PASS"
+        if all(r["status"] == "PASS" and r["loss_decreased"] for r in res["runs"])
+        else "PARTIAL"
+    )
 
     print(json.dumps(res, indent=2))
     jdump("13_mps_train", res)

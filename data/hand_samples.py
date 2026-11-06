@@ -21,6 +21,7 @@ Four files, all committed so a reviewer sees them in the pull request:
 Everything is seeded from the data seed, so the same documents and people come
 up after a rebuild and a reviewer's notes stay valid.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,7 +46,7 @@ def _fence(text: str) -> str:
 
 def _cell(text: str, limit: int = 160) -> str:
     out = text.replace("|", "\\|").replace("\n", " ⏎ ")
-    return out if len(out) <= limit else "…" + out[-(limit - 1):]
+    return out if len(out) <= limit else "…" + out[-(limit - 1) :]
 
 
 # ---------------------------------------------------------------------------
@@ -68,11 +69,15 @@ def pile_samples(cfg: DataConfig, per_subject: int = 10) -> str:
         slug = cfg.slug(subject)
         docs = list(read_jsonl(cfg.heldout_dir / "test" / f"{slug}.jsonl.gz"))
         rng = keyed_rng(cfg.seed, "pile_sample", subject)
-        picked = sorted(rng.sample(docs, min(per_subject, len(docs))),
-                        key=lambda r: r["doc_id"])
-        lines += [f"## {subject}", "",
-                  f"{len(docs):,} documents in the test half; "
-                  f"{len(picked)} shown.", ""]
+        picked = sorted(
+            rng.sample(docs, min(per_subject, len(docs))), key=lambda r: r["doc_id"]
+        )
+        lines += [
+            f"## {subject}",
+            "",
+            f"{len(docs):,} documents in the test half; " f"{len(picked)} shown.",
+            "",
+        ]
         for r in picked:
             ov = r.get("ngram_overlap")
             ov_s = "exempt (not measured)" if ov is None else f"{ov:.4%}"
@@ -99,11 +104,13 @@ def bios_review(cfg: DataConfig, n_train: int = 20, n_control: int = 5) -> str:
     for p in people:
         by_split[p["split"]].append(p)
     rng = keyed_rng(cfg.seed, "bios_review")
-    picked = (rng.sample(sorted(by_split["train"], key=lambda p: p["person_id"]),
-                         min(n_train, len(by_split["train"])))
-              + rng.sample(sorted(by_split["control"],
-                                  key=lambda p: p["person_id"]),
-                           min(n_control, len(by_split["control"]))))
+    picked = rng.sample(
+        sorted(by_split["train"], key=lambda p: p["person_id"]),
+        min(n_train, len(by_split["train"])),
+    ) + rng.sample(
+        sorted(by_split["control"], key=lambda p: p["person_id"]),
+        min(n_control, len(by_split["control"])),
+    )
     picked.sort(key=lambda p: (p["split"] != "train", p["person_id"]))
     wanted = {p["person_id"] for p in picked}
 
@@ -142,33 +149,47 @@ def bios_review(cfg: DataConfig, n_train: int = 20, n_control: int = 5) -> str:
         lines += [
             f"## {p['name']} (`{pid}`) — **{p['split']}**",
             "",
-            "| | |", "|---|---|",
+            "| | |",
+            "|---|---|",
             f"| gender | {p['gender']} |",
             f"| tier | {p['tier']} |",
             f"| target exposures | {p['target_exposures']} |",
             "",
-            "| attribute | value |", "|---|---|",
+            "| attribute | value |",
+            "|---|---|",
         ]
         for attr in cfg.bio_attributes:
             lines.append(f"| `{attr}` | {p['facts'][attr]} |")
         lines += ["", "**Rewordings**", ""]
         for r in sorted(bios[pid]):
-            role = ("discovery" if r in cfg.bio_discovery_rewordings else "test")
+            role = "discovery" if r in cfg.bio_discovery_rewordings else "test"
             lines += [f"{r}. *({role})* {bios[pid][r]}", ""]
-        lines += ["**Fact-recall prompts**", "",
-                  "| role | which | attribute | prompt | continuation | true value |",
-                  "|---|---|---|---|---|---|"]
-        rows = sorted(facts[pid], key=lambda r: (
-            {"discovery": 0, "test": 1, "paraphrase": 2}[r["role"]],
-            r["rewording_id"] if r["rewording_id"] is not None else -1,
-            r["template_id"], r["attribute"]))
+        lines += [
+            "**Fact-recall prompts**",
+            "",
+            "| role | which | attribute | prompt | continuation | true value |",
+            "|---|---|---|---|---|---|",
+        ]
+        rows = sorted(
+            facts[pid],
+            key=lambda r: (
+                {"discovery": 0, "test": 1, "paraphrase": 2}[r["role"]],
+                r["rewording_id"] if r["rewording_id"] is not None else -1,
+                r["template_id"],
+                r["attribute"],
+            ),
+        )
         for r in rows:
-            which = (f"r{r['rewording_id']} t{r['template_id']}"
-                     if r["rewording_id"] is not None
-                     else f"held-out t{r['template_id']}")
-            lines.append(f"| {r['role']} | {which} | `{r['attribute']}` | "
-                         f"{_cell(r['prompt'])} | `{_cell(r['continuation'], 40)}` "
-                         f"| {_cell(r['true_value'], 40)} |")
+            which = (
+                f"r{r['rewording_id']} t{r['template_id']}"
+                if r["rewording_id"] is not None
+                else f"held-out t{r['template_id']}"
+            )
+            lines.append(
+                f"| {r['role']} | {which} | `{r['attribute']}` | "
+                f"{_cell(r['prompt'])} | `{_cell(r['continuation'], 40)}` "
+                f"| {_cell(r['true_value'], 40)} |"
+            )
         lines += ["", "---", ""]
     return "\n".join(lines)
 
@@ -286,8 +307,10 @@ INTERIM_WORDING: Dict[str, Dict[int, str]] = {
 PREVIOUS_HELDOUT_WORDING: Dict[str, Dict[int, str]] = {
     "birth_date": {0: "Question: when was {obj} born? Answer: {v}."},
     "birth_city": {0: "Question: where was {obj} born? Answer: {v}."},
-    "university": {0: "Question: where did {obj} take a degree? Answer: {v}.",
-                   3: "{Poss} profile reads as follows -- university attended: {v}."},
+    "university": {
+        0: "Question: where did {obj} take a degree? Answer: {v}.",
+        3: "{Poss} profile reads as follows -- university attended: {v}.",
+    },
     "major": {0: "Question: what did {obj} study? Answer: {v}."},
     "employer": {0: "Question: where does {obj} work? Answer: {v}."},
 }
@@ -329,35 +352,44 @@ def templates_rendered(cfg: DataConfig) -> str:
             "",
         ]
         for label, pool, previous in (
-                ("Training templates", bd.TRAIN_TEMPLATES[attr],
-                 PREVIOUS_WORDING.get(attr, {})),
-                ("Held-out templates", bd.HELDOUT_TEMPLATES[attr],
-                 PREVIOUS_HELDOUT_WORDING.get(attr, {}))):
+            (
+                "Training templates",
+                bd.TRAIN_TEMPLATES[attr],
+                PREVIOUS_WORDING.get(attr, {}),
+            ),
+            (
+                "Held-out templates",
+                bd.HELDOUT_TEMPLATES[attr],
+                PREVIOUS_HELDOUT_WORDING.get(attr, {}),
+            ),
+        ):
             lines += [f"### {label}", ""]
             for i, template in enumerate(pool):
                 was = previous.get(i)
                 tag = " — **changed**" if was else ""
                 lines += [f"**{i}.** `{template}`{tag}", ""]
                 for gender, use_name in (("female", False), ("male", True)):
-                    text, at = render(template, EXAMPLE_NAME, gender, use_name,
-                                      value)
+                    text, at = render(template, EXAMPLE_NAME, gender, use_name, value)
                     shown = f"{text[:at]}**{value}**{text[at + len(value):]}"
                     how = "female pronoun" if not use_name else "male name"
                     lines.append(f"- *{how}:* {shown}")
                 if was:
-                    old_text, old_at = render(was, EXAMPLE_NAME, "female",
-                                              False, value)
+                    old_text, old_at = render(was, EXAMPLE_NAME, "female", False, value)
                     lines += [
                         "",
                         f"  - data 5 was: `{was}`",
                         f"  - data 5 read: {old_text[:old_at]}**{value}**"
                         f"{old_text[old_at + len(value):]}",
                     ]
-                    mid = (INTERIM_WORDING.get(attr, {}).get(i)
-                           if label.startswith("Training") else None)
+                    mid = (
+                        INTERIM_WORDING.get(attr, {}).get(i)
+                        if label.startswith("Training")
+                        else None
+                    )
                     if mid:
-                        mid_text, mid_at = render(mid, EXAMPLE_NAME, "female",
-                                                  False, value)
+                        mid_text, mid_at = render(
+                            mid, EXAMPLE_NAME, "female", False, value
+                        )
                         lines += [
                             f"  - first data-6 draft: `{mid}`",
                             f"  - which read: {mid_text[:mid_at]}**{value}**"
@@ -368,8 +400,9 @@ def templates_rendered(cfg: DataConfig) -> str:
 
 
 # ---------------------------------------------------------------------------
-def _near_duplicate_pairs(values: List[str], attribute: str,
-                          skip_first_word: bool = False) -> List[Dict[str, str]]:
+def _near_duplicate_pairs(
+    values: List[str], attribute: str, skip_first_word: bool = False
+) -> List[Dict[str, str]]:
     """Pairs a human should look at: a shared first word, or one inside the other.
 
     Deliberately over-reports — the builder already dropped first-token clashes
@@ -383,6 +416,7 @@ def _near_duplicate_pairs(values: List[str], attribute: str,
     nothing; a date is identified by (month, day), which is unique by build.
     """
     from data.bios import _GENERIC_BY_ATTR
+
     generic = _GENERIC_BY_ATTR.get(attribute, frozenset())
     out: List[Dict[str, str]] = []
     if not skip_first_word:
@@ -393,20 +427,30 @@ def _near_duplicate_pairs(values: List[str], attribute: str,
             if len(group) > 1:
                 for i in range(len(group)):
                     for j in range(i + 1, len(group)):
-                        out.append({"a": group[i], "b": group[j],
-                                    "why": f"share the first word {word!r}"})
+                        out.append(
+                            {
+                                "a": group[i],
+                                "b": group[j],
+                                "why": f"share the first word {word!r}",
+                            }
+                        )
     low = [(v, v.lower()) for v in values]
     for i, (va, la) in enumerate(low):
-        for vb, lb in low[i + 1:]:
+        for vb, lb in low[i + 1 :]:
             if la in lb or lb in la:
                 out.append({"a": va, "b": vb, "why": "one contains the other"})
             else:
                 wa = {w for w in re.findall(r"[a-z0-9]+", la) if w not in generic}
                 wb = {w for w in re.findall(r"[a-z0-9]+", lb) if w not in generic}
                 if wa and wb and (wa <= wb or wb <= wa):
-                    out.append({"a": va, "b": vb,
-                                "why": "identity words nest "
-                                       f"({sorted(wa)} vs {sorted(wb)})"})
+                    out.append(
+                        {
+                            "a": va,
+                            "b": vb,
+                            "why": "identity words nest "
+                            f"({sorted(wa)} vs {sorted(wb)})",
+                        }
+                    )
     seen = set()
     uniq = []
     for p in out:
@@ -419,6 +463,7 @@ def _near_duplicate_pairs(values: List[str], attribute: str,
 
 def value_lists(cfg: DataConfig) -> str:
     from data.common import get_encoder
+
     enc = get_encoder(cfg.tokenizer_name, cfg.vocab_size)
     data = json.loads((cfg.bios_dir / "attribute_values.json").read_text())
     lines = [
@@ -449,11 +494,13 @@ def value_lists(cfg: DataConfig) -> str:
         tok = data["tokens"][attr]
         n = 2 if attr in cfg.bio_first_two_tokens_unique else 1
         flags[attr] = _near_duplicate_pairs(
-            vals, attr, skip_first_word=attr in cfg.bio_first_two_tokens_unique)
+            vals, attr, skip_first_word=attr in cfg.bio_first_two_tokens_unique
+        )
         lines.append(
             f"| `{attr}` | {len(vals)} | first {n} token"
             f"{'s' if n > 1 else ''} | {tok['distinct_first_tokens']} | "
-            f"{tok['value_tokens_mean']} | {len(flags[attr])} |")
+            f"{tok['value_tokens_mean']} | {len(flags[attr])} |"
+        )
     lines.append("")
     for attr in cfg.bio_attributes:
         vals = data["values"][attr]
@@ -468,20 +515,26 @@ def value_lists(cfg: DataConfig) -> str:
             "",
         ]
         if flags[attr]:
-            lines += ["**Flagged pairs — for a human to accept or reject:**", "",
-                      "| a | b | why flagged |", "|---|---|---|"]
+            lines += [
+                "**Flagged pairs — for a human to accept or reject:**",
+                "",
+                "| a | b | why flagged |",
+                "|---|---|---|",
+            ]
             for p in flags[attr]:
                 lines.append(f"| {p['a']} | {p['b']} | {p['why']} |")
             lines.append("")
         elif attr in cfg.bio_first_two_tokens_unique:
-            lines += ["No pairs flagged. (The \"shared first word\" rule is "
-                      "switched off for dates: 200 dates share twelve month "
-                      "names by construction, and a date is identified by its "
-                      "(month, day) pair, which is unique by build.)", ""]
+            lines += [
+                'No pairs flagged. (The "shared first word" rule is '
+                "switched off for dates: 200 dates share twelve month "
+                "names by construction, and a date is identified by its "
+                "(month, day) pair, which is unique by build.)",
+                "",
+            ]
         else:
             lines += ["No pairs flagged.", ""]
-        lines += ["<details><summary>all "
-                  f"{len(vals)} values</summary>", ""]
+        lines += ["<details><summary>all " f"{len(vals)} values</summary>", ""]
         for v in vals:
             ids = enc.encode_ordinary(" " + v)
             keep = ids[:2] if attr in cfg.bio_first_two_tokens_unique else ids[:1]
@@ -504,10 +557,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     out = cfg.samples_dir
     out.mkdir(parents=True, exist_ok=True)
     for name, text in (
-            ("pile_samples.md", pile_samples(cfg, args.per_subject)),
-            ("bios_review.md", bios_review(cfg, args.people, args.control)),
-            ("value_lists.md", value_lists(cfg)),
-            ("templates_rendered.md", templates_rendered(cfg))):
+        ("pile_samples.md", pile_samples(cfg, args.per_subject)),
+        ("bios_review.md", bios_review(cfg, args.people, args.control)),
+        ("value_lists.md", value_lists(cfg)),
+        ("templates_rendered.md", templates_rendered(cfg)),
+    ):
         (out / name).write_text(text, encoding="utf-8")
         kb = (out / name).stat().st_size / 1024
         print(f"[samples] {out / name}  ({kb:,.0f} KB)")

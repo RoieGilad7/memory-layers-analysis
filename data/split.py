@@ -10,6 +10,7 @@ source order and stopping at the first document that reaches the budget.
 Checks the per-half document minimum and reports any subject below it rather
 than failing: a short subject is a finding for the report, not a crash.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -17,8 +18,16 @@ import sys
 import time
 from typing import Any, Dict, List, Optional
 
-from data.common import (record_timing, DataConfig, dumps_record, heldout_half, load_config,
-                         open_write, read_jsonl, write_json)
+from data.common import (
+    record_timing,
+    DataConfig,
+    dumps_record,
+    heldout_half,
+    load_config,
+    open_write,
+    read_jsonl,
+    write_json,
+)
 
 
 def run(cfg: DataConfig) -> Dict[str, Any]:
@@ -68,12 +77,17 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         }
         line = " | ".join(
             f"{h}: {stats[h]['docs']:>6,} docs {stats[h]['tokens']:>9,} tok"
-            for h in halves)
+            for h in halves
+        )
         flags = [f"{h}:BELOW_MIN_DOCS" for h in halves if stats[h]["below_min_docs"]]
-        flags += [f"{h}:BELOW_TARGET" for h in halves
-                  if stats[h]["below_target_tokens"]]
-        print(f"[split] {subject:20s} pool={len(pool):>6,} {line}"
-              + ("  <<< " + ",".join(flags) if flags else ""), flush=True)
+        flags += [
+            f"{h}:BELOW_TARGET" for h in halves if stats[h]["below_target_tokens"]
+        ]
+        print(
+            f"[split] {subject:20s} pool={len(pool):>6,} {line}"
+            + ("  <<< " + ",".join(flags) if flags else ""),
+            flush=True,
+        )
 
     out = {
         "stage": "split",
@@ -85,11 +99,17 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         "min_docs_per_half": cfg.heldout_min_docs_per_half,
         "per_subject": per_subject,
         "subjects_below_min_docs": sorted(
-            f"{s}/{h}" for s, v in per_subject.items() for h in halves
-            if v["halves"][h]["below_min_docs"]),
+            f"{s}/{h}"
+            for s, v in per_subject.items()
+            for h in halves
+            if v["halves"][h]["below_min_docs"]
+        ),
         "subjects_below_target_tokens": sorted(
-            f"{s}/{h}" for s, v in per_subject.items() for h in halves
-            if v["halves"][h]["below_target_tokens"]),
+            f"{s}/{h}"
+            for s, v in per_subject.items()
+            for h in halves
+            if v["halves"][h]["below_target_tokens"]
+        ),
     }
     record_timing(cfg, "split", time.time() - t0)
     write_json(cfg.reports_dir / "split_report.json", out)
@@ -104,11 +124,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     cfg = load_config(args.config, small=args.small)
     out = run(cfg)
     if out["subjects_below_min_docs"]:
-        print(f"\n[split] BELOW the {out['min_docs_per_half']}-document minimum: "
-              f"{out['subjects_below_min_docs']}")
+        print(
+            f"\n[split] BELOW the {out['min_docs_per_half']}-document minimum: "
+            f"{out['subjects_below_min_docs']}"
+        )
     if out["subjects_below_target_tokens"]:
-        print(f"[split] below the {out['tokens_per_half']:,}-token target: "
-              f"{out['subjects_below_target_tokens']}")
+        print(
+            f"[split] below the {out['tokens_per_half']:,}-token target: "
+            f"{out['subjects_below_target_tokens']}"
+        )
     return 0
 
 

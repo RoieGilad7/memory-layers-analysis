@@ -9,6 +9,7 @@ reparameterize.py hardcodes device_map="cuda" and save_pretrained; this check do
 math on MPS/CPU and keeps the LUT in memory instead of writing 3.7 GB to disk, then verifies
 the reparameterized model reproduces the training-form logits.
 """
+
 import json, os, sys, time
 
 import torch
@@ -27,11 +28,18 @@ def main():
     from modeling_mole_rep import MoleForCausalLM as MoleForCausalLM_rep
 
     dev, dev_note = best_device()
-    res = {"repo": REPO, "code": "github.com/JieShibo/MoLE -> external/MoLE",
-           "device": dev, "device_note": dev_note,
-           "repo_files_GB": 0.780, "note_repo_form": "training-phase weights (pre-reparameterization)"}
+    res = {
+        "repo": REPO,
+        "code": "github.com/JieShibo/MoLE -> external/MoLE",
+        "device": dev,
+        "device_note": dev_note,
+        "repo_files_GB": 0.780,
+        "note_repo_form": "training-phase weights (pre-reparameterization)",
+    }
 
-    res["load_code"] = f'''import sys; sys.path.insert(0, "external/MoLE")   # github.com/JieShibo/MoLE
+    res[
+        "load_code"
+    ] = f"""import sys; sys.path.insert(0, "external/MoLE")   # github.com/JieShibo/MoLE
 from transformers import AutoTokenizer
 from modeling_mole import MoleForCausalLM                      # training form
 from modeling_mole_rep import MoleForCausalLM as MoleForCausalLM_rep   # inference form
@@ -39,18 +47,28 @@ from modeling_mole_rep import MoleForCausalLM as MoleForCausalLM_rep   # inferen
 tok   = AutoTokenizer.from_pretrained("{REPO}")
 model = MoleForCausalLM.from_pretrained("{REPO}", torch_dtype=torch.float32,
                                         attn_implementation="eager").to("{dev}")
-out   = model(**tok("{SENTENCE}", return_tensors="pt").to("{dev}"))'''
+out   = model(**tok("{SENTENCE}", return_tensors="pt").to("{dev}"))"""
 
     # ---- load the training form --------------------------------------------------
     tok = AutoTokenizer.from_pretrained(REPO)
     t0 = time.perf_counter()
-    model = MoleForCausalLM.from_pretrained(REPO, torch_dtype=torch.float32,
-                                            attn_implementation="eager")
+    model = MoleForCausalLM.from_pretrained(
+        REPO, torch_dtype=torch.float32, attn_implementation="eager"
+    )
     res["load_seconds_cpu"] = round(time.perf_counter() - t0, 2)
     cfg = model.config
-    res["config"] = {k: getattr(cfg, k) for k in
-                     ("vocab_size", "hidden_size", "num_hidden_layers", "num_experts",
-                      "intermediate_size", "num_attention_heads", "max_position_embeddings")}
+    res["config"] = {
+        k: getattr(cfg, k)
+        for k in (
+            "vocab_size",
+            "hidden_size",
+            "num_hidden_layers",
+            "num_experts",
+            "intermediate_size",
+            "num_attention_heads",
+            "max_position_embeddings",
+        )
+    }
     res["params_training_form"] = sum(p.numel() for p in model.parameters())
 
     t0 = time.perf_counter()
@@ -77,10 +95,13 @@ out   = model(**tok("{SENTENCE}", return_tensors="pt").to("{dev}"))'''
     }
     if dev == "mps":
         res["mps_driver_alloc_GB_after_training_form"] = round(
-            torch.mps.driver_allocated_memory() / 1e9, 2)
+            torch.mps.driver_allocated_memory() / 1e9, 2
+        )
 
     # ---- the reparameterization (reparameterize.py, device-adapted) ---------------
-    res["reparameterize_code"] = '''# reparameterize.py, with device_map="cuda" -> MPS/CPU and no save_pretrained:
+    res[
+        "reparameterize_code"
+    ] = """# reparameterize.py, with device_map="cuda" -> MPS/CPU and no save_pretrained:
 with torch.no_grad():
     output_all = []
     for layer in model.model.layers:
@@ -90,14 +111,16 @@ with torch.no_grad():
     output_all = torch.stack(output_all, dim=1)                   # [V, L, E, d]
     output_all = output_all.reshape(output_all.size(0), -1)       # [V, L*E*d]
 state_dict = {"model.moe_table.weight": output_all}
-model_rep.load_state_dict(state_dict, False)'''
+model_rep.load_state_dict(state_dict, False)"""
 
     t0 = time.perf_counter()
     with torch.no_grad():
         output_all = []
         for layer in model.model.layers:
             token_embeds = layer.expert_layernorm(model.model.embed_tokens.weight)
-            output_layer = torch.stack([expert(token_embeds) for expert in layer.experts], dim=1)
+            output_layer = torch.stack(
+                [expert(token_embeds) for expert in layer.experts], dim=1
+            )
             output_all.append(output_layer.cpu())
         output_all = torch.stack(output_all, dim=1)
         output_all = output_all.reshape(output_all.size(0), -1)
@@ -119,15 +142,18 @@ model_rep.load_state_dict(state_dict, False)'''
         "size_fp16_as_saved": human(output_all.numel() * 2),
         "dtype_on_disk": "float16 (reparameterize.py calls .half() before save_pretrained)",
         "indexed_by": "input_ids -- one LUT row per VOCAB TOKEN, not per hidden state",
-        "how_read": ("MoleModel.forward: moe_output = self.moe_table(input_ids) then "
-                     ".view(B, L, num_layers, num_experts, hidden_size); layer idx gets "
-                     "moe_output[:, :, idx], which the decoder layer combines with "
-                     "softmax(router(h)) weights"),
+        "how_read": (
+            "MoleModel.forward: moe_output = self.moe_table(input_ids) then "
+            ".view(B, L, num_layers, num_experts, hidden_size); layer idx gets "
+            "moe_output[:, :, idx], which the decoder layer combines with "
+            "softmax(router(h)) weights"
+        ),
         "key_structural_note": (
             "MoLE is NOT a product-key memory: there is no learned key table and no top-k "
             "search. The 'address' is the input token id itself and ALL num_experts entries "
             "for that token are read and mixed by the router softmax. So its value table is "
-            "a per-token lookup, which is why it reparameterizes exactly."),
+            "a per-token lookup, which is why it reparameterizes exactly."
+        ),
         "stats": {
             "mean": round(float(output_all.mean()), 6),
             "std": round(float(output_all.std()), 6),
@@ -136,16 +162,19 @@ model_rep.load_state_dict(state_dict, False)'''
     }
 
     # ---- load the inference form and verify it matches ---------------------------
-    rep = MoleForCausalLM_rep.from_pretrained(REPO, torch_dtype=torch.float32,
-                                              attn_implementation="eager")
+    rep = MoleForCausalLM_rep.from_pretrained(
+        REPO, torch_dtype=torch.float32, attn_implementation="eager"
+    )
     missing, unexpected = rep.load_state_dict(
-        {"model.moe_table.weight": output_all}, strict=False)
+        {"model.moe_table.weight": output_all}, strict=False
+    )
     res["rep_unexpected_keys"] = list(unexpected)
     res["rep_missing_keys_count"] = len(missing)
     res["params_inference_form"] = sum(p.numel() for p in rep.parameters())
     res["params_inference_form_note"] = (
         "larger than the training form: the 4 small expert MLPs per layer are replaced by the "
-        "dense [V, L*E*d] LUT, which is the whole point -- compute goes down, memory goes up")
+        "dense [V, L*E*d] LUT, which is the whole point -- compute goes down, memory goes up"
+    )
 
     del model
     if dev == "mps":
@@ -161,7 +190,9 @@ model_rep.load_state_dict(state_dict, False)'''
                 out_rep = r(**e2)
             if try_dev == "mps":
                 torch.mps.synchronize()
-                fwd["mps_driver_alloc_GB"] = round(torch.mps.driver_allocated_memory() / 1e9, 2)
+                fwd["mps_driver_alloc_GB"] = round(
+                    torch.mps.driver_allocated_memory() / 1e9, 2
+                )
             lt = out_train.logits.float().cpu()
             lr = out_rep.logits.float().cpu()
             fwd[try_dev] = {
@@ -172,12 +203,16 @@ model_rep.load_state_dict(state_dict, False)'''
                 "top1_next_token": tok.decode(out_rep.logits[0, -1].argmax().item()),
                 "max_abs_diff_vs_training_form": round(float((lt - lr).abs().max()), 6),
                 "argmax_agrees_with_training_form": bool(
-                    torch.equal(lt.argmax(-1), lr.argmax(-1))),
+                    torch.equal(lt.argmax(-1), lr.argmax(-1))
+                ),
             }
             res["forward_device_used_rep"] = try_dev
             break
         except Exception as e:
-            fwd[try_dev] = {"status": "FAIL", "error": f"{type(e).__name__}: {str(e)[:400]}"}
+            fwd[try_dev] = {
+                "status": "FAIL",
+                "error": f"{type(e).__name__}: {str(e)[:400]}",
+            }
             rep = rep.to("cpu")
     res["forward_inference_form"] = fwd
     res["status"] = "PASS" if res.get("forward_device_used_rep") else "PARTIAL"

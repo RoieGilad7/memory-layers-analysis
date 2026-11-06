@@ -1,4 +1,5 @@
 """Packing the Pile text and the biographies into token files. No network."""
+
 import json
 import sys
 from collections import Counter, defaultdict
@@ -11,8 +12,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from data import bios, dedup, pack, split
-from data.common import (DataConfig, dumps_record, get_encoder, open_write,
-                         read_jsonl)
+from data.common import DataConfig, dumps_record, get_encoder, open_write, read_jsonl
 from data.pack import BIO_SUBJECT, TOKEN_DTYPE
 from tests._data_fixtures import CONFIG, body
 
@@ -23,13 +23,26 @@ SUBJECTS = ["Pile-CC", "Github"]
 # --------------------------------------------------------------------------
 # a miniature end-to-end build
 # --------------------------------------------------------------------------
-def make_cfg(root: Path, seed=None, tokens_per_subject=20000, n_docs=90,
-             n_train=16, n_control=4, **over) -> DataConfig:
+def make_cfg(
+    root: Path,
+    seed=None,
+    tokens_per_subject=20000,
+    n_docs=90,
+    n_train=16,
+    n_control=4,
+    **over,
+) -> DataConfig:
     raw = yaml.safe_load(CONFIG.read_text())
     r = str(root)
-    raw["paths"] = {"root": r, "raw": f"{r}/raw", "work": f"{r}/_work",
-                    "train": f"{r}/train", "heldout_pool": f"{r}/heldout_pool",
-                    "heldout": f"{r}/heldout", "reports": f"{r}/reports"}
+    raw["paths"] = {
+        "root": r,
+        "raw": f"{r}/raw",
+        "work": f"{r}/_work",
+        "train": f"{r}/train",
+        "heldout_pool": f"{r}/heldout_pool",
+        "heldout": f"{r}/heldout",
+        "reports": f"{r}/reports",
+    }
     raw["small"]["root"] = r
     if seed is not None:
         raw["seed"] = seed
@@ -60,9 +73,18 @@ def _write_raw(cfg, split_name, subject, docs):
     src = cfg.train_files[0] if split_name == "train" else cfg.heldout_files[0]
     with open_write(path) as fh:
         for line, text in docs:
-            fh.write(dumps_record({
-                "doc_id": cfg.doc_id(subject, src, line), "subject": subject,
-                "split": split_name, "source": src, "line": line, "text": text}))
+            fh.write(
+                dumps_record(
+                    {
+                        "doc_id": cfg.doc_id(subject, src, line),
+                        "subject": subject,
+                        "split": split_name,
+                        "source": src,
+                        "line": line,
+                        "text": text,
+                    }
+                )
+            )
 
 
 def build_mini(root: Path, **kw) -> DataConfig:
@@ -70,12 +92,21 @@ def build_mini(root: Path, **kw) -> DataConfig:
     cfg = make_cfg(root, **kw)
     n_docs = kw.get("n_docs", 90)
     for si, subject in enumerate(SUBJECTS):
-        _write_raw(cfg, "train", subject,
-                   [(i * 7, body(f"tr{si}", 420, i)) for i in range(n_docs)])
-        _write_raw(cfg, "heldout", subject,
-                   [(i, body(f"ho{si}", 300, i)) for i in range(24)])
-    _write_raw(cfg, "heldout", "USPTO Backgrounds",
-               [(i, body("us", 300, i)) for i in range(24)])
+        _write_raw(
+            cfg,
+            "train",
+            subject,
+            [(i * 7, body(f"tr{si}", 420, i)) for i in range(n_docs)],
+        )
+        _write_raw(
+            cfg, "heldout", subject, [(i, body(f"ho{si}", 300, i)) for i in range(24)]
+        )
+    _write_raw(
+        cfg,
+        "heldout",
+        "USPTO Backgrounds",
+        [(i, body("us", 300, i)) for i in range(24)],
+    )
     dedup.run(cfg)
     split.run(cfg)
     bios.run(cfg, name_check=False)
@@ -121,8 +152,10 @@ def test_selection_truncates_exactly_one_document_per_subject(built):
         lengths[d] += int(n)
     partials = {report["select"][s]["partial_document"] for s in cfg.train_subjects}
     for subject in cfg.train_subjects:
-        full = {r["doc_id"]: r["n_tokens"] for r in
-                read_jsonl(cfg.train_dir / f"{cfg.slug(subject)}.jsonl.gz")}
+        full = {
+            r["doc_id"]: r["n_tokens"]
+            for r in read_jsonl(cfg.train_dir / f"{cfg.slug(subject)}.jsonl.gz")
+        }
         for doc_id, got in lengths.items():
             if doc_id in full and doc_id not in partials:
                 assert got == full[doc_id], doc_id
@@ -139,8 +172,9 @@ def test_selection_is_seeded_and_a_new_seed_picks_other_documents(built):
     assert [i.doc_id for i in a] == [i.doc_id for i in b]
     assert [i.doc_id for i in a] != [i.doc_id for i in c]
     # but both land on exactly the target
-    assert sum(i.take for i in a) == sum(i.take for i in c) == \
-        cfg.pack_tokens_per_subject
+    assert (
+        sum(i.take for i in a) == sum(i.take for i in c) == cfg.pack_tokens_per_subject
+    )
 
 
 # --------------------------------------------------------------------------
@@ -160,8 +194,7 @@ def test_copy_counts_match_the_tier_and_spread_over_the_rewordings(built):
     cfg, report, _, index = built
     people = {p["person_id"]: p for p in read_jsonl(cfg.bios_dir / "people.jsonl")}
     seen = defaultdict(Counter)
-    for s, pid, rw in zip(index["subject"], index["person_id"],
-                          index["rewording_id"]):
+    for s, pid, rw in zip(index["subject"], index["person_id"], index["rewording_id"]):
         if s == BIO_SUBJECT:
             seen[pid][int(rw)] += 1
 
@@ -174,13 +207,17 @@ def test_copy_counts_match_the_tier_and_spread_over_the_rewordings(built):
         counts = [seen[pid][r] for r in range(p["n_rewordings"])]
         assert counts == pack.copies_per_rewording(want, p["n_rewordings"]), pid
     assert report["biographies"]["copies"] == sum(
-        int(p["target_exposures"]) for p in people.values() if p["split"] == "train")
+        int(p["target_exposures"]) for p in people.values() if p["split"] == "train"
+    )
 
 
 def test_control_people_contribute_nothing(built):
     cfg, _, _, index = built
-    control = {p["person_id"] for p in read_jsonl(cfg.bios_dir / "people.jsonl")
-               if p["split"] == "control"}
+    control = {
+        p["person_id"]
+        for p in read_jsonl(cfg.bios_dir / "people.jsonl")
+        if p["split"] == "control"
+    }
     assert control
     assert not (control & {p for p in index["person_id"] if p})
 
@@ -203,9 +240,11 @@ def test_no_biography_copy_crosses_a_sequence_boundary(built):
 def test_pile_documents_are_allowed_to_cross_boundaries(built):
     cfg, _, _, index = built
     block = cfg.block_size
-    crossing = sum(1 for s, st, ln in zip(index["subject"], index["start"],
-                                          index["length"])
-                   if s != BIO_SUBJECT and st // block != (st + ln - 1) // block)
+    crossing = sum(
+        1
+        for s, st, ln in zip(index["subject"], index["start"], index["length"])
+        if s != BIO_SUBJECT and st // block != (st + ln - 1) // block
+    )
     assert crossing > 0, "with 20k tokens per subject some Pile doc must straddle"
 
 
@@ -215,8 +254,10 @@ def test_moved_biographies_are_reported_and_filler_is_pile_text(built):
     assert report["train"]["filler_tokens"] > 0
     # filler never invents tokens: subject totals are still exact
     for subject in cfg.train_subjects:
-        assert report["train"]["per_subject"][subject]["tokens"] == \
-            cfg.pack_tokens_per_subject
+        assert (
+            report["train"]["per_subject"][subject]["tokens"]
+            == cfg.pack_tokens_per_subject
+        )
 
 
 # --------------------------------------------------------------------------
@@ -238,8 +279,10 @@ def test_deficit_greedy_beats_a_shuffle_on_window_balance():
         def __init__(self, take):
             self.take = take
 
-    streams = {"big": [It(2000) for _ in range(450)],
-               "small": [It(80) for _ in range(1250)]}
+    streams = {
+        "big": [It(2000) for _ in range(450)],
+        "small": [It(80) for _ in range(1250)],
+    }
     greedy = pack.interleave(streams)
     g = pack.window_shares(greedy, streams, 100_000)
 
@@ -312,8 +355,8 @@ def test_decoding_index_segments_reproduces_the_source_text(built):
         start, length = int(index["start"][j]), int(index["length"][j])
         offset = int(index["doc_offset"][j])
         want = np.asarray(enc.encode_ordinary(source[doc_id]), dtype=TOKEN_DTYPE)
-        got = tokens[start:start + length]
-        assert np.array_equal(got, want[offset:offset + length]), doc_id
+        got = tokens[start : start + length]
+        assert np.array_equal(got, want[offset : offset + length]), doc_id
         if offset == 0 and length == want.size:
             assert enc.decode(got.tolist()) == source[doc_id], doc_id
             whole_docs += 1
@@ -326,8 +369,7 @@ def test_decoding_index_segments_reproduces_the_source_text(built):
 def test_heldout_files_hold_every_subject_and_no_biographies(built):
     cfg, report, _, _ = built
     for half in cfg.pack_halves:
-        toks = np.fromfile(cfg.heldout_tokens_dir / f"{half}.bin",
-                           dtype=TOKEN_DTYPE)
+        toks = np.fromfile(cfg.heldout_tokens_dir / f"{half}.bin", dtype=TOKEN_DTYPE)
         idx = pack.read_index(cfg.heldout_tokens_dir / f"{half}.idx.parquet")
         assert toks.dtype == np.uint16 and int(toks.max()) < cfg.vocab_size
         subjects = set(idx["subject"])
@@ -336,7 +378,7 @@ def test_heldout_files_hold_every_subject_and_no_biographies(built):
         # the same tiling invariant
         covered = np.zeros(toks.size, dtype=bool)
         for s, n in zip(idx["start"], idx["length"]):
-            covered[int(s):int(s) + int(n)] = True
+            covered[int(s) : int(s) + int(n)] = True
         assert (toks[~covered] == cfg.eot_token).all()
         assert (toks[covered] != cfg.eot_token).all()
         # every document is within the cap
@@ -351,8 +393,9 @@ def test_heldout_index_keeps_the_ngram_overlap(built):
         assert "ngram_overlap" in idx
         want = {}
         for subject in cfg.all_subjects:
-            for r in read_jsonl(cfg.heldout_dir / half /
-                                f"{cfg.slug(subject)}.jsonl.gz"):
+            for r in read_jsonl(
+                cfg.heldout_dir / half / f"{cfg.slug(subject)}.jsonl.gz"
+            ):
                 want[r["doc_id"]] = r.get("ngram_overlap")
         n = 0
         for d, ov in zip(idx["doc_id"], idx["ngram_overlap"]):
@@ -373,10 +416,14 @@ def test_rebuilding_gives_byte_identical_files(tmp_path):
 
     def digest(cfg):
         out = {}
-        for p in [cfg.tokens_dir / "train.bin",
-                  cfg.tokens_dir / "train.idx.parquet"] + [
-                      cfg.heldout_tokens_dir / f"{h}.{e}"
-                      for h in cfg.pack_halves for e in ("bin", "idx.parquet")]:
+        for p in [
+            cfg.tokens_dir / "train.bin",
+            cfg.tokens_dir / "train.idx.parquet",
+        ] + [
+            cfg.heldout_tokens_dir / f"{h}.{e}"
+            for h in cfg.pack_halves
+            for e in ("bin", "idx.parquet")
+        ]:
             out[p.name] = hashlib.sha256(p.read_bytes()).hexdigest()
         return out
 

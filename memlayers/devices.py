@@ -2,6 +2,7 @@
 
 Priority is cuda > mps > cpu so the same code runs on a Colab T4 and on this Mac.
 """
+
 from __future__ import annotations
 
 import torch

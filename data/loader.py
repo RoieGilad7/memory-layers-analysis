@@ -17,6 +17,7 @@ Interface-compatible with `memlayers.data_fake`: `get_batch(step, batch_size,
 micro, device)`. The `step` argument is ignored for ordering (position is what
 advances), but passing it keeps the call sites identical.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -35,13 +36,19 @@ class PackedDataset:
 
     name = "real"
 
-    def __init__(self, path: str | Path, block_size: int = 512,
-                 seed: int = 1337, vocab_size: int = 50257):
+    def __init__(
+        self,
+        path: str | Path,
+        block_size: int = 512,
+        seed: int = 1337,
+        vocab_size: int = 50257,
+    ):
         self.path = Path(path)
         if not self.path.exists():
             raise FileNotFoundError(
                 f"{self.path} not found. Build it with `python -m data.pack` or "
-                "fetch the frozen bundle with `python -m data.fetch`.")
+                "fetch the frozen bundle with `python -m data.fetch`."
+            )
         self.block_size = int(block_size)
         self.seed = int(seed)
         self.vocab_size = int(vocab_size)
@@ -56,7 +63,8 @@ class PackedDataset:
         if n <= 0:
             raise ValueError(
                 f"{self.path}: {self.n_tokens} tokens is not even one "
-                f"{self.block_size}-token sequence plus its target")
+                f"{self.block_size}-token sequence plus its target"
+            )
         self.n_sequences = n
 
         self.position = 0
@@ -86,24 +94,28 @@ class PackedDataset:
             epoch, offset = divmod(self.position, self.n_sequences)
             self._set_epoch(epoch)
             take = min(k - filled, self.n_sequences - offset)
-            out[filled:filled + take] = self._perm[offset:offset + take]
+            out[filled : filled + take] = self._perm[offset : offset + take]
             self.position += take
             filled += take
         return out
 
     # -- batches -----------------------------------------------------------
-    def get_batch(self, step: int = 0, batch_size: int = 8, micro: int = 0,
-                  device: Optional[torch.device] = None
-                  ) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_batch(
+        self,
+        step: int = 0,
+        batch_size: int = 8,
+        micro: int = 0,
+        device: Optional[torch.device] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         idx = self._next_indices(batch_size)
         b = self.block_size
         x = np.empty((batch_size, b), dtype=np.int64)
         y = np.empty((batch_size, b), dtype=np.int64)
         for row, s in enumerate(idx):
             a = int(s) * b
-            window = np.asarray(self.tokens[a:a + b + 1], dtype=np.int64)
+            window = np.asarray(self.tokens[a : a + b + 1], dtype=np.int64)
             x[row] = window[:b]
-            y[row] = window[1:b + 1]
+            y[row] = window[1 : b + 1]
         xt = torch.from_numpy(x)
         yt = torch.from_numpy(y)
         if device is not None:
@@ -116,32 +128,40 @@ class PackedDataset:
 
     # -- checkpoint state --------------------------------------------------
     def state_dict(self) -> Dict[str, Any]:
-        return {"seed": self.seed, "position": self.position,
-                "n_sequences": self.n_sequences, "block_size": self.block_size,
-                "path": str(self.path), "n_tokens": self.n_tokens}
+        return {
+            "seed": self.seed,
+            "position": self.position,
+            "n_sequences": self.n_sequences,
+            "block_size": self.block_size,
+            "path": str(self.path),
+            "n_tokens": self.n_tokens,
+        }
 
     def load_state_dict(self, state: Dict[str, Any]) -> None:
         if int(state["block_size"]) != self.block_size:
             raise ValueError(
-                f"checkpoint block_size {state['block_size']} != {self.block_size}")
+                f"checkpoint block_size {state['block_size']} != {self.block_size}"
+            )
         if int(state["n_sequences"]) != self.n_sequences:
             raise ValueError(
                 f"checkpoint was written against {state['n_sequences']:,} "
                 f"sequences but this file has {self.n_sequences:,}. The data "
-                "changed under the run; refusing to resume.")
+                "changed under the run; refusing to resume."
+            )
         self.seed = int(state["seed"])
         self._epoch = -1
         self.position = int(state["position"])
         self._set_epoch(self.position // self.n_sequences)
 
-    def __repr__(self) -> str:                                  # pragma: no cover
-        return (f"PackedDataset({self.path.name}, {self.n_tokens:,} tokens, "
-                f"{self.n_sequences:,} sequences of {self.block_size}, "
-                f"seed={self.seed}, position={self.position})")
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"PackedDataset({self.path.name}, {self.n_tokens:,} tokens, "
+            f"{self.n_sequences:,} sequences of {self.block_size}, "
+            f"seed={self.seed}, position={self.position})"
+        )
 
 
-def iter_document_windows(tokens: np.ndarray, start: int, length: int,
-                          block_size: int):
+def iter_document_windows(tokens: np.ndarray, start: int, length: int, block_size: int):
     """Split one document's span into (x, y) windows for evaluation.
 
     Windows stay inside the document, so a per-document loss never mixes in a

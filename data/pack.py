@@ -36,6 +36,7 @@ Outputs:
     heldout/test.idx.parquet
     reports/pack_report.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,8 +48,16 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-from data.common import (record_timing, DataConfig, TOKEN_DTYPE, get_encoder,
-                         keyed_rng, load_config, read_jsonl, write_json)
+from data.common import (
+    record_timing,
+    DataConfig,
+    TOKEN_DTYPE,
+    get_encoder,
+    keyed_rng,
+    load_config,
+    read_jsonl,
+    write_json,
+)
 
 BIO_SUBJECT = "bio"
 
@@ -56,8 +65,15 @@ BIO_SUBJECT = "bio"
 # two pieces (a prefix pulled forward as filler, the rest at its own turn), and
 # without the offset a consumer cannot tell which part of the document a
 # segment is. The six columns the design fixes are all here unchanged.
-INDEX_COLUMNS = ["doc_id", "subject", "start", "length", "doc_offset",
-                 "person_id", "rewording_id"]
+INDEX_COLUMNS = [
+    "doc_id",
+    "subject",
+    "start",
+    "length",
+    "doc_offset",
+    "person_id",
+    "rewording_id",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -67,9 +83,9 @@ INDEX_COLUMNS = ["doc_id", "subject", "start", "length", "doc_offset",
 class PileItem:
     doc_id: str
     subject: str
-    take: int                 # tokens of this document that enter train.bin
-    doc_tokens: int           # the document's full token count
-    consumed: int = 0         # tokens already written (as filler or in turn)
+    take: int  # tokens of this document that enter train.bin
+    doc_tokens: int  # the document's full token count
+    consumed: int = 0  # tokens already written (as filler or in turn)
 
     @property
     def remaining(self) -> int:
@@ -87,8 +103,9 @@ class BioItem:
 # ---------------------------------------------------------------------------
 # 1. selection
 # ---------------------------------------------------------------------------
-def select_subject(cfg: DataConfig, subject: str
-                   ) -> Tuple[List[PileItem], Dict[str, Any]]:
+def select_subject(
+    cfg: DataConfig, subject: str
+) -> Tuple[List[PileItem], Dict[str, Any]]:
     """Exactly `pack.train_tokens_per_subject` tokens, in a seeded order."""
     slug = cfg.slug(subject)
     path = cfg.train_dir / f"{slug}.jsonl.gz"
@@ -109,14 +126,14 @@ def select_subject(cfg: DataConfig, subject: str
         take = min(n, target - acc)
         if take < n:
             truncated = doc_id
-        items.append(PileItem(doc_id=doc_id, subject=subject, take=take,
-                              doc_tokens=n))
+        items.append(PileItem(doc_id=doc_id, subject=subject, take=take, doc_tokens=n))
         acc += take
     if acc != target:
         raise RuntimeError(
             f"{subject}: only {acc:,} tokens available but {target:,} needed. "
             "Prompt 1's slack was eaten -- re-run the pile stage or lower "
-            "pack.train_tokens_per_subject.")
+            "pack.train_tokens_per_subject."
+        )
     report = {
         "documents_available": len(docs),
         "tokens_available": sum(n for _, n in docs),
@@ -160,8 +177,14 @@ def build_bio_items(cfg: DataConfig) -> Tuple[List[BioItem], Dict[str, Any]]:
             doc_id = f"bio-{p['person_id']}-{r}"
             take = lengths[doc_id]
             for _ in range(k):
-                items.append(BioItem(doc_id=doc_id, person_id=p["person_id"],
-                                     rewording_id=r, take=take))
+                items.append(
+                    BioItem(
+                        doc_id=doc_id,
+                        person_id=p["person_id"],
+                        rewording_id=r,
+                        take=take,
+                    )
+                )
             slot["copies"] += k
             slot["tokens"] += k * take
     keyed_rng(cfg.seed, "bio_order").shuffle(items)
@@ -222,9 +245,12 @@ def interleave(streams: Dict[str, Sequence[Any]]) -> List[Tuple[str, int]]:
     return out
 
 
-def window_shares(order: Sequence[Tuple[str, int]], streams: Dict[str, Sequence[Any]],
-                  window: int, stride: Optional[int] = None
-                  ) -> Dict[str, Dict[str, float]]:
+def window_shares(
+    order: Sequence[Tuple[str, int]],
+    streams: Dict[str, Sequence[Any]],
+    window: int,
+    stride: Optional[int] = None,
+) -> Dict[str, Dict[str, float]]:
     """Worst share deviation per stream over every `window` of tokens.
 
     Windows overlap (stride = window/4 by default) so the check is stricter than
@@ -242,9 +268,16 @@ def window_shares(order: Sequence[Tuple[str, int]], streams: Dict[str, Sequence[
         cum[w, j + 1] += lengths[j]
     target = {k: float(cum[i, -1]) / total for i, k in enumerate(keys)}
 
-    out = {k: {"target_share": target[k], "worst_share": target[k],
-               "worst_deviation_points": 0.0, "worst_window_start": 0,
-               "n_windows": 0} for k in keys}
+    out = {
+        k: {
+            "target_share": target[k],
+            "worst_share": target[k],
+            "worst_deviation_points": 0.0,
+            "worst_window_start": 0,
+            "n_windows": 0,
+        }
+        for k in keys
+    }
     step = stride or max(1, window // 4)
     starts = np.arange(0, max(total - window + 1, 1), step)
     if total < window:
@@ -306,19 +339,47 @@ class Writer:
             self._emit(np.array([self.eot], dtype=TOKEN_DTYPE))
             self.need_sep = False
 
-    def _row(self, doc_id: str, subject: str, start: int, length: int,
-             doc_offset: int, person_id: Optional[str], rewording_id: int) -> None:
-        self.rows.append({
-            "doc_id": doc_id, "subject": subject, "start": start,
-            "length": length, "doc_offset": doc_offset,
-            "person_id": person_id, "rewording_id": rewording_id})
+    def _row(
+        self,
+        doc_id: str,
+        subject: str,
+        start: int,
+        length: int,
+        doc_offset: int,
+        person_id: Optional[str],
+        rewording_id: int,
+    ) -> None:
+        self.rows.append(
+            {
+                "doc_id": doc_id,
+                "subject": subject,
+                "start": start,
+                "length": length,
+                "doc_offset": doc_offset,
+                "person_id": person_id,
+                "rewording_id": rewording_id,
+            }
+        )
 
-    def write_segment(self, tokens: np.ndarray, doc_id: str, subject: str,
-                      doc_offset: int, person_id: Optional[str] = None,
-                      rewording_id: int = -1) -> None:
+    def write_segment(
+        self,
+        tokens: np.ndarray,
+        doc_id: str,
+        subject: str,
+        doc_offset: int,
+        person_id: Optional[str] = None,
+        rewording_id: int = -1,
+    ) -> None:
         self._sep()
-        self._row(doc_id, subject, self.n, int(tokens.size), doc_offset,
-                  person_id, rewording_id)
+        self._row(
+            doc_id,
+            subject,
+            self.n,
+            int(tokens.size),
+            doc_offset,
+            person_id,
+            rewording_id,
+        )
         self._emit(tokens)
         self.need_sep = True
 
@@ -343,24 +404,24 @@ class Writer:
                 self.need_sep = False
                 return
             tokens, doc_id, subject, doc_offset = chunk
-            self._row(doc_id, subject, self.n, int(tokens.size), doc_offset,
-                      None, -1)
+            self._row(doc_id, subject, self.n, int(tokens.size), doc_offset, None, -1)
             self._emit(tokens)
             self.filler_tokens += int(tokens.size)
             self.need_sep = True
 
-    def place_bio(self, tokens: np.ndarray, doc_id: str, person_id: str,
-                  rewording_id: int) -> None:
+    def place_bio(
+        self, tokens: np.ndarray, doc_id: str, person_id: str, rewording_id: int
+    ) -> None:
         length = int(tokens.size)
         if length >= self.block:
             raise ValueError(
                 f"{doc_id}: {length} tokens cannot fit in a {self.block}-token "
-                "sequence without splitting")
+                "sequence without splitting"
+            )
         if not self._fits(length):
             self.fill_to(((self.n // self.block) + 1) * self.block)
             self.moved_biographies += 1
-        self.write_segment(tokens, doc_id, BIO_SUBJECT, 0, person_id,
-                           rewording_id)
+        self.write_segment(tokens, doc_id, BIO_SUBJECT, 0, person_id, rewording_id)
 
     # -- finish ------------------------------------------------------------
     def finish(self, align: bool = True) -> np.ndarray:
@@ -369,14 +430,16 @@ class Writer:
             k = self.block - (self.n % self.block)
             self._emit(np.full(k, self.eot, dtype=TOKEN_DTYPE))
             self.pad_tokens += k
-        return (np.concatenate(self.buf) if self.buf
-                else np.zeros(0, dtype=TOKEN_DTYPE))
+        return np.concatenate(self.buf) if self.buf else np.zeros(0, dtype=TOKEN_DTYPE)
 
 
-def pack_train(cfg: DataConfig, tokens: Dict[str, np.ndarray],
-               pile_streams: Dict[str, List[PileItem]],
-               bio_items: List[BioItem], bio_tokens: Dict[str, np.ndarray]
-               ) -> Tuple[np.ndarray, List[Dict[str, Any]], Dict[str, Any]]:
+def pack_train(
+    cfg: DataConfig,
+    tokens: Dict[str, np.ndarray],
+    pile_streams: Dict[str, List[PileItem]],
+    bio_items: List[BioItem],
+    bio_tokens: Dict[str, np.ndarray],
+) -> Tuple[np.ndarray, List[Dict[str, Any]], Dict[str, Any]]:
     streams: Dict[str, Sequence[Any]] = dict(pile_streams)
     streams[BIO_SUBJECT] = bio_items
     order = interleave(streams)
@@ -397,7 +460,7 @@ def pack_train(cfg: DataConfig, tokens: Dict[str, np.ndarray],
                 continue
             take = min(n, item.remaining)
             off = item.consumed
-            arr = tokens[item.doc_id][off:off + take]
+            arr = tokens[item.doc_id][off : off + take]
             item.consumed += take
             return arr, item.doc_id, item.subject, off
         return None
@@ -406,14 +469,15 @@ def pack_train(cfg: DataConfig, tokens: Dict[str, np.ndarray],
     for k, i in order:
         if k == BIO_SUBJECT:
             item = bio_items[i]
-            w.place_bio(bio_tokens[item.doc_id], item.doc_id, item.person_id,
-                        item.rewording_id)
+            w.place_bio(
+                bio_tokens[item.doc_id], item.doc_id, item.person_id, item.rewording_id
+            )
         else:
             item = pile_streams[k][i]
             if item.remaining <= 0:
-                continue                      # already written as filler
+                continue  # already written as filler
             off = item.consumed
-            arr = tokens[item.doc_id][off:off + item.remaining]
+            arr = tokens[item.doc_id][off : off + item.remaining]
             item.consumed = item.take
             w.write_segment(arr, item.doc_id, item.subject, off)
     arr = w.finish(align=True)
@@ -434,8 +498,9 @@ def pack_train(cfg: DataConfig, tokens: Dict[str, np.ndarray],
 # ---------------------------------------------------------------------------
 # 5. held-out
 # ---------------------------------------------------------------------------
-def pack_heldout(cfg: DataConfig, half: str
-                 ) -> Tuple[np.ndarray, List[Dict[str, Any]], Dict[str, Any]]:
+def pack_heldout(
+    cfg: DataConfig, half: str
+) -> Tuple[np.ndarray, List[Dict[str, Any]], Dict[str, Any]]:
     """One .bin per half, all six subjects, no biographies."""
     enc = get_encoder(cfg.tokenizer_name, cfg.vocab_size)
     w = Writer(cfg.block_size, cfg.eot_token, filler=None)
@@ -452,33 +517,42 @@ def pack_heldout(cfg: DataConfig, half: str
             if len(toks) > cfg.max_tokens:
                 raise AssertionError(
                     f"{rec['doc_id']}: {len(toks)} tokens exceeds the "
-                    f"{cfg.max_tokens}-token cap")
-            w.write_segment(np.asarray(toks, dtype=TOKEN_DTYPE), rec["doc_id"],
-                            subject, 0)
+                    f"{cfg.max_tokens}-token cap"
+                )
+            w.write_segment(
+                np.asarray(toks, dtype=TOKEN_DTYPE), rec["doc_id"], subject, 0
+            )
             overlaps.append(rec.get("ngram_overlap"))
             n_tok += len(toks)
         per_subject[subject] = {"documents": len(docs), "tokens": n_tok}
     arr = w.finish(align=False)
     for row, ov in zip(w.rows, overlaps):
         row["ngram_overlap"] = ov
-    stats = {"half": half, "tokens": int(arr.size), "documents": len(w.rows),
-             "per_subject": per_subject}
+    stats = {
+        "half": half,
+        "tokens": int(arr.size),
+        "documents": len(w.rows),
+        "per_subject": per_subject,
+    }
     return arr, w.rows, stats
 
 
 # ---------------------------------------------------------------------------
 # index IO
 # ---------------------------------------------------------------------------
-def write_index(rows: Sequence[Dict[str, Any]], path: Path,
-                extra_columns: Sequence[str] = ()) -> Path:
+def write_index(
+    rows: Sequence[Dict[str, Any]], path: Path, extra_columns: Sequence[str] = ()
+) -> Path:
     """Write the segment index. Parquet, byte-stable for a given pyarrow."""
     import pyarrow as pa
     import pyarrow.parquet as pq
+
     cols = list(INDEX_COLUMNS) + list(extra_columns)
     arrays = {
         "doc_id": pa.array([r["doc_id"] for r in rows], pa.string()),
-        "subject": pa.array([r["subject"] for r in rows],
-                            pa.string()).dictionary_encode(),
+        "subject": pa.array(
+            [r["subject"] for r in rows], pa.string()
+        ).dictionary_encode(),
         "start": pa.array([r["start"] for r in rows], pa.int64()),
         "length": pa.array([r["length"] for r in rows], pa.int64()),
         "doc_offset": pa.array([r["doc_offset"] for r in rows], pa.int64()),
@@ -496,14 +570,18 @@ def write_index(rows: Sequence[Dict[str, Any]], path: Path,
 def read_index(path: Path) -> Dict[str, Any]:
     """The index as a dict of numpy/object arrays -- no pandas needed."""
     import pyarrow.parquet as pq
+
     t = pq.read_table(path)
     out: Dict[str, Any] = {}
     for name in t.column_names:
         col = t.column(name)
         if str(col.type).startswith("dictionary"):
             col = col.cast("string")
-        out[name] = col.to_pylist() if col.type == "string" else col.to_numpy(
-            zero_copy_only=False)
+        out[name] = (
+            col.to_pylist()
+            if col.type == "string"
+            else col.to_numpy(zero_copy_only=False)
+        )
     return out
 
 
@@ -516,12 +594,12 @@ def write_bin(arr: np.ndarray, path: Path) -> Path:
     return path
 
 
-
 # ---------------------------------------------------------------------------
 # tokenizing the selected documents
 # ---------------------------------------------------------------------------
-def tokenize_selected(cfg: DataConfig, enc, subject: str,
-                      wanted: Dict[str, int]) -> Dict[str, np.ndarray]:
+def tokenize_selected(
+    cfg: DataConfig, enc, subject: str, wanted: Dict[str, int]
+) -> Dict[str, np.ndarray]:
     """Tokenize only the documents selection kept. Asserts the recorded counts."""
     slug = cfg.slug(subject)
     out: Dict[str, np.ndarray] = {}
@@ -531,13 +609,14 @@ def tokenize_selected(cfg: DataConfig, enc, subject: str,
         if not batch:
             return
         for (doc_id, _t, n_rec), toks in zip(
-                batch, enc.encode_ordinary_batch([t for _, t, _ in batch],
-                                                 num_threads=8)):
+            batch, enc.encode_ordinary_batch([t for _, t, _ in batch], num_threads=8)
+        ):
             if len(toks) != n_rec:
                 raise AssertionError(
                     f"{doc_id}: n_tokens says {n_rec} but the text encodes to "
                     f"{len(toks)}. The cleaned text and its recorded count have "
-                    "drifted apart -- re-run the dedup stage.")
+                    "drifted apart -- re-run the dedup stage."
+                )
             out[doc_id] = np.asarray(toks, dtype=TOKEN_DTYPE)
         batch.clear()
 
@@ -553,14 +632,17 @@ def tokenize_selected(cfg: DataConfig, enc, subject: str,
     return out
 
 
-def bio_token_arrays(cfg: DataConfig, enc, wanted: Iterable[str]
-                     ) -> Dict[str, np.ndarray]:
+def bio_token_arrays(
+    cfg: DataConfig, enc, wanted: Iterable[str]
+) -> Dict[str, np.ndarray]:
     want = set(wanted)
     out: Dict[str, np.ndarray] = {}
-    recs = [r for r in read_jsonl(cfg.bios_dir / "bios_train.jsonl")
-            if r["doc_id"] in want]
-    for rec, toks in zip(recs, enc.encode_ordinary_batch(
-            [r["text"] for r in recs], num_threads=8)):
+    recs = [
+        r for r in read_jsonl(cfg.bios_dir / "bios_train.jsonl") if r["doc_id"] in want
+    ]
+    for rec, toks in zip(
+        recs, enc.encode_ordinary_batch([r["text"] for r in recs], num_threads=8)
+    ):
         out[rec["doc_id"]] = np.asarray(toks, dtype=TOKEN_DTYPE)
     return out
 
@@ -571,8 +653,11 @@ def bio_token_arrays(cfg: DataConfig, enc, wanted: Iterable[str]
 def run(cfg: DataConfig) -> Dict[str, Any]:
     t0 = time.time()
     enc = get_encoder(cfg.tokenizer_name, cfg.vocab_size)
-    print(f"[pack] root={cfg.root}  small={cfg.small}  "
-          f"fingerprint={cfg.fingerprint('pack')[:16]}", flush=True)
+    print(
+        f"[pack] root={cfg.root}  small={cfg.small}  "
+        f"fingerprint={cfg.fingerprint('pack')[:16]}",
+        flush=True,
+    )
 
     # 1. select
     pile_streams: Dict[str, List[PileItem]] = {}
@@ -581,46 +666,65 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         items, rep = select_subject(cfg, subject)
         pile_streams[subject] = items
         select_reports[subject] = rep
-        print(f"[pack] select {subject:20s} {rep['documents_used']:>7,} docs "
-              f"of {rep['documents_available']:>7,} -> {rep['tokens_used']:,} "
-              f"tokens (1 partial: {rep['partial_document']})", flush=True)
+        print(
+            f"[pack] select {subject:20s} {rep['documents_used']:>7,} docs "
+            f"of {rep['documents_available']:>7,} -> {rep['tokens_used']:,} "
+            f"tokens (1 partial: {rep['partial_document']})",
+            flush=True,
+        )
 
     # 2. biography copies
     bio_items, bio_report = build_bio_items(cfg)
-    print(f"[pack] bios {bio_report['copies']:,} copies of "
-          f"{bio_report['distinct_biographies']:,} biographies = "
-          f"{bio_report['tokens']:,} tokens", flush=True)
+    print(
+        f"[pack] bios {bio_report['copies']:,} copies of "
+        f"{bio_report['distinct_biographies']:,} biographies = "
+        f"{bio_report['tokens']:,} tokens",
+        flush=True,
+    )
 
     # tokenize
     tokens: Dict[str, np.ndarray] = {}
     for subject, items in pile_streams.items():
-        tokens.update(tokenize_selected(
-            cfg, enc, subject, {i.doc_id: i.take for i in items}))
+        tokens.update(
+            tokenize_selected(cfg, enc, subject, {i.doc_id: i.take for i in items})
+        )
     bio_tokens = bio_token_arrays(cfg, enc, {i.doc_id for i in bio_items})
-    print(f"[pack] tokenized {len(tokens):,} Pile documents and "
-          f"{len(bio_tokens):,} biographies ({time.time() - t0:.0f}s)", flush=True)
+    print(
+        f"[pack] tokenized {len(tokens):,} Pile documents and "
+        f"{len(bio_tokens):,} biographies ({time.time() - t0:.0f}s)",
+        flush=True,
+    )
 
     # 3+4. interleave and pack
     arr, rows, stats = pack_train(cfg, tokens, pile_streams, bio_items, bio_tokens)
     write_bin(arr, cfg.tokens_dir / "train.bin")
     write_index(rows, cfg.tokens_dir / "train.idx.parquet")
     worst = max(v["worst_deviation_points"] for v in stats["window_shares"].values())
-    print(f"[pack] train.bin {stats['tokens']:,} tokens = "
-          f"{stats['sequences']:,} sequences, {len(rows):,} index rows, "
-          f"{stats['filler_tokens']:,} filler tokens, "
-          f"{stats['biographies_moved_to_next_sequence']:,} biographies moved, "
-          f"worst window deviation {worst:.3f} pts", flush=True)
+    print(
+        f"[pack] train.bin {stats['tokens']:,} tokens = "
+        f"{stats['sequences']:,} sequences, {len(rows):,} index rows, "
+        f"{stats['filler_tokens']:,} filler tokens, "
+        f"{stats['biographies_moved_to_next_sequence']:,} biographies moved, "
+        f"worst window deviation {worst:.3f} pts",
+        flush=True,
+    )
 
     # 5. held-out
     heldout_stats = {}
     for half in cfg.pack_halves:
         h_arr, h_rows, h_stats = pack_heldout(cfg, half)
         write_bin(h_arr, cfg.heldout_tokens_dir / f"{half}.bin")
-        write_index(h_rows, cfg.heldout_tokens_dir / f"{half}.idx.parquet",
-                    extra_columns=["ngram_overlap"])
+        write_index(
+            h_rows,
+            cfg.heldout_tokens_dir / f"{half}.idx.parquet",
+            extra_columns=["ngram_overlap"],
+        )
         heldout_stats[half] = h_stats
-        print(f"[pack] heldout/{half}.bin {h_stats['tokens']:,} tokens, "
-              f"{h_stats['documents']:,} documents", flush=True)
+        print(
+            f"[pack] heldout/{half}.bin {h_stats['tokens']:,} tokens, "
+            f"{h_stats['documents']:,} documents",
+            flush=True,
+        )
 
     per_subject = {}
     idx_subjects = np.array([r["subject"] for r in rows])
@@ -640,8 +744,7 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         "eot_token": cfg.eot_token,
         "select": select_reports,
         "biographies": bio_report,
-        "train": {**stats, "per_subject": per_subject,
-                  "index_rows": len(rows)},
+        "train": {**stats, "per_subject": per_subject, "index_rows": len(rows)},
         "heldout": heldout_stats,
     }
     record_timing(cfg, "pack", time.time() - t0)

@@ -1,4 +1,5 @@
 """Tiny synthetic raw JSONL fixtures for the data tests. No network anywhere."""
+
 import random
 import sys
 from pathlib import Path
@@ -30,9 +31,15 @@ def make_cfg(root: Path, **overrides) -> DataConfig:
     """Real v1 config, pointed at `root`, shrunk to two training subjects."""
     raw = yaml.safe_load(CONFIG.read_text())
     r = str(root)
-    raw["paths"] = {"root": r, "raw": f"{r}/raw", "work": f"{r}/_work",
-                    "train": f"{r}/train", "heldout_pool": f"{r}/heldout_pool",
-                    "heldout": f"{r}/heldout", "reports": f"{r}/reports"}
+    raw["paths"] = {
+        "root": r,
+        "raw": f"{r}/raw",
+        "work": f"{r}/_work",
+        "train": f"{r}/train",
+        "heldout_pool": f"{r}/heldout_pool",
+        "heldout": f"{r}/heldout",
+        "reports": f"{r}/reports",
+    }
     raw["small"]["root"] = r
     raw["subjects"]["train"] = ["Pile-CC", "Github"]
     raw["subjects"]["heldout_only"] = ["USPTO Backgrounds"]
@@ -55,11 +62,18 @@ def write_raw(cfg: DataConfig, split: str, subject: str, docs) -> Path:
     src = cfg.train_files[0] if split == "train" else cfg.heldout_files[0]
     with open_write(path) as fh:
         for line, text in docs:
-            fh.write(dumps_record({
-                "doc_id": cfg.doc_id(subject, src, line),
-                "subject": subject, "split": split, "source": src,
-                "line": line, "text": text,
-            }))
+            fh.write(
+                dumps_record(
+                    {
+                        "doc_id": cfg.doc_id(subject, src, line),
+                        "subject": subject,
+                        "split": split,
+                        "source": src,
+                        "line": line,
+                        "text": text,
+                    }
+                )
+            )
     return path
 
 
@@ -73,9 +87,12 @@ def build_corpus(cfg: DataConfig, n_train: int = 6, n_heldout: int = 12) -> dict
     train_docs = [(i * 10, t) for i, t in train_texts.items()]
     train_docs.append((999, train_texts[2]))
     write_raw(cfg, "train", "Pile-CC", train_docs)
-    write_raw(cfg, "train", "Github",
-              [(i * 10, f"def f{i}():\n    return {body('gh', 200, i)}")
-               for i in range(3)])
+    write_raw(
+        cfg,
+        "train",
+        "Github",
+        [(i * 10, f"def f{i}():\n    return {body('gh', 200, i)}") for i in range(3)],
+    )
 
     held = []
     # 0: a verbatim copy of a training document -> exact dup across splits
@@ -91,10 +108,22 @@ def build_corpus(cfg: DataConfig, n_train: int = 6, n_heldout: int = 12) -> dict
     # the rest are clean, independent documents
     held += [(i, f"{LICENSE} {body('ho', seed=i)}") for i in range(5, n_heldout)]
     write_raw(cfg, "heldout", "Pile-CC", held)
-    write_raw(cfg, "heldout", "Github",
-              [(i, f"class C{i}:\n    pass\n{body('ghh', 200, i)}")
-               for i in range(n_heldout)])
-    write_raw(cfg, "heldout", "USPTO Backgrounds",
-              [(i, f"A background of the invention. {body('us', 300, i)}")
-               for i in range(n_heldout)])
+    write_raw(
+        cfg,
+        "heldout",
+        "Github",
+        [
+            (i, f"class C{i}:\n    pass\n{body('ghh', 200, i)}")
+            for i in range(n_heldout)
+        ],
+    )
+    write_raw(
+        cfg,
+        "heldout",
+        "USPTO Backgrounds",
+        [
+            (i, f"A background of the invention. {body('us', 300, i)}")
+            for i in range(n_heldout)
+        ],
+    )
     return {"train_texts": train_texts, "heldout": held}

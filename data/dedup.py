@@ -20,6 +20,7 @@ Two passes, both deterministic:
 
 Writes `<reports>/dedup_log.json`: counts dropped per reason per subject.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,13 +31,30 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from data.common import (record_timing, CHARS_PER_TOKEN_BOUND, DataConfig, cap_to_max_tokens,
-                         clean_text, dumps_record, get_encoder, load_config,
-                         ngram_hashes, open_write, overlap_rate, read_jsonl,
-                         text_sha256, write_json)
+from data.common import (
+    record_timing,
+    CHARS_PER_TOKEN_BOUND,
+    DataConfig,
+    cap_to_max_tokens,
+    clean_text,
+    dumps_record,
+    get_encoder,
+    load_config,
+    ngram_hashes,
+    open_write,
+    overlap_rate,
+    read_jsonl,
+    text_sha256,
+    write_json,
+)
 
-REASONS = ("empty", "under_min_tokens", "exact_dup_same_split",
-           "exact_dup_cross_split", "ngram_overlap")
+REASONS = (
+    "empty",
+    "under_min_tokens",
+    "exact_dup_same_split",
+    "exact_dup_cross_split",
+    "ngram_overlap",
+)
 
 
 def _empty_counts() -> Dict[str, int]:
@@ -45,8 +63,9 @@ def _empty_counts() -> Dict[str, int]:
     return d
 
 
-def clean_record(enc, rec: Dict[str, Any], cfg: DataConfig
-                 ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+def clean_record(
+    enc, rec: Dict[str, Any], cfg: DataConfig
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """Clean and cap one raw record. Returns (cleaned record, drop reason)."""
     raw = rec.get("text") or ""
     limit = cfg.max_tokens * CHARS_PER_TOKEN_BOUND
@@ -55,15 +74,19 @@ def clean_record(enc, rec: Dict[str, Any], cfg: DataConfig
     # multi-megabyte document costs several copies of itself in transient
     # memory. Fall back to the full text if the prefix collapsed below `limit`
     # (a document that is mostly whitespace).
-    cleaned = clean_text(raw if len(raw) <= 2 * limit else raw[:2 * limit],
-                         cfg.unicode_form, cfg.max_consecutive_newlines)
+    cleaned = clean_text(
+        raw if len(raw) <= 2 * limit else raw[: 2 * limit],
+        cfg.unicode_form,
+        cfg.max_consecutive_newlines,
+    )
     if len(raw) > 2 * limit and len(cleaned) < limit:
         cleaned = clean_text(raw, cfg.unicode_form, cfg.max_consecutive_newlines)
     if not cleaned:
         return None, "empty"
     # cap first: a document is only ever its first max_tokens tokens
     text, n_tokens, truncated = cap_to_max_tokens(
-        enc, cleaned if len(cleaned) <= limit else cleaned[:limit], cfg.max_tokens)
+        enc, cleaned if len(cleaned) <= limit else cleaned[:limit], cfg.max_tokens
+    )
     if len(cleaned) > limit:
         truncated = True
     if n_tokens < cfg.min_tokens:
@@ -86,7 +109,7 @@ def clean_record(enc, rec: Dict[str, Any], cfg: DataConfig
 # --------------------------------------------------------------------------
 def _pass_a(cfg: DataConfig, enc) -> Dict[str, Dict[str, Dict[str, int]]]:
     """Clean, cap, exact-dedup. Fixed visit order => deterministic survivors."""
-    seen: Dict[str, str] = {}          # sha256 -> split that claimed it first
+    seen: Dict[str, str] = {}  # sha256 -> split that claimed it first
     log: Dict[str, Dict[str, Dict[str, int]]] = {"train": {}, "heldout": {}}
 
     for split in ("train", "heldout"):
@@ -94,8 +117,11 @@ def _pass_a(cfg: DataConfig, enc) -> Dict[str, Dict[str, Dict[str, int]]]:
             slug = cfg.slug(subject)
             counts = _empty_counts()
             src = cfg.raw_dir / split / f"{slug}.jsonl.gz"
-            out_path = (cfg.train_dir / f"{slug}.jsonl.gz" if split == "train"
-                        else cfg.work_dir / "heldout_clean" / f"{slug}.jsonl.gz")
+            out_path = (
+                cfg.train_dir / f"{slug}.jsonl.gz"
+                if split == "train"
+                else cfg.work_dir / "heldout_clean" / f"{slug}.jsonl.gz"
+            )
             with open_write(out_path) as fh:
                 for rec in read_jsonl(src):
                     counts["docs_in"] += 1
@@ -105,8 +131,11 @@ def _pass_a(cfg: DataConfig, enc) -> Dict[str, Dict[str, Dict[str, int]]]:
                         continue
                     owner = seen.get(cleaned["sha256"])
                     if owner is not None:
-                        key = ("exact_dup_same_split" if owner == split
-                               else "exact_dup_cross_split")
+                        key = (
+                            "exact_dup_same_split"
+                            if owner == split
+                            else "exact_dup_cross_split"
+                        )
                         counts[f"dropped_{key}"] += 1
                         continue
                     seen[cleaned["sha256"]] = split
@@ -115,13 +144,16 @@ def _pass_a(cfg: DataConfig, enc) -> Dict[str, Dict[str, Dict[str, int]]]:
                     counts["tokens_kept"] += cleaned["n_tokens"]
                     counts["docs_truncated"] += int(cleaned["truncated"])
             log[split][subject] = counts
-            print(f"[dedup] A {split:8s} {subject:20s} in={counts['docs_in']:>7,} "
-                  f"kept={counts['docs_kept']:>7,} "
-                  f"tokens={counts['tokens_kept']:>12,} "
-                  f"dropped: empty={counts['dropped_empty']} "
-                  f"short={counts['dropped_under_min_tokens']} "
-                  f"dup_same={counts['dropped_exact_dup_same_split']} "
-                  f"dup_cross={counts['dropped_exact_dup_cross_split']}", flush=True)
+            print(
+                f"[dedup] A {split:8s} {subject:20s} in={counts['docs_in']:>7,} "
+                f"kept={counts['docs_kept']:>7,} "
+                f"tokens={counts['tokens_kept']:>12,} "
+                f"dropped: empty={counts['dropped_empty']} "
+                f"short={counts['dropped_under_min_tokens']} "
+                f"dup_same={counts['dropped_exact_dup_same_split']} "
+                f"dup_cross={counts['dropped_exact_dup_cross_split']}",
+                flush=True,
+            )
     return log
 
 
@@ -174,8 +206,9 @@ def _train_ngram_index(cfg: DataConfig, enc, subject: str) -> np.ndarray:
     return base
 
 
-def _copy_through_exempt(cfg: DataConfig, subject: str, log: Dict[str, Any],
-                         t0: float) -> Dict[str, Any]:
+def _copy_through_exempt(
+    cfg: DataConfig, subject: str, log: Dict[str, Any], t0: float
+) -> Dict[str, Any]:
     """Copy one subject's held-out documents past the 13-gram rule untouched."""
     slug = cfg.slug(subject)
     src = cfg.work_dir / "heldout_clean" / f"{slug}.jsonl.gz"
@@ -192,9 +225,12 @@ def _copy_through_exempt(cfg: DataConfig, subject: str, log: Dict[str, Any],
         log["heldout"][subject]["dropped_ngram_overlap"] = 0
         log["heldout"][subject]["docs_kept"] = kept
         log["heldout"][subject]["tokens_kept"] = kept_tokens
-    print(f"[dedup] B {subject:20s} EXEMPT from the "
-          f"{cfg.ngram_drop_threshold:.0%} 13-gram rule -- "
-          f"{kept:,} docs copied through untouched", flush=True)
+    print(
+        f"[dedup] B {subject:20s} EXEMPT from the "
+        f"{cfg.ngram_drop_threshold:.0%} 13-gram rule -- "
+        f"{kept:,} docs copied through untouched",
+        flush=True,
+    )
     return {
         "exempt": True,
         "exempt_reason": "rewordings of one person overlap by design",
@@ -236,12 +272,14 @@ def _pass_b(cfg: DataConfig, enc, log: Dict[str, Any]) -> Dict[str, Any]:
         batch: List[Dict[str, Any]] = []
 
         with open_write(dst) as fh:
+
             def flush() -> None:
                 nonlocal n_found, n_total, kept, dropped, kept_tokens
                 if not batch:
                     return
                 enc_batch = enc.encode_ordinary_batch(
-                    [r["text"] for r in batch], num_threads=8)
+                    [r["text"] for r in batch], num_threads=8
+                )
                 for rec, toks in zip(batch, enc_batch):
                     h = ngram_hashes(toks, cfg.ngram_n)
                     found, total = overlap_rate(h, index)
@@ -281,10 +319,13 @@ def _pass_b(cfg: DataConfig, enc, log: Dict[str, Any]) -> Dict[str, Any]:
             "docs_kept": kept,
             "tokens_kept": kept_tokens,
         }
-        print(f"[dedup] B {subject:20s} train_13grams={index.size:>12,} "
-              f"overlap={out[subject]['aggregate_overlap_rate']:.4%} "
-              f"dropped={dropped:>5,} kept={kept:>6,} "
-              f"tokens={kept_tokens:>10,} ({time.time() - t0:.1f}s)", flush=True)
+        print(
+            f"[dedup] B {subject:20s} train_13grams={index.size:>12,} "
+            f"overlap={out[subject]['aggregate_overlap_rate']:.4%} "
+            f"dropped={dropped:>5,} kept={kept:>6,} "
+            f"tokens={kept_tokens:>10,} ({time.time() - t0:.1f}s)",
+            flush=True,
+        )
     return out
 
 
@@ -307,8 +348,10 @@ def run(cfg: DataConfig) -> Dict[str, Any]:
         "train_tokens_total": sum(v["tokens_kept"] for v in log["train"].values()),
         "train_target_per_subject": cfg.train_tokens_per_subject,
         "train_subjects_below_target": [
-            s for s, v in log["train"].items()
-            if v["tokens_kept"] < cfg.train_tokens_per_subject],
+            s
+            for s, v in log["train"].items()
+            if v["tokens_kept"] < cfg.train_tokens_per_subject
+        ],
     }
     record_timing(cfg, "dedup", time.time() - t0)
     write_json(cfg.reports_dir / "dedup_log.json", out)

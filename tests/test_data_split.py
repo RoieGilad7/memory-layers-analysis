@@ -1,4 +1,5 @@
 """Held-out label/test halves: disjoint, deterministic, trimmed, counted."""
+
 import sys
 from pathlib import Path
 
@@ -44,7 +45,9 @@ def test_half_assignment_is_a_seeded_hash_of_the_doc_id(built):
 
 def test_a_different_seed_moves_documents(built):
     cfg, _ = built
-    ids = _ids(cfg, "label", "USPTO Backgrounds") + _ids(cfg, "test", "USPTO Backgrounds")
+    ids = _ids(cfg, "label", "USPTO Backgrounds") + _ids(
+        cfg, "test", "USPTO Backgrounds"
+    )
     a = [heldout_half(i, cfg.seed, cfg.heldout_halves) for i in ids]
     b = [heldout_half(i, cfg.seed + 1, cfg.heldout_halves) for i in ids]
     assert a != b
@@ -66,8 +69,9 @@ def test_documents_written_match_the_reported_counts(built):
     cfg, rep = built
     for subject in cfg.all_subjects:
         for half in cfg.heldout_halves:
-            recs = list(read_jsonl(cfg.heldout_dir / half /
-                                   f"{cfg.slug(subject)}.jsonl.gz"))
+            recs = list(
+                read_jsonl(cfg.heldout_dir / half / f"{cfg.slug(subject)}.jsonl.gz")
+            )
             st = rep["per_subject"][subject]["halves"][half]
             assert len(recs) == st["docs"]
             assert sum(r["n_tokens"] for r in recs) == st["tokens"]
@@ -76,14 +80,13 @@ def test_documents_written_match_the_reported_counts(built):
 
 
 def test_a_subject_below_the_document_minimum_is_reported_not_crashed(tmp_path):
-    cfg = make_cfg(tmp_path / "out",
-                   **{"targets.heldout_min_docs_per_half": 500})
+    cfg = make_cfg(tmp_path / "out", **{"targets.heldout_min_docs_per_half": 500})
     build_corpus(cfg, n_heldout=12)
     dedup.run(cfg)
     rep = split.run(cfg)
     assert rep["subjects_below_min_docs"]
     for entry in rep["subjects_below_min_docs"]:
-        assert "/" in entry                      # "<subject>/<half>"
+        assert "/" in entry  # "<subject>/<half>"
     assert rep["min_docs_per_half"] == 500
 
 
@@ -99,6 +102,7 @@ def test_halves_split_is_stable_when_documents_are_reordered(tmp_path):
             write_raw(cfg, "heldout", subject, order)
         dedup.run(cfg)
         split.run(cfg)
-        seen.append({h: sorted(_ids(cfg, h, "USPTO Backgrounds"))
-                     for h in cfg.heldout_halves})
+        seen.append(
+            {h: sorted(_ids(cfg, h, "USPTO Backgrounds")) for h in cfg.heldout_halves}
+        )
     assert seen[0] == seen[1]

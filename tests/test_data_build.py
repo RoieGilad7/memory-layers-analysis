@@ -1,4 +1,5 @@
 """The build is reproducible: same config + same input -> byte-identical output."""
+
 import hashlib
 import json
 import subprocess
@@ -40,7 +41,7 @@ def test_same_config_gives_byte_identical_output(tmp_path):
     a = _run(tmp_path / "a")
     b = _run(tmp_path / "b")
     assert a == b
-    assert len(a) >= 6                      # train + pool + both halves
+    assert len(a) >= 6  # train + pool + both halves
 
 
 def test_gzip_outputs_carry_no_timestamp(tmp_path):
@@ -58,12 +59,22 @@ def test_records_are_sorted_key_json(tmp_path):
     build_corpus(cfg)
     dedup.run(cfg)
     import gzip
+
     with gzip.open(cfg.train_dir / "pile_cc.jsonl.gz", "rt", encoding="utf-8") as fh:
         line = fh.readline().strip()
     obj = json.loads(line)
     assert list(obj) == sorted(obj)
-    assert set(obj) == {"doc_id", "subject", "split", "source", "line",
-                        "n_tokens", "truncated", "sha256", "text"}
+    assert set(obj) == {
+        "doc_id",
+        "subject",
+        "split",
+        "source",
+        "line",
+        "n_tokens",
+        "truncated",
+        "sha256",
+        "text",
+    }
 
 
 def test_manifest_records_the_pinned_revision_and_fingerprint(tmp_path):
@@ -72,13 +83,21 @@ def test_manifest_records_the_pinned_revision_and_fingerprint(tmp_path):
     dedup.run(cfg)
     rep = split.run(cfg)
     log = json.loads((cfg.reports_dir / "dedup_log.json").read_text())
-    assert log["config_fingerprint"] == cfg.fingerprint("pile") == rep["config_fingerprint"]
+    assert (
+        log["config_fingerprint"]
+        == cfg.fingerprint("pile")
+        == rep["config_fingerprint"]
+    )
     assert cfg.revision == "3be90335b66f24456a5d6659d9c8d208c0357119"
 
 
 def test_cli_is_wired_up():
-    out = subprocess.run([sys.executable, "-m", "data.build", "--help"],
-                         cwd=ROOT, capture_output=True, text=True)
+    out = subprocess.run(
+        [sys.executable, "-m", "data.build", "--help"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
     assert out.returncode == 0
     assert "--stage" in out.stdout and "--small" in out.stdout
     assert "pile" in out.stdout
@@ -86,10 +105,13 @@ def test_cli_is_wired_up():
 
 def test_real_config_loads_and_is_self_consistent():
     cfg = load_config(CONFIG)
-    assert cfg.train_tokens_per_subject * len(cfg.train_subjects) == \
-        int(cfg.total_train_tokens * (1 - cfg.bio_share))
-    assert cfg.heldout_tokens_per_half * len(cfg.heldout_halves) == \
-        cfg.heldout_tokens_per_subject
+    assert cfg.train_tokens_per_subject * len(cfg.train_subjects) == int(
+        cfg.total_train_tokens * (1 - cfg.bio_share)
+    )
+    assert (
+        cfg.heldout_tokens_per_half * len(cfg.heldout_halves)
+        == cfg.heldout_tokens_per_subject
+    )
     assert set(cfg.source_tags) >= set(cfg.train_files + cfg.heldout_files)
     assert "train/00.jsonl.zst" not in cfg.train_fallback_files
     assert "train/00.jsonl.zst" not in cfg.heldout_fallback_files
@@ -103,15 +125,18 @@ def test_merge_gz_does_not_depend_on_how_the_parts_were_split(tmp_path):
     file. Concatenating gzip members would pass the content check and fail this.
     """
     from data.common import dumps_record, merge_gz, open_write, read_jsonl
-    recs = [{"doc_id": f"x-y-{i}", "line": i, "text": f"document {i} " * 40}
-            for i in range(60)]
+
+    recs = [
+        {"doc_id": f"x-y-{i}", "line": i, "text": f"document {i} " * 40}
+        for i in range(60)
+    ]
 
     outs = []
     for n_parts, label in ((1, "one"), (4, "four"), (60, "each")):
         parts = []
         per = -(-len(recs) // n_parts)
         for p in range(n_parts):
-            chunk = recs[p * per:(p + 1) * per]
+            chunk = recs[p * per : (p + 1) * per]
             if not chunk:
                 continue
             path = tmp_path / label / f"part-{p:04d}.jsonl.gz"

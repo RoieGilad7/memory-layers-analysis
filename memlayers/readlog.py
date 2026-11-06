@@ -14,6 +14,7 @@ Two levels, because they cost very different amounts:
 Indices are stored as the narrowest unsigned type that fits the slot count, weights
 as float16. A JSON manifest records the shapes so the reader can rebuild the arrays.
 """
+
 from __future__ import annotations
 
 import json
@@ -25,8 +26,13 @@ from typing import Dict, Iterable, List, Optional
 import numpy as np
 import torch
 
-__all__ = ["SlotUsageCounter", "ReadLogWriter", "ReadLogReader", "usage_stats",
-           "bytes_per_token"]
+__all__ = [
+    "SlotUsageCounter",
+    "ReadLogWriter",
+    "ReadLogReader",
+    "usage_stats",
+    "bytes_per_token",
+]
 
 
 def _index_dtype(n_slots: int) -> np.dtype:
@@ -37,7 +43,9 @@ def _index_dtype(n_slots: int) -> np.dtype:
     return np.dtype(np.uint64)
 
 
-def bytes_per_token(n_slots: int, heads: int, topk: int, store_weights: bool = True) -> int:
+def bytes_per_token(
+    n_slots: int, heads: int, topk: int, store_weights: bool = True
+) -> int:
     per_read = _index_dtype(n_slots).itemsize + (2 if store_weights else 0)
     return per_read * heads * topk
 
@@ -48,10 +56,13 @@ class SlotUsageCounter:
     def __init__(self, n_slots: Dict[int, int]):
         self.n_slots = dict(n_slots)
         self.counts: Dict[int, torch.Tensor] = {
-            layer: torch.zeros(n, dtype=torch.long) for layer, n in self.n_slots.items()}
+            layer: torch.zeros(n, dtype=torch.long) for layer, n in self.n_slots.items()
+        }
         self.tokens_seen = 0
         self.weight_sums: Dict[int, torch.Tensor] = {
-            layer: torch.zeros(n, dtype=torch.float64) for layer, n in self.n_slots.items()}
+            layer: torch.zeros(n, dtype=torch.float64)
+            for layer, n in self.n_slots.items()
+        }
 
     @torch.no_grad()
     def update(self, reads: Dict[int, "object"], count_tokens: bool = True) -> None:
@@ -62,15 +73,18 @@ class SlotUsageCounter:
             self.counts[layer] += torch.bincount(idx, minlength=self.n_slots[layer])
             w = r.weights.reshape(-1).to("cpu", torch.float64)
             self.weight_sums[layer] += torch.bincount(
-                idx, weights=w, minlength=self.n_slots[layer])
+                idx, weights=w, minlength=self.n_slots[layer]
+            )
         if count_tokens and reads:
             any_r = next(iter(reads.values()))
             b, t = any_r.indices.shape[:2]
             self.tokens_seen += int(b) * int(t)
 
     def stats(self) -> Dict[int, dict]:
-        return {layer: usage_stats(c, self.weight_sums[layer])
-                for layer, c in self.counts.items()}
+        return {
+            layer: usage_stats(c, self.weight_sums[layer])
+            for layer, c in self.counts.items()
+        }
 
     def save(self, path: str | Path) -> Path:
         path = Path(path)
@@ -85,7 +99,9 @@ class SlotUsageCounter:
 
 
 @torch.no_grad()
-def usage_stats(counts: torch.Tensor, weight_sums: Optional[torch.Tensor] = None) -> dict:
+def usage_stats(
+    counts: torch.Tensor, weight_sums: Optional[torch.Tensor] = None
+) -> dict:
     """Slot-usage summary, following Lample et al. 2019 sec 4.
 
     kl_from_uniform is KL(p || uniform) in nats, where p is the normalized read
@@ -104,8 +120,13 @@ def usage_stats(counts: torch.Tensor, weight_sums: Optional[torch.Tensor] = None
         "max_kl_nats": math.log(n) if n else 0.0,
     }
     if total <= 0:
-        out.update(kl_from_uniform=0.0, normalized_kl=0.0, top1_share=0.0,
-                   top1pct_share=0.0, gini=0.0)
+        out.update(
+            kl_from_uniform=0.0,
+            normalized_kl=0.0,
+            top1_share=0.0,
+            top1pct_share=0.0,
+            gini=0.0,
+        )
         return out
     p = counts / total
     nz = p[p > 0]
@@ -120,7 +141,16 @@ def usage_stats(counts: torch.Tensor, weight_sums: Optional[torch.Tensor] = None
         normalized_kl=kl / math.log(n) if n > 1 else 0.0,
         top1_share=float(srt[0]),
         top1pct_share=float(srt[:k1].sum()),
-        gini=float(1.0 - 2.0 * ((torch.cumsum(torch.sort(p).values, 0) - 0.5 * torch.sort(p).values).sum() / n)),
+        gini=float(
+            1.0
+            - 2.0
+            * (
+                (
+                    torch.cumsum(torch.sort(p).values, 0) - 0.5 * torch.sort(p).values
+                ).sum()
+                / n
+            )
+        ),
     )
     if weight_sums is not None and float(weight_sums.sum()) > 0:
         w = weight_sums.to(torch.float64)
@@ -135,9 +165,15 @@ def usage_stats(counts: torch.Tensor, weight_sums: Optional[torch.Tensor] = None
 class ReadLogWriter:
     """Appends the full read log to flat binary files, one pair per memory layer."""
 
-    def __init__(self, out_dir: str | Path, n_slots: Dict[int, int],
-                 heads: Dict[int, int], topk: Dict[int, int],
-                 store_weights: bool = True, enabled: bool = True):
+    def __init__(
+        self,
+        out_dir: str | Path,
+        n_slots: Dict[int, int],
+        heads: Dict[int, int],
+        topk: Dict[int, int],
+        store_weights: bool = True,
+        enabled: bool = True,
+    ):
         self.enabled = enabled
         self.out_dir = Path(out_dir)
         self.n_slots, self.heads, self.topk = dict(n_slots), dict(heads), dict(topk)
@@ -170,9 +206,16 @@ class ReadLogWriter:
                 fw = self._fh(f"layer{layer}_w.bin")
                 fw.write(w.tobytes())
                 self.bytes_written += w.nbytes
-            self.records.append({"step": int(step), "layer": int(layer),
-                                 "batch": int(b), "seq": int(t),
-                                 "heads": int(h), "topk": int(k)})
+            self.records.append(
+                {
+                    "step": int(step),
+                    "layer": int(layer),
+                    "batch": int(b),
+                    "seq": int(t),
+                    "heads": int(h),
+                    "topk": int(k),
+                }
+            )
         any_r = next(iter(reads.values()))
         self.tokens_logged += int(any_r.indices.shape[0]) * int(any_r.indices.shape[1])
 
@@ -183,17 +226,29 @@ class ReadLogWriter:
             fh.close()
         self._files.clear()
         manifest = self.out_dir / "manifest.json"
-        manifest.write_text(json.dumps({
-            "n_slots": self.n_slots, "heads": self.heads, "topk": self.topk,
-            "store_weights": self.store_weights,
-            "index_dtype": {str(l): _index_dtype(n).name for l, n in self.n_slots.items()},
-            "weight_dtype": "float16",
-            "bytes_written": self.bytes_written,
-            "tokens_logged": self.tokens_logged,
-            "bytes_per_token": (self.bytes_written / self.tokens_logged
-                                if self.tokens_logged else 0.0),
-            "records": self.records,
-        }, indent=2))
+        manifest.write_text(
+            json.dumps(
+                {
+                    "n_slots": self.n_slots,
+                    "heads": self.heads,
+                    "topk": self.topk,
+                    "store_weights": self.store_weights,
+                    "index_dtype": {
+                        str(l): _index_dtype(n).name for l, n in self.n_slots.items()
+                    },
+                    "weight_dtype": "float16",
+                    "bytes_written": self.bytes_written,
+                    "tokens_logged": self.tokens_logged,
+                    "bytes_per_token": (
+                        self.bytes_written / self.tokens_logged
+                        if self.tokens_logged
+                        else 0.0
+                    ),
+                    "records": self.records,
+                },
+                indent=2,
+            )
+        )
         return manifest
 
     def __enter__(self):

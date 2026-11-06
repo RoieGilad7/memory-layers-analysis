@@ -1,4 +1,5 @@
 """Shared helpers for the step-0 access checks."""
+
 import json, os, pathlib, platform, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -42,6 +43,7 @@ def jdump(name, obj):
 
 def best_device():
     import torch
+
     if torch.backends.mps.is_available():
         return "mps", "mps"
     return "cpu", "cpu (MPS unavailable)"
@@ -65,7 +67,6 @@ def human(n):
         n /= 1000
 
 
-
 def finish():
     """Flush and hard-exit.
 
@@ -75,6 +76,7 @@ def finish():
     joins instead of waiting on them.
     """
     import os, sys
+
     sys.stdout.flush()
     sys.stderr.flush()
     os._exit(0)

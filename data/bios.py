@@ -30,6 +30,7 @@ Outputs, in `<root>/bios/`:
 Prompt 3 places the exposure copies, tokenizes and packs. This prompt only
 records the targets.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -43,16 +44,38 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from data import bios_data as bd
-from data.common import (record_timing, ROOT, DataConfig, clean_text, dumps_record,
-                         get_encoder, keyed_rng, load_config, open_write,
-                         read_jsonl, write_json)
+from data.common import (
+    record_timing,
+    ROOT,
+    DataConfig,
+    clean_text,
+    dumps_record,
+    get_encoder,
+    keyed_rng,
+    load_config,
+    open_write,
+    read_jsonl,
+    write_json,
+)
 
 # A full name is two capitalized words with exactly one space between them, so
 # this is all the corpus scan has to look for.
 _CAP_WORD = re.compile(r"[A-Z][A-Za-z]+")
 
-MONTHS = ["January", "February", "March", "April", "May", "June", "July",
-          "August", "September", "October", "November", "December"]
+MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
 DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 # Words carrying no identity, for the near-duplicate test -- per attribute,
@@ -63,14 +86,47 @@ DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 # degrees. So majors, cities and dates strip nothing and are compared on
 # containment alone.
 _GENERIC_BY_ATTR: Dict[str, frozenset] = {
-    "university": frozenset({
-        "university", "college", "institute", "school", "of", "the", "and",
-        "for", "state", "technology", "polytechnic", "technological",
-        "national", "military", "universiteit"}),
-    "employer": frozenset({
-        "group", "holdings", "company", "corporation", "inc", "plc", "ag",
-        "sa", "nv", "ltd", "limited", "co", "the", "and", "of",
-        "international", "technology", "technologies"}),
+    "university": frozenset(
+        {
+            "university",
+            "college",
+            "institute",
+            "school",
+            "of",
+            "the",
+            "and",
+            "for",
+            "state",
+            "technology",
+            "polytechnic",
+            "technological",
+            "national",
+            "military",
+            "universiteit",
+        }
+    ),
+    "employer": frozenset(
+        {
+            "group",
+            "holdings",
+            "company",
+            "corporation",
+            "inc",
+            "plc",
+            "ag",
+            "sa",
+            "nv",
+            "ltd",
+            "limited",
+            "co",
+            "the",
+            "and",
+            "of",
+            "international",
+            "technology",
+            "technologies",
+        }
+    ),
     "major": frozenset(),
     "birth_city": frozenset(),
     "birth_date": frozenset(),
@@ -95,8 +151,9 @@ def _significant_words(value: str, attribute: str) -> frozenset:
     return frozenset(keep or words)
 
 
-def _near_duplicate_of(value: str, attribute: str,
-                       kept: Dict[frozenset, str]) -> Optional[str]:
+def _near_duplicate_of(
+    value: str, attribute: str, kept: Dict[frozenset, str]
+) -> Optional[str]:
     """A value is a near-duplicate when its identity words nest in another's.
 
     Catches "Boston College" vs "Boston University" and "Michigan State
@@ -119,8 +176,10 @@ def build_date_values(cfg: DataConfig, n: int) -> List[str]:
     lo, hi = cfg.bio_year_range
     pairs = [(m, d) for m in range(12) for d in range(1, DAYS_IN_MONTH[m] + 1)]
     if n > len(pairs):
-        raise ValueError(f"cannot build {n} dates with unique month-day pairs "
-                         f"(only {len(pairs)} exist)")
+        raise ValueError(
+            f"cannot build {n} dates with unique month-day pairs "
+            f"(only {len(pairs)} exist)"
+        )
     rng = _rng(cfg.seed, "dates")
     chosen = rng.sample(pairs, n)
     chosen.sort()
@@ -131,9 +190,14 @@ def build_date_values(cfg: DataConfig, n: int) -> List[str]:
     return out
 
 
-def filter_values(enc, candidates: Sequence[str], target: int, mode: str,
-                  rng: random.Random, attribute: str = "major"
-                  ) -> Tuple[List[str], Dict[str, Any]]:
+def filter_values(
+    enc,
+    candidates: Sequence[str],
+    target: int,
+    mode: str,
+    rng: random.Random,
+    attribute: str = "major",
+) -> Tuple[List[str], Dict[str, Any]]:
     """Drop near-duplicates, then first-token clashes, then trim to `target`.
 
     `mode` is "first_token" or "first_two_tokens" -- which prefix has to be
@@ -157,8 +221,13 @@ def filter_values(enc, candidates: Sequence[str], target: int, mode: str,
     for v in stage1:
         prefix = tuple(enc.encode_ordinary(" " + v)[:n_prefix])
         if prefix in seen:
-            token_drops.append({"dropped": v, "clashes_with": seen[prefix],
-                                "on": enc.decode(list(prefix))})
+            token_drops.append(
+                {
+                    "dropped": v,
+                    "clashes_with": seen[prefix],
+                    "on": enc.decode(list(prefix)),
+                }
+            )
             continue
         seen[prefix] = v
         stage2.append(v)
@@ -180,7 +249,9 @@ def filter_values(enc, candidates: Sequence[str], target: int, mode: str,
     return trimmed, report
 
 
-def build_value_lists(cfg: DataConfig, enc) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
+def build_value_lists(
+    cfg: DataConfig, enc
+) -> Tuple[Dict[str, List[str]], Dict[str, Any]]:
     sources = {
         "birth_city": bd.CITY_CANDIDATES,
         "university": bd.UNIVERSITY_CANDIDATES,
@@ -191,15 +262,20 @@ def build_value_lists(cfg: DataConfig, enc) -> Tuple[Dict[str, List[str]], Dict[
     reports: Dict[str, Any] = {}
     for attr in cfg.bio_attributes:
         target = cfg.bio_value_targets[attr]
-        mode = ("first_two_tokens" if attr in cfg.bio_first_two_tokens_unique
-                else "first_token")
+        mode = (
+            "first_two_tokens"
+            if attr in cfg.bio_first_two_tokens_unique
+            else "first_token"
+        )
         if attr == "birth_date":
             dates = build_date_values(cfg, target)
-            vals, rep = filter_values(enc, dates, target, mode,
-                                      _rng(cfg.seed, "trim", attr), attr)
+            vals, rep = filter_values(
+                enc, dates, target, mode, _rng(cfg.seed, "trim", attr), attr
+            )
         else:
-            vals, rep = filter_values(enc, sources[attr], target, mode,
-                                      _rng(cfg.seed, "trim", attr), attr)
+            vals, rep = filter_values(
+                enc, sources[attr], target, mode, _rng(cfg.seed, "trim", attr), attr
+            )
         if not vals:
             raise RuntimeError(f"{attr}: no values survived filtering")
         values[attr] = vals
@@ -220,7 +296,8 @@ def first_token_report(enc, values: Dict[str, List[str]]) -> Dict[str, Any]:
             "distinct_first_two_tokens": len(set(pairs)),
             "first_two_tokens_unique": len(set(pairs)) == len(vals),
             "value_tokens_mean": round(
-                sum(len(enc.encode_ordinary(" " + v)) for v in vals) / len(vals), 2),
+                sum(len(enc.encode_ordinary(" " + v)) for v in vals) / len(vals), 2
+            ),
         }
     return out
 
@@ -248,8 +325,9 @@ def _value_words(value: str) -> frozenset:
     return frozenset(w.lower() for w in re.findall(r"[A-Za-z0-9]+", value))
 
 
-def name_word_collides(enc, cfg: DataConfig, word: str,
-                       values: Dict[str, List[str]]) -> Optional[Tuple[str, str, str]]:
+def name_word_collides(
+    enc, cfg: DataConfig, word: str, values: Dict[str, List[str]]
+) -> Optional[Tuple[str, str, str]]:
     """Does this name word hand a probe one of its answers for free?
 
     Two ways, both global across every list -- a surname that primes *another*
@@ -273,10 +351,12 @@ def name_word_collides(enc, cfg: DataConfig, word: str,
     return None
 
 
-def names_colliding_with_values(cfg: DataConfig, enc,
-                                candidates: Sequence[Dict[str, str]],
-                                values: Dict[str, List[str]]
-                                ) -> Tuple[List[str], Dict[str, Any]]:
+def names_colliding_with_values(
+    cfg: DataConfig,
+    enc,
+    candidates: Sequence[Dict[str, str]],
+    values: Dict[str, List[str]],
+) -> Tuple[List[str], Dict[str, Any]]:
     """Candidate names rejected because a name word collides with a value.
 
     Rejected in the same place the Pile name check rejects -- before people are
@@ -306,22 +386,36 @@ def names_colliding_with_values(cfg: DataConfig, enc,
             by_reason[reason] += 1
             by_attribute[attribute] = by_attribute.get(attribute, 0) + 1
             if len(examples) < 25:
-                examples.append({"name": cand["name"], "word": cand[part],
-                                 "attribute": attribute, "value": value,
-                                 "reason": reason})
+                examples.append(
+                    {
+                        "name": cand["name"],
+                        "word": cand[part],
+                        "attribute": attribute,
+                        "value": value,
+                        "reason": reason,
+                    }
+                )
             break
-    stats = {"candidates": len(candidates), "rejected": len(rejected),
-             "by_gender": by_gender, "by_reason": by_reason,
-             "by_attribute": dict(sorted(by_attribute.items())),
-             "distinct_words_tested": len(cache),
-             "examples": examples}
+    stats = {
+        "candidates": len(candidates),
+        "rejected": len(rejected),
+        "by_gender": by_gender,
+        "by_reason": by_reason,
+        "by_attribute": dict(sorted(by_attribute.items())),
+        "distinct_words_tested": len(cache),
+        "examples": examples,
+    }
     return rejected, stats
 
 
-def resolve_fact_collisions(cfg: DataConfig, enc, pid: str,
-                            facts: Dict[str, str], values: Dict[str, List[str]],
-                            max_attempts: int = 200
-                            ) -> Tuple[Dict[str, str], List[Dict[str, Any]]]:
+def resolve_fact_collisions(
+    cfg: DataConfig,
+    enc,
+    pid: str,
+    facts: Dict[str, str],
+    values: Dict[str, List[str]],
+    max_attempts: int = 200,
+) -> Tuple[Dict[str, str], List[Dict[str, Any]]]:
     """Redraw a person's later facts until no value leaks another's answer.
 
     Every rewording puts all five values in one paragraph in a random order, so
@@ -343,24 +437,37 @@ def resolve_fact_collisions(cfg: DataConfig, enc, pid: str,
         attempt = 0
         while True:
             clash = next(
-                ((e, facts[e]) for e in earlier
-                 if (set(keys[attr]) & toks[e]) or (set(keys[e]) & toks[attr])),
-                None)
+                (
+                    (e, facts[e])
+                    for e in earlier
+                    if (set(keys[attr]) & toks[e]) or (set(keys[e]) & toks[attr])
+                ),
+                None,
+            )
             if clash is None:
                 break
             attempt += 1
             if attempt > max_attempts:
                 raise RuntimeError(
                     f"{pid}/{attr}: could not redraw clear of {clash} in "
-                    f"{max_attempts} attempts")
+                    f"{max_attempts} attempts"
+                )
             old = facts[attr]
-            facts[attr] = keyed_rng(cfg.seed, "facts", pid, attr,
-                                    attempt).choice(values[attr])
+            facts[attr] = keyed_rng(cfg.seed, "facts", pid, attr, attempt).choice(
+                values[attr]
+            )
             keys[attr] = ranking_key(enc, cfg, attr, facts[attr])
             toks[attr] = value_token_set(enc, facts[attr])
-            changes.append({"person_id": pid, "attribute": attr, "attempt": attempt,
-                            "was": old, "now": facts[attr],
-                            "clashed_with": {clash[0]: clash[1]}})
+            changes.append(
+                {
+                    "person_id": pid,
+                    "attribute": attr,
+                    "attempt": attempt,
+                    "was": old,
+                    "now": facts[attr],
+                    "clashed_with": {clash[0]: clash[1]},
+                }
+            )
     return facts, changes
 
 
@@ -387,13 +494,13 @@ def build_name_candidates(cfg: DataConfig) -> List[Dict[str, str]]:
             if name in seen:
                 continue
             seen.add(name)
-            out.append({"gender": gender, "first": first, "last": last,
-                        "name": name})
+            out.append({"gender": gender, "first": first, "last": last, "name": name})
     return out
 
 
-def scan_corpus_for_names(paths: Iterable[Path], names: Iterable[str],
-                          case_sensitive: bool = True) -> Dict[str, Any]:
+def scan_corpus_for_names(
+    paths: Iterable[Path], names: Iterable[str], case_sensitive: bool = True
+) -> Dict[str, Any]:
     """Which of `names` occur verbatim in the cleaned Pile text.
 
     One pass. Candidate names are two capitalized words with a single space, so
@@ -423,8 +530,9 @@ def scan_corpus_for_names(paths: Iterable[Path], names: Iterable[str],
                 pair = text[s0:e1]
                 key = pair if case_sensitive else pair.lower()
                 if key in wanted:
-                    hits[pair if case_sensitive else key] = hits.get(
-                        pair if case_sensitive else key, 0) + 1
+                    hits[pair if case_sensitive else key] = (
+                        hits.get(pair if case_sensitive else key, 0) + 1
+                    )
     return {
         "files": files,
         "documents_scanned": docs,
@@ -449,11 +557,14 @@ def corpus_paths(cfg: DataConfig) -> List[Path]:
 # ---------------------------------------------------------------------------
 # people
 # ---------------------------------------------------------------------------
-def build_people(cfg: DataConfig, values: Dict[str, List[str]],
-                 candidates: Sequence[Dict[str, str]],
-                 banned: Sequence[str],
-                 value_colliding: Sequence[str] = (),
-                 enc=None) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+def build_people(
+    cfg: DataConfig,
+    values: Dict[str, List[str]],
+    candidates: Sequence[Dict[str, str]],
+    banned: Sequence[str],
+    value_colliding: Sequence[str] = (),
+    enc=None,
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """2,000 trained + 500 control people, gender-balanced inside every tier.
 
     Tiers are assigned by filling a deterministic plan -- (tier, gender) slots in
@@ -488,7 +599,8 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
     if short:
         raise RuntimeError(
             f"not enough surviving names: {short}. Raise "
-            "bios.people.name_candidates_per_gender.")
+            "bios.people.name_candidates_per_gender."
+        )
 
     # the exactly-balanced (split, tier) plan, per gender
     plan: Dict[str, List[Tuple[str, str, int]]] = {}
@@ -498,11 +610,13 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
             n = tier["n_people"] // len(cfg.bio_genders)
             slots += [("train", tier["name"], tier["exposures"])] * n
         slots += [("control", cfg.bio_control_tier, 0)] * (
-            cfg.bio_n_control // len(cfg.bio_genders))
+            cfg.bio_n_control // len(cfg.bio_genders)
+        )
         if len(slots) != per_gender:
             raise ValueError(
                 f"{g}: plan has {len(slots)} slots but {per_gender} names; "
-                "every tier's n_people must divide by the number of genders")
+                "every tier's n_people must divide by the number of genders"
+            )
         _rng(cfg.seed, "tierplan", g).shuffle(slots)
         plan[g] = slots
 
@@ -510,7 +624,8 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
     people: List[Dict[str, Any]] = []
     fact_redraws: List[Dict[str, Any]] = []
     order: List[Tuple[str, int]] = [
-        (g, i) for i in range(per_gender) for g in cfg.bio_genders]
+        (g, i) for i in range(per_gender) for g in cfg.bio_genders
+    ]
     for idx, (g, i) in enumerate(order):
         cand = chosen[g][i]
         split, tier, exposures = plan[g][i]
@@ -519,18 +634,20 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
         facts = {attr: prng.choice(values[attr]) for attr in cfg.bio_attributes}
         facts, changes = resolve_fact_collisions(cfg, enc, pid, facts, values)
         fact_redraws.extend(changes)
-        people.append({
-            "person_id": pid,
-            "name": cand["name"],
-            "first_name": cand["first"],
-            "last_name": cand["last"],
-            "gender": g,
-            "split": split,
-            "tier": tier,
-            "target_exposures": exposures,
-            "n_rewordings": cfg.bio_n_rewordings,
-            "facts": facts,
-        })
+        people.append(
+            {
+                "person_id": pid,
+                "name": cand["name"],
+                "first_name": cand["first"],
+                "last_name": cand["last"],
+                "gender": g,
+                "split": split,
+                "tier": tier,
+                "target_exposures": exposures,
+                "n_rewordings": cfg.bio_n_rewordings,
+                "facts": facts,
+            }
+        )
 
     stats = {
         "n_people": len(people),
@@ -544,8 +661,7 @@ def build_people(cfg: DataConfig, values: Dict[str, List[str]],
         "by_split": _count(people, "split"),
         "by_gender": _count(people, "gender"),
         "by_tier": _count(people, "tier"),
-        "by_tier_gender": {
-            f"{p['tier']}/{p['gender']}": 0 for p in people},
+        "by_tier_gender": {f"{p['tier']}/{p['gender']}": 0 for p in people},
     }
     for p in people:
         stats["by_tier_gender"][f"{p['tier']}/{p['gender']}"] += 1
@@ -563,23 +679,33 @@ def _count(rows: Sequence[Dict[str, Any]], field: str) -> Dict[str, int]:
 # rendering
 # ---------------------------------------------------------------------------
 PRONOUNS = {
-    "female": {"Subj": "She", "subj": "she", "Poss": "Her", "poss": "her",
-               "obj": "her"},
-    "male": {"Subj": "He", "subj": "he", "Poss": "His", "poss": "his",
-             "obj": "him"},
+    "female": {
+        "Subj": "She",
+        "subj": "she",
+        "Poss": "Her",
+        "poss": "her",
+        "obj": "her",
+    },
+    "male": {"Subj": "He", "subj": "he", "Poss": "His", "poss": "his", "obj": "him"},
 }
 
 
 def mention(name: str, gender: str, use_name: bool) -> Dict[str, str]:
     """The person-placeholder fills for one sentence."""
     if use_name:
-        return {"Subj": name, "subj": name, "Poss": f"{name}'s",
-                "poss": f"{name}'s", "obj": name}
+        return {
+            "Subj": name,
+            "subj": name,
+            "Poss": f"{name}'s",
+            "poss": f"{name}'s",
+            "obj": name,
+        }
     return dict(PRONOUNS[gender])
 
 
-def render(template: str, name: str, gender: str, use_name: bool,
-           value: str) -> Tuple[str, int]:
+def render(
+    template: str, name: str, gender: str, use_name: bool, value: str
+) -> Tuple[str, int]:
     """Render one sentence. Returns (text, index where the value starts).
 
     The index is taken from the template, not searched for in the output, so a
@@ -624,18 +750,23 @@ def person_plan(cfg: DataConfig, person: Dict[str, Any]) -> List[Dict[str, Any]]
         rng = _rng(cfg.seed, "rw", pid, r)
         order = list(cfg.bio_attributes)
         rng.shuffle(order)
-        plans.append({
-            "rewording_id": r,
-            "order": order,
-            "template_ids": {a: picks[a][r] for a in cfg.bio_attributes},
-            "use_name": mention_pattern(cfg, rng, len(order)),
-        })
+        plans.append(
+            {
+                "rewording_id": r,
+                "order": order,
+                "template_ids": {a: picks[a][r] for a in cfg.bio_attributes},
+                "use_name": mention_pattern(cfg, rng, len(order)),
+            }
+        )
     return plans
 
 
-def build_biography(cfg: DataConfig, person: Dict[str, Any], plan: Dict[str, Any],
-                    heldout: Optional[Tuple[str, int]] = None
-                    ) -> Tuple[str, Dict[str, Dict[str, Any]]]:
+def build_biography(
+    cfg: DataConfig,
+    person: Dict[str, Any],
+    plan: Dict[str, Any],
+    heldout: Optional[Tuple[str, int]] = None,
+) -> Tuple[str, Dict[str, Dict[str, Any]]]:
     """Render one biography. Returns (text, {attribute: {offset, template_id,...}}).
 
     `heldout=(attribute, index)` swaps that one attribute's sentence for a
@@ -656,14 +787,19 @@ def build_biography(cfg: DataConfig, person: Dict[str, Any], plan: Dict[str, Any
             template = bd.TRAIN_TEMPLATES[attr][tid]
             is_held = False
         if i == 0:
-            use_name = True                     # the first sentence names them
+            use_name = True  # the first sentence names them
         value = person["facts"][attr]
         text, at = render(template, name, gender, use_name, value)
-        spans[attr] = {"offset": pos + at, "template_id": tid,
-                       "held_out_template": is_held, "sentence_index": i,
-                       "used_name": use_name, "value": value}
+        spans[attr] = {
+            "offset": pos + at,
+            "template_id": tid,
+            "held_out_template": is_held,
+            "sentence_index": i,
+            "used_name": use_name,
+            "value": value,
+        }
         parts.append(text)
-        pos += len(text) + 1                    # sentences joined by one space
+        pos += len(text) + 1  # sentences joined by one space
     return " ".join(parts), spans
 
 
@@ -678,9 +814,9 @@ def _role(cfg: DataConfig, rewording_id: int) -> str:
     raise ValueError(f"rewording {rewording_id} has no role in the config")
 
 
-def fact_rows(cfg: DataConfig, person: Dict[str, Any], enc,
-              value_tokens: Dict[str, List[int]]) -> Tuple[List[Dict[str, Any]],
-                                                           List[Dict[str, Any]]]:
+def fact_rows(
+    cfg: DataConfig, person: Dict[str, Any], enc, value_tokens: Dict[str, List[int]]
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """All fact rows for one person, plus that person's biography rows.
 
     A row's `prompt` is the biography text up to the value, with the space
@@ -699,26 +835,54 @@ def fact_rows(cfg: DataConfig, person: Dict[str, Any], enc,
         text, spans = build_biography(cfg, person, plan)
         r = plan["rewording_id"]
         doc_id = f"bio-{pid}-{r}"
-        bios.append({"person_id": pid, "rewording_id": r, "doc_id": doc_id,
-                     "split": person["split"], "text": text})
+        bios.append(
+            {
+                "person_id": pid,
+                "rewording_id": r,
+                "doc_id": doc_id,
+                "split": person["split"],
+                "text": text,
+            }
+        )
         for attr in cfg.bio_attributes:
             sp = spans[attr]
-            rows.append(_row(cfg, person, attr, sp, text, r, _role(cfg, r),
-                             doc_id, value_tokens))
+            rows.append(
+                _row(
+                    cfg, person, attr, sp, text, r, _role(cfg, r), doc_id, value_tokens
+                )
+            )
 
     ctx = plans[cfg.bio_heldout_context_rewording]
     for h in range(cfg.bio_n_heldout_templates):
         for attr in cfg.bio_attributes:
             text, spans = build_biography(cfg, person, ctx, heldout=(attr, h))
-            rows.append(_row(cfg, person, attr, spans[attr], text, None,
-                             cfg.bio_heldout_role, None, value_tokens))
+            rows.append(
+                _row(
+                    cfg,
+                    person,
+                    attr,
+                    spans[attr],
+                    text,
+                    None,
+                    cfg.bio_heldout_role,
+                    None,
+                    value_tokens,
+                )
+            )
     return rows, bios
 
 
-def _row(cfg: DataConfig, person: Dict[str, Any], attr: str, span: Dict[str, Any],
-         text: str, rewording_id: Optional[int], role: str,
-         doc_id: Optional[str], value_tokens: Dict[str, List[int]]
-         ) -> Dict[str, Any]:
+def _row(
+    cfg: DataConfig,
+    person: Dict[str, Any],
+    attr: str,
+    span: Dict[str, Any],
+    text: str,
+    rewording_id: Optional[int],
+    role: str,
+    doc_id: Optional[str],
+    value_tokens: Dict[str, List[int]],
+) -> Dict[str, Any]:
     value = span["value"]
     start = span["offset"]
     if start == 0 or text[start - 1] != " ":
@@ -734,7 +898,7 @@ def _row(cfg: DataConfig, person: Dict[str, Any], attr: str, span: Dict[str, Any
         "rewording_id": rewording_id,
         "held_out_template": span["held_out_template"],
         "role": role,
-        "prompt": text[:start - 1],
+        "prompt": text[: start - 1],
         "continuation": " " + value,
         "true_value": value,
         "value_token_ids": value_tokens[value],
@@ -749,17 +913,23 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
     t0 = time.time()
     enc = get_encoder(cfg.tokenizer_name, cfg.vocab_size)
     out_dir = cfg.bios_dir
-    print(f"[bios] root={out_dir}  small={cfg.small}  "
-          f"fingerprint={cfg.fingerprint('bios')[:16]}", flush=True)
+    print(
+        f"[bios] root={out_dir}  small={cfg.small}  "
+        f"fingerprint={cfg.fingerprint('bios')[:16]}",
+        flush=True,
+    )
 
     values, value_reports = build_value_lists(cfg, enc)
     tok_report = first_token_report(enc, values)
     for attr in cfg.bio_attributes:
         r = value_reports[attr]
-        print(f"[bios] values {attr:12s} {r['candidates']:>4d} cand -> "
-              f"{r['after_near_duplicate_drop']:>4d} after near-dup -> "
-              f"{r['after_prefix_drop']:>4d} after {r['uniqueness']} -> "
-              f"{r['final']:>4d} final", flush=True)
+        print(
+            f"[bios] values {attr:12s} {r['candidates']:>4d} cand -> "
+            f"{r['after_near_duplicate_drop']:>4d} after near-dup -> "
+            f"{r['after_prefix_drop']:>4d} after {r['uniqueness']} -> "
+            f"{r['final']:>4d} final",
+            flush=True,
+        )
 
     candidates = build_name_candidates(cfg)
     if name_check and cfg.bio_name_check:
@@ -768,35 +938,54 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
             raise RuntimeError(
                 f"the Pile name check found no corpus under {cfg.root} "
                 f"({cfg.bio_name_check_dirs}). Build the pile stage first, or "
-                "pass --skip-name-check and accept unchecked names.")
-        print(f"[bios] name check: scanning {len(paths)} files for "
-              f"{len(candidates):,} candidate names", flush=True)
+                "pass --skip-name-check and accept unchecked names."
+            )
+        print(
+            f"[bios] name check: scanning {len(paths)} files for "
+            f"{len(candidates):,} candidate names",
+            flush=True,
+        )
         check = scan_corpus_for_names(
-            paths, [c["name"] for c in candidates],
-            case_sensitive=cfg.bio_name_check_case_sensitive)
+            paths,
+            [c["name"] for c in candidates],
+            case_sensitive=cfg.bio_name_check_case_sensitive,
+        )
         check["skipped"] = False
     else:
-        check = {"skipped": True, "reason": "name check disabled",
-                 "names_found": [], "n_names_found": 0,
-                 "candidates_tested": len(candidates), "files": []}
-    print(f"[bios] name check: {check['n_names_found']} of "
-          f"{check['candidates_tested']:,} candidate names occur in the Pile",
-          flush=True)
+        check = {
+            "skipped": True,
+            "reason": "name check disabled",
+            "names_found": [],
+            "n_names_found": 0,
+            "candidates_tested": len(candidates),
+            "files": [],
+        }
+    print(
+        f"[bios] name check: {check['n_names_found']} of "
+        f"{check['candidates_tested']:,} candidate names occur in the Pile",
+        flush=True,
+    )
 
-    colliding, collide_stats = names_colliding_with_values(
-        cfg, enc, candidates, values)
-    print(f"[bios] value collision: {collide_stats['rejected']:,} of "
-          f"{collide_stats['candidates']:,} candidate names rejected "
-          f"({collide_stats['by_gender']}); by reason "
-          f"{collide_stats['by_reason']}", flush=True)
+    colliding, collide_stats = names_colliding_with_values(cfg, enc, candidates, values)
+    print(
+        f"[bios] value collision: {collide_stats['rejected']:,} of "
+        f"{collide_stats['candidates']:,} candidate names rejected "
+        f"({collide_stats['by_gender']}); by reason "
+        f"{collide_stats['by_reason']}",
+        flush=True,
+    )
 
-    people, people_stats = build_people(cfg, values, candidates,
-                                        check["names_found"], colliding, enc)
+    people, people_stats = build_people(
+        cfg, values, candidates, check["names_found"], colliding, enc
+    )
     people_stats["value_collision"] = collide_stats
     if people_stats["fact_redraws"]:
-        print(f"[bios] fact redraws: {people_stats['fact_redraws']} draws over "
-              f"{people_stats['people_with_a_redrawn_fact']} people whose values "
-              f"would have leaked each other's answer", flush=True)
+        print(
+            f"[bios] fact redraws: {people_stats['fact_redraws']} draws over "
+            f"{people_stats['people_with_a_redrawn_fact']} people whose values "
+            f"would have leaked each other's answer",
+            flush=True,
+        )
 
     all_values = sorted({v for vals in values.values() for v in vals})
     value_tokens = {v: enc.encode_ordinary(" " + v) for v in all_values}
@@ -816,8 +1005,14 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
             rows, bios = fact_rows(cfg, person, enc, value_tokens)
             handle = train_handle if person["split"] == "train" else ctrl_handle
             for b in bios:
-                handle.write(dumps_record(
-                    {k: b[k] for k in ("person_id", "rewording_id", "doc_id", "text")}))
+                handle.write(
+                    dumps_record(
+                        {
+                            k: b[k]
+                            for k in ("person_id", "rewording_id", "doc_id", "text")
+                        }
+                    )
+                )
                 bio_tokens.append(len(enc.encode_ordinary(b["text"])))
             for row in rows:
                 fact_handle.write(dumps_record(row))
@@ -828,43 +1023,68 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
         for h in (fact_handle, train_handle, ctrl_handle, people_handle):
             h.close()
 
-    write_json(out_dir / "attribute_values.json", {
-        "config_fingerprint": cfg.fingerprint("bios"),
-        "seed": cfg.seed,
-        "tokenizer": cfg.tokenizer_name,
-        "values": values,
-        "filtering": value_reports,
-        "tokens": tok_report,
-    })
-    write_json(out_dir / "templates.json", {
-        "config_fingerprint": cfg.fingerprint("bios"),
-        "placeholders": {
-            "{Subj}": "sentence-initial subject: the full name, or She/He",
-            "{Poss}": "sentence-initial possessive: \"Name's\", or Her/His",
-            "{poss}": "mid-sentence possessive: \"Name's\", or her/his",
-            "{obj}": "mid-sentence object: the full name, or her/him",
-            "{v}": "the attribute value",
+    write_json(
+        out_dir / "attribute_values.json",
+        {
+            "config_fingerprint": cfg.fingerprint("bios"),
+            "seed": cfg.seed,
+            "tokenizer": cfg.tokenizer_name,
+            "values": values,
+            "filtering": value_reports,
+            "tokens": tok_report,
         },
-        "heldout_markers": bd.HELDOUT_MARKERS,
-        "templates": {
-            attr: (
-                [{"template_id": i, "held_out_template": False, "text": t,
-                  "pre_value_context": bd.pre_value_context(t)}
-                 for i, t in enumerate(bd.TRAIN_TEMPLATES[attr])]
-                + [{"template_id": i, "held_out_template": True, "text": t,
-                    "pre_value_context": bd.pre_value_context(t)}
-                   for i, t in enumerate(bd.HELDOUT_TEMPLATES[attr])])
-            for attr in cfg.bio_attributes},
-    })
+    )
+    write_json(
+        out_dir / "templates.json",
+        {
+            "config_fingerprint": cfg.fingerprint("bios"),
+            "placeholders": {
+                "{Subj}": "sentence-initial subject: the full name, or She/He",
+                "{Poss}": 'sentence-initial possessive: "Name\'s", or Her/His',
+                "{poss}": 'mid-sentence possessive: "Name\'s", or her/his',
+                "{obj}": "mid-sentence object: the full name, or her/him",
+                "{v}": "the attribute value",
+            },
+            "heldout_markers": bd.HELDOUT_MARKERS,
+            "templates": {
+                attr: (
+                    [
+                        {
+                            "template_id": i,
+                            "held_out_template": False,
+                            "text": t,
+                            "pre_value_context": bd.pre_value_context(t),
+                        }
+                        for i, t in enumerate(bd.TRAIN_TEMPLATES[attr])
+                    ]
+                    + [
+                        {
+                            "template_id": i,
+                            "held_out_template": True,
+                            "text": t,
+                            "pre_value_context": bd.pre_value_context(t),
+                        }
+                        for i, t in enumerate(bd.HELDOUT_TEMPLATES[attr])
+                    ]
+                )
+                for attr in cfg.bio_attributes
+            },
+        },
+    )
     write_json(out_dir / "name_check.json", check)
 
     exposures = sum(p["target_exposures"] for p in people)
-    train_bio_tokens = [t for p, t in zip(
-        [p for p in people for _ in range(cfg.bio_n_rewordings)], bio_tokens)
-        if p["split"] == "train"]
+    train_bio_tokens = [
+        t
+        for p, t in zip(
+            [p for p in people for _ in range(cfg.bio_n_rewordings)], bio_tokens
+        )
+        if p["split"] == "train"
+    ]
     mean_tok = sum(bio_tokens) / len(bio_tokens)
-    mean_train_tok = (sum(train_bio_tokens) / len(train_bio_tokens)
-                      if train_bio_tokens else 0.0)
+    mean_train_tok = (
+        sum(train_bio_tokens) / len(train_bio_tokens) if train_bio_tokens else 0.0
+    )
     manifest = {
         "stage": "bios",
         "config_fingerprint": cfg.fingerprint("bios"),
@@ -874,11 +1094,17 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
         "values": {a: value_reports[a] for a in cfg.bio_attributes},
         "value_tokens": tok_report,
         "templates_per_attribute": {
-            a: {"train": len(bd.TRAIN_TEMPLATES[a]),
-                "held_out": len(bd.HELDOUT_TEMPLATES[a])}
-            for a in cfg.bio_attributes},
-        "facts": {"rows": n_facts, "by_role": dict(sorted(role_counts.items())),
-                  "by_attribute": dict(sorted(attr_counts.items()))},
+            a: {
+                "train": len(bd.TRAIN_TEMPLATES[a]),
+                "held_out": len(bd.HELDOUT_TEMPLATES[a]),
+            }
+            for a in cfg.bio_attributes
+        },
+        "facts": {
+            "rows": n_facts,
+            "by_role": dict(sorted(role_counts.items())),
+            "by_attribute": dict(sorted(attr_counts.items())),
+        },
         "biographies": {
             "rows": len(bio_tokens),
             "tokens_mean": round(mean_tok, 2),
@@ -890,7 +1116,8 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
             "total_copies": exposures,
             "implied_tokens": int(round(exposures * mean_train_tok)),
             "share_of_train_budget": round(
-                exposures * mean_train_tok / cfg.total_train_tokens, 4),
+                exposures * mean_train_tok / cfg.total_train_tokens, 4
+            ),
             "train_budget": cfg.total_train_tokens,
             "bio_share_target": cfg.bio_share,
         },
@@ -904,38 +1131,56 @@ def run(cfg: DataConfig, name_check: bool = True) -> Dict[str, Any]:
 
 def print_summary(cfg: DataConfig, m: Dict[str, Any]) -> None:
     p = m["people"]
-    print(f"\n[bios] {p['n_people']:,} people  "
-          f"splits={p['by_split']}  genders={p['by_gender']}")
+    print(
+        f"\n[bios] {p['n_people']:,} people  "
+        f"splits={p['by_split']}  genders={p['by_gender']}"
+    )
     print(f"[bios] tiers={p['by_tier']}")
     print(f"[bios] tier/gender={p['by_tier_gender']}")
-    print(f"[bios] facts.jsonl {m['facts']['rows']:,} rows  "
-          f"roles={m['facts']['by_role']}")
+    print(
+        f"[bios] facts.jsonl {m['facts']['rows']:,} rows  "
+        f"roles={m['facts']['by_role']}"
+    )
     b, e = m["biographies"], m["exposures"]
-    print(f"[bios] biography tokens: mean {b['tokens_mean']} "
-          f"(train {b['train_tokens_mean']}), range {b['tokens_min']}-{b['tokens_max']}")
-    print(f"[bios] exposure copies {e['total_copies']:,} -> "
-          f"{e['implied_tokens']:,} tokens = "
-          f"{e['share_of_train_budget']:.2%} of {e['train_budget']:,} "
-          f"(target {e['bio_share_target']:.0%})")
-    print(f"[bios] names rejected: {p['names_rejected_by_pile_check']} by the "
-          f"Pile check, {p.get('names_rejected_by_value_collision', 0)} by the "
-          f"value-collision filter; {p.get('fact_redraws', 0)} fact redraws "
-          f"over {p.get('people_with_a_redrawn_fact', 0)} people")
+    print(
+        f"[bios] biography tokens: mean {b['tokens_mean']} "
+        f"(train {b['train_tokens_mean']}), range {b['tokens_min']}-{b['tokens_max']}"
+    )
+    print(
+        f"[bios] exposure copies {e['total_copies']:,} -> "
+        f"{e['implied_tokens']:,} tokens = "
+        f"{e['share_of_train_budget']:.2%} of {e['train_budget']:,} "
+        f"(target {e['bio_share_target']:.0%})"
+    )
+    print(
+        f"[bios] names rejected: {p['names_rejected_by_pile_check']} by the "
+        f"Pile check, {p.get('names_rejected_by_value_collision', 0)} by the "
+        f"value-collision filter; {p.get('fact_redraws', 0)} fact redraws "
+        f"over {p.get('people_with_a_redrawn_fact', 0)} people"
+    )
 
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", required=True)
     ap.add_argument("--small", action="store_true")
-    ap.add_argument("--skip-name-check", action="store_true",
-                    help="do not scan the Pile text for generated names")
-    ap.add_argument("--samples", type=int, default=0,
-                    help="also write N random people to <root>/samples/bios_sample.md")
+    ap.add_argument(
+        "--skip-name-check",
+        action="store_true",
+        help="do not scan the Pile text for generated names",
+    )
+    ap.add_argument(
+        "--samples",
+        type=int,
+        default=0,
+        help="also write N random people to <root>/samples/bios_sample.md",
+    )
     args = ap.parse_args(argv)
     cfg = load_config(args.config, small=args.small)
     run(cfg, name_check=not args.skip_name_check)
     if args.samples:
         from data.bios_sample import write_sample
+
         print(f"[bios] sample -> {write_sample(cfg, args.samples)}")
     return 0
 

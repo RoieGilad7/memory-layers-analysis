@@ -14,6 +14,7 @@ block boundaries only, so an interrupted run restarts from the last boundary
 (it re-streams the skipped prefix of the current file, which is the price of a
 single-frame zstd stream having no random access).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,14 +31,24 @@ import requests
 import zstandard as zstd
 from huggingface_hub import hf_hub_url
 
-from data.common import (record_timing, CHARS_PER_TOKEN_BOUND, DataConfig, clean_text, merge_gz,
-                         dumps_record, free_disk_gb, get_encoder, load_config,
-                         open_write, write_json)
+from data.common import (
+    record_timing,
+    CHARS_PER_TOKEN_BOUND,
+    DataConfig,
+    clean_text,
+    merge_gz,
+    dumps_record,
+    free_disk_gb,
+    get_encoder,
+    load_config,
+    open_write,
+    write_json,
+)
 
 # State checkpoint granularity. Overridable so the resume path can be exercised
 # against a real stream without reading 100,000 lines first.
 BLOCK_LINES = int(os.environ.get("DATA_BLOCK_LINES", 100_000))
-TOKENIZE_BATCH = 128           # docs per tiktoken batch call
+TOKENIZE_BATCH = 128  # docs per tiktoken batch call
 STREAM_RETRIES = 4
 MIN_FREE_DISK_GB = 20.0
 
@@ -56,21 +67,23 @@ class _CountingReader(io.RawIOBase):
         chunk = self._raw.read(len(b))
         if not chunk:
             return 0
-        b[:len(chunk)] = chunk
+        b[: len(chunk)] = chunk
         self.n_bytes += len(chunk)
         return len(chunk)
 
 
 def _open_stream(cfg: DataConfig, filename: str) -> Tuple[Any, _CountingReader, Any]:
-    url = hf_hub_url(cfg.dataset, filename, repo_type=cfg.repo_type,
-                     revision=cfg.revision)
+    url = hf_hub_url(
+        cfg.dataset, filename, repo_type=cfg.repo_type, revision=cfg.revision
+    )
     resp = requests.get(url, stream=True, timeout=120)
     resp.raise_for_status()
     counter = _CountingReader(resp.raw)
-    dctx = zstd.ZstdDecompressor(max_window_size=2 ** 31)
+    dctx = zstd.ZstdDecompressor(max_window_size=2**31)
     reader = dctx.stream_reader(counter)
-    text = io.TextIOWrapper(io.BufferedReader(reader, buffer_size=1 << 22),
-                            encoding="utf-8")
+    text = io.TextIOWrapper(
+        io.BufferedReader(reader, buffer_size=1 << 22), encoding="utf-8"
+    )
     return resp, counter, text
 
 
@@ -78,8 +91,13 @@ def _open_stream(cfg: DataConfig, filename: str) -> Tuple[Any, _CountingReader, 
 # state
 # --------------------------------------------------------------------------
 def _empty_subject_stats() -> Dict[str, int]:
-    return {"docs": 0, "tokens": 0, "docs_under_min": 0, "docs_truncated": 0,
-            "raw_chars": 0}
+    return {
+        "docs": 0,
+        "tokens": 0,
+        "docs_under_min": 0,
+        "docs_truncated": 0,
+        "raw_chars": 0,
+    }
 
 
 def _empty_split_state(cfg: DataConfig, split: str) -> Dict[str, Any]:
@@ -108,10 +126,14 @@ def _load_state(cfg: DataConfig, path: Path) -> Dict[str, Any]:
     }
 
 
-def _part_path(cfg: DataConfig, split: str, subject: str, tag: str,
-               block: int) -> Path:
-    return (cfg.raw_dir / "_parts" / split / cfg.slug(subject)
-            / f"{tag}-{block:06d}.jsonl.gz")
+def _part_path(cfg: DataConfig, split: str, subject: str, tag: str, block: int) -> Path:
+    return (
+        cfg.raw_dir
+        / "_parts"
+        / split
+        / cfg.slug(subject)
+        / f"{tag}-{block:06d}.jsonl.gz"
+    )
 
 
 def _part_key(path: Path) -> Tuple[str, int]:
@@ -136,9 +158,15 @@ def _drop_parts_from(cfg: DataConfig, split: str, tag: str, block: int) -> int:
 # --------------------------------------------------------------------------
 # one file
 # --------------------------------------------------------------------------
-def _stream_file(cfg: DataConfig, split: str, filename: str,
-                 st: Dict[str, Any], state_path: Path, state: Dict[str, Any],
-                 enc) -> bool:
+def _stream_file(
+    cfg: DataConfig,
+    split: str,
+    filename: str,
+    st: Dict[str, Any],
+    state_path: Path,
+    state: Dict[str, Any],
+    enc,
+) -> bool:
     """Collect from one source file. Returns True if every subject is full."""
     tag = cfg.source_tag(filename)
     wanted = set(cfg.subjects_for(split))
@@ -154,8 +182,11 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
     resume_line = st["block"] * BLOCK_LINES if st["current_file"] == filename else 0
     if resume_line:
         dropped = _drop_parts_from(cfg, split, tag, st["block"])
-        print(f"[extract] {split}/{filename}: resuming at line {resume_line:,} "
-              f"(dropped {dropped} partial part files)", flush=True)
+        print(
+            f"[extract] {split}/{filename}: resuming at line {resume_line:,} "
+            f"(dropped {dropped} partial part files)",
+            flush=True,
+        )
     else:
         _drop_parts_from(cfg, split, tag, 0)
         st["block"] = 0
@@ -189,9 +220,10 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
         """
         if not buf:
             return
-        cleaned_all = [clean_text(raw, cfg.unicode_form,
-                                  cfg.max_consecutive_newlines)[:char_limit]
-                       for _, _, raw in buf]
+        cleaned_all = [
+            clean_text(raw, cfg.unicode_form, cfg.max_consecutive_newlines)[:char_limit]
+            for _, _, raw in buf
+        ]
         counts = enc.encode_ordinary_batch(cleaned_all, num_threads=8)
         for (subject, line, raw), cleaned, toks in zip(buf, cleaned_all, counts):
             if not hungry(subject):
@@ -207,15 +239,20 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
             key = cfg.slug(subject)
             if key not in handles:
                 handles[key] = open_write(
-                    _part_path(cfg, split, subject, tag, block), append=True)
-            handles[key].write(dumps_record({
-                "doc_id": cfg.doc_id(subject, filename, line),
-                "subject": subject,
-                "split": split,
-                "source": filename,
-                "line": line,
-                "text": raw,
-            }))
+                    _part_path(cfg, split, subject, tag, block), append=True
+                )
+            handles[key].write(
+                dumps_record(
+                    {
+                        "doc_id": cfg.doc_id(subject, filename, line),
+                        "subject": subject,
+                        "split": split,
+                        "source": filename,
+                        "line": line,
+                        "text": raw,
+                    }
+                )
+            )
             s["raw_chars"] += len(raw)
             if n_tok < cfg.min_tokens:
                 s["docs_under_min"] += 1
@@ -236,7 +273,7 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
         try:
             resp, counter, stream = _open_stream(cfg, filename)
             break
-        except Exception as exc:                                # pragma: no cover
+        except Exception as exc:  # pragma: no cover
             attempt += 1
             if attempt > STREAM_RETRIES:
                 raise
@@ -253,11 +290,16 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
                 block = st["block"]
                 st["bytes_downloaded"] = bytes_at_start + counter.n_bytes
                 done = sum(v["tokens"] for v in stats.values())
-                print(f"[extract] {split}/{tag} line {idx:,} "
-                      f"({counter.n_bytes / 1e9:.2f} GB) tokens={done:,} "
-                      f"{time.time() - t0:.0f}s "
-                      + " ".join(f"{cfg.slug(s)}={stats[s]['tokens'] / 1e6:.1f}M"
-                                 for s in cfg.subjects_for(split)), flush=True)
+                print(
+                    f"[extract] {split}/{tag} line {idx:,} "
+                    f"({counter.n_bytes / 1e9:.2f} GB) tokens={done:,} "
+                    f"{time.time() - t0:.0f}s "
+                    + " ".join(
+                        f"{cfg.slug(s)}={stats[s]['tokens'] / 1e6:.1f}M"
+                        for s in cfg.subjects_for(split)
+                    ),
+                    flush=True,
+                )
                 # A checkpoint flushes the buffer, so the last subject can fill
                 # here rather than on a buffer-full flush. Without this check the
                 # buffer would never fill again (no subject is hungry, so nothing
@@ -267,10 +309,11 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
                 if free_disk_gb() < MIN_FREE_DISK_GB:
                     raise RuntimeError(
                         f"free disk {free_disk_gb():.1f} GB < {MIN_FREE_DISK_GB} GB "
-                        "-- stopping (re-run to resume)")
+                        "-- stopping (re-run to resume)"
+                    )
             try:
                 rec = json.loads(line)
-            except json.JSONDecodeError:                        # pragma: no cover
+            except json.JSONDecodeError:  # pragma: no cover
                 continue
             subject = rec.get("meta", {}).get("pile_set_name")
             if subject not in wanted:
@@ -288,14 +331,17 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
         try:
             stream.close()
             resp.close()
-        except Exception:                                       # pragma: no cover
+        except Exception:  # pragma: no cover
             pass
         write_json(state_path, state)
 
     full = all_full()
-    print(f"[extract] {split}/{tag} finished at line {line_no:,}: "
-          f"all_subjects_full={full}, {time.time() - t0:.0f}s, "
-          f"{counter.n_bytes / 1e9:.2f} GB downloaded", flush=True)
+    print(
+        f"[extract] {split}/{tag} finished at line {line_no:,}: "
+        f"all_subjects_full={full}, {time.time() - t0:.0f}s, "
+        f"{counter.n_bytes / 1e9:.2f} GB downloaded",
+        flush=True,
+    )
     return full
 
 
@@ -304,13 +350,13 @@ def _stream_file(cfg: DataConfig, split: str, filename: str,
 # --------------------------------------------------------------------------
 def _finalize_split(cfg: DataConfig, split: str, st: Dict[str, Any]) -> None:
     """Concatenate part files into one gzip per subject, in (file, block) order."""
-    order = {t: i for i, t in enumerate(
-        [cfg.source_tag(f) for f in st["files_done"]])}
+    order = {t: i for i, t in enumerate([cfg.source_tag(f) for f in st["files_done"]])}
     for subject in cfg.subjects_for(split):
         pdir = cfg.raw_dir / "_parts" / split / cfg.slug(subject)
-        parts = sorted(pdir.glob("*.jsonl.gz"),
-                       key=lambda p: (order.get(_part_key(p)[0], 99),
-                                      _part_key(p)[1]))
+        parts = sorted(
+            pdir.glob("*.jsonl.gz"),
+            key=lambda p: (order.get(_part_key(p)[0], 99), _part_key(p)[1]),
+        )
         out = cfg.raw_dir / split / f"{cfg.slug(subject)}.jsonl.gz"
         merge_gz(parts, out)
         for p in parts:
@@ -319,7 +365,9 @@ def _finalize_split(cfg: DataConfig, split: str, st: Dict[str, Any]) -> None:
             pdir.rmdir()
 
 
-def run(cfg: DataConfig, splits: Tuple[str, ...] = ("train", "heldout")) -> Dict[str, Any]:
+def run(
+    cfg: DataConfig, splits: Tuple[str, ...] = ("train", "heldout")
+) -> Dict[str, Any]:
     enc = get_encoder(cfg.tokenizer_name, cfg.vocab_size)
     state_path = cfg.raw_dir / "extract_state.json"
     state = _load_state(cfg, state_path)
@@ -330,33 +378,45 @@ def run(cfg: DataConfig, splits: Tuple[str, ...] = ("train", "heldout")) -> Dict
         if st["done"]:
             print(f"[extract] {split}: already done, skipping", flush=True)
             continue
-        files = (cfg.train_files + cfg.train_fallback_files if split == "train"
-                 else cfg.heldout_files + cfg.heldout_fallback_files)
+        files = (
+            cfg.train_files + cfg.train_fallback_files
+            if split == "train"
+            else cfg.heldout_files + cfg.heldout_fallback_files
+        )
         primary = set(cfg.train_files if split == "train" else cfg.heldout_files)
         for filename in files:
             if filename in st["files_done"]:
                 continue
             if filename not in primary:
-                short = [s for s in cfg.subjects_for(split)
-                         if st["subjects"][s]["tokens"] < cfg.target_tokens(split, s)]
+                short = [
+                    s
+                    for s in cfg.subjects_for(split)
+                    if st["subjects"][s]["tokens"] < cfg.target_tokens(split, s)
+                ]
                 if not short:
                     break
-                print(f"[extract] {split}: short on {short} -> fallback {filename}",
-                      flush=True)
+                print(
+                    f"[extract] {split}: short on {short} -> fallback {filename}",
+                    flush=True,
+                )
             full = False
             for attempt in range(STREAM_RETRIES + 1):
                 try:
-                    full = _stream_file(cfg, split, filename, st, state_path,
-                                        state, enc)
+                    full = _stream_file(
+                        cfg, split, filename, st, state_path, state, enc
+                    )
                     break
                 except KeyboardInterrupt:
                     raise
-                except Exception as exc:                        # pragma: no cover
+                except Exception as exc:  # pragma: no cover
                     if attempt == STREAM_RETRIES or "free disk" in str(exc):
                         raise
-                    print(f"[extract] {split}/{filename} failed mid-stream "
-                          f"({exc!r}); retry {attempt + 1} from the last "
-                          f"checkpoint", flush=True)
+                    print(
+                        f"[extract] {split}/{filename} failed mid-stream "
+                        f"({exc!r}); retry {attempt + 1} from the last "
+                        f"checkpoint",
+                        flush=True,
+                    )
                     time.sleep(5 * (attempt + 1))
             st["files_done"].append(filename)
             st["current_file"] = None
@@ -384,16 +444,21 @@ def run(cfg: DataConfig, splits: Tuple[str, ...] = ("train", "heldout")) -> Dict
         manifest["splits"][split] = {
             "files_used": st["files_done"],
             "fallback_files_used": [
-                f for f in st["files_done"]
-                if f not in (cfg.train_files if split == "train" else cfg.heldout_files)],
+                f
+                for f in st["files_done"]
+                if f not in (cfg.train_files if split == "train" else cfg.heldout_files)
+            ],
             "lines_read": st["lines_read"],
             "bytes_downloaded": st["bytes_downloaded"],
             "target_tokens_per_subject": {
-                s: cfg.target_tokens(split, s) for s in cfg.subjects_for(split)},
+                s: cfg.target_tokens(split, s) for s in cfg.subjects_for(split)
+            },
             "subjects": st["subjects"],
             "short_subjects": [
-                s for s in cfg.subjects_for(split)
-                if st["subjects"][s]["tokens"] < cfg.target_tokens(split, s)],
+                s
+                for s in cfg.subjects_for(split)
+                if st["subjects"][s]["tokens"] < cfg.target_tokens(split, s)
+            ],
         }
     record_timing(cfg, "extract", time.time() - t_start)
     write_json(cfg.reports_dir / "extract_manifest.json", manifest)
@@ -410,12 +475,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     splits = ("train", "heldout") if args.split == "both" else (args.split,)
     m = run(cfg, splits)
     for split, d in m["splits"].items():
-        print(f"\n[extract] {split}: files={d['files_used']} "
-              f"lines={d['lines_read']:,} "
-              f"download={d['bytes_downloaded'] / 1e9:.2f} GB")
+        print(
+            f"\n[extract] {split}: files={d['files_used']} "
+            f"lines={d['lines_read']:,} "
+            f"download={d['bytes_downloaded'] / 1e9:.2f} GB"
+        )
         for s, v in d["subjects"].items():
-            print(f"   {s:20s} docs={v['docs']:>8,} tokens={v['tokens']:>12,} "
-                  f"under_min={v['docs_under_min']:>6,} trunc={v['docs_truncated']:>7,}")
+            print(
+                f"   {s:20s} docs={v['docs']:>8,} tokens={v['tokens']:>12,} "
+                f"under_min={v['docs_under_min']:>6,} trunc={v['docs_truncated']:>7,}"
+            )
         if d["short_subjects"]:
             print(f"   SHORT: {d['short_subjects']}")
     return 0

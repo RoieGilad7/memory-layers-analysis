@@ -1,4 +1,5 @@
 """C4 -- faiss-cpu: flat inner-product index and IndexIVFPQ over 1M x 256 float32."""
+
 import json, os, time
 
 import numpy as np
@@ -13,6 +14,7 @@ K = 32
 
 def rss_gb():
     import resource
+
     # ru_maxrss is bytes on macOS, kilobytes on Linux
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e9
 
@@ -20,8 +22,14 @@ def rss_gb():
 def main():
     import faiss
 
-    res = {"faiss_version": faiss.__version__, "n": N, "d": D, "nq": NQ, "k": K,
-           "threads": faiss.omp_get_max_threads()}
+    res = {
+        "faiss_version": faiss.__version__,
+        "n": N,
+        "d": D,
+        "nq": NQ,
+        "k": K,
+        "threads": faiss.omp_get_max_threads(),
+    }
 
     rng = np.random.default_rng(0)
     t0 = time.perf_counter()
@@ -53,11 +61,17 @@ def main():
 
     # ---- IVFPQ -------------------------------------------------------------------
     nlist, m, nbits = 4096, 32, 8
-    ivf = {"nlist": nlist, "m_subquantizers": m, "nbits": nbits,
-           "load_code": (f'quant = faiss.IndexFlatIP({D})\n'
-                         f'index = faiss.IndexIVFPQ(quant, {D}, {nlist}, {m}, {nbits}, '
-                         f'faiss.METRIC_INNER_PRODUCT)\n'
-                         'index.train(xb[:262144]); index.add(xb); index.nprobe = 32')}
+    ivf = {
+        "nlist": nlist,
+        "m_subquantizers": m,
+        "nbits": nbits,
+        "load_code": (
+            f"quant = faiss.IndexFlatIP({D})\n"
+            f"index = faiss.IndexIVFPQ(quant, {D}, {nlist}, {m}, {nbits}, "
+            f"faiss.METRIC_INNER_PRODUCT)\n"
+            "index.train(xb[:262144]); index.add(xb); index.nprobe = 32"
+        ),
+    }
     try:
         quant = faiss.IndexFlatIP(D)
         ix = faiss.IndexIVFPQ(quant, D, nlist, m, nbits, faiss.METRIC_INNER_PRODUCT)
@@ -73,7 +87,7 @@ def main():
         ivf["build_seconds"] = round(ivf["train_seconds"] + ivf["add_seconds"], 2)
         ivf["ntotal"] = ix.ntotal
         ivf["rss_after_build_GB"] = round(rss_gb(), 2)
-        ivf["codes_bytes_est"] = N * m          # 1 byte per subquantizer at nbits=8
+        ivf["codes_bytes_est"] = N * m  # 1 byte per subquantizer at nbits=8
         ivf["codes_MB_est"] = round(N * m / 1e6, 1)
         ivf["compression_vs_flat"] = f"{xb.nbytes / (N * m):.1f}x"
 

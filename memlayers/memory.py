@@ -26,6 +26,7 @@ forward hook may return a replacement output, so the gate weights of masked slot
 are zeroed in place. The top-k search itself is untouched, which is the point --
 a masked slot is not replaced by the next-best one.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -37,8 +38,14 @@ import torch.nn as nn
 from PEER_pytorch import PEER as _PEER
 from product_key_memory import PKM as _PKM
 
-__all__ = ["MemoryRead", "MemoryLayer", "PKMMemory", "PEERMemory",
-           "QueryBatchNorm", "build_memory"]
+__all__ = [
+    "MemoryRead",
+    "MemoryLayer",
+    "PKMMemory",
+    "PEERMemory",
+    "QueryBatchNorm",
+    "build_memory",
+]
 
 _EPS = 1e-9
 
@@ -51,6 +58,7 @@ class MemoryRead:
     weights: float  [batch, seq, heads, topk] -- the gate weight each slot got,
              AFTER masking, i.e. exactly what multiplied the value rows
     """
+
     indices: torch.Tensor
     weights: torch.Tensor
 
@@ -79,7 +87,9 @@ class QueryBatchNorm(nn.Module):
         super().__init__()
         self.bn = nn.BatchNorm1d(dim_head)
 
-    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         d = x.shape[-1]
         if mask is None:
             return self.bn(x.reshape(-1, d)).reshape(x.shape)
@@ -124,8 +134,9 @@ class MemoryLayer(nn.Module):
         return self._log_reads or self.slot_mask is not None
 
     # ---- slot masking -------------------------------------------------------
-    def set_mask_slots(self, slot_ids: Optional[Iterable[int]],
-                       renormalize: Optional[bool] = None) -> None:
+    def set_mask_slots(
+        self, slot_ids: Optional[Iterable[int]], renormalize: Optional[bool] = None
+    ) -> None:
         """Disable `slot_ids` after the top-k search. None or empty clears the mask.
 
         An empty mask is cleared rather than kept as an all-False tensor so that
@@ -143,7 +154,8 @@ class MemoryLayer(nn.Module):
         if int(ids.max()) >= self.n_slots or int(ids.min()) < 0:
             raise ValueError(
                 f"slot ids must be in [0, {self.n_slots}); got "
-                f"[{int(ids.min())}, {int(ids.max())}]")
+                f"[{int(ids.min())}, {int(ids.max())}]"
+            )
         mask = torch.zeros(self.n_slots, dtype=torch.bool)
         mask[ids] = True
         self.slot_mask = mask.to(self._device_hint())
@@ -183,7 +195,9 @@ class MemoryLayer(nn.Module):
         raise NotImplementedError
 
     def other_parameters(self) -> Iterator[nn.Parameter]:
-        special = {id(p) for p in self.key_parameters()} | {id(p) for p in self.value_parameters()}
+        special = {id(p) for p in self.key_parameters()} | {
+            id(p) for p in self.value_parameters()
+        }
         for p in self.parameters():
             if id(p) not in special:
                 yield p
@@ -196,7 +210,12 @@ class MemoryLayer(nn.Module):
         keys = sum(p.numel() for p in self.key_parameters())
         vals = sum(p.numel() for p in self.value_parameters())
         other = sum(p.numel() for p in self.other_parameters())
-        return {"keys": keys, "values": vals, "other": other, "total": keys + vals + other}
+        return {
+            "keys": keys,
+            "values": vals,
+            "other": other,
+            "total": keys + vals + other,
+        }
 
     # ---- sizes --------------------------------------------------------------
     @property
@@ -224,15 +243,27 @@ class PKMMemory(MemoryLayer):
 
     kind = "pkm"
 
-    def __init__(self, dim: int, num_keys: int = 256, topk: int = 32, heads: int = 4,
-                 dim_head: int = 128, query_batchnorm: bool = True,
-                 freeze_keys: bool = False, value_dropout: float = 0.0,
-                 non_competitive_gates: bool = False,
-                 mask_slots: Optional[Iterable[int]] = None,
-                 renormalize_after_mask: bool = False) -> None:
+    def __init__(
+        self,
+        dim: int,
+        num_keys: int = 256,
+        topk: int = 32,
+        heads: int = 4,
+        dim_head: int = 128,
+        query_batchnorm: bool = True,
+        freeze_keys: bool = False,
+        value_dropout: float = 0.0,
+        non_competitive_gates: bool = False,
+        mask_slots: Optional[Iterable[int]] = None,
+        renormalize_after_mask: bool = False,
+    ) -> None:
         super().__init__()
         self.pkm = _PKM(
-            dim=dim, heads=heads, dim_head=dim_head, num_keys=num_keys, topk=topk,
+            dim=dim,
+            heads=heads,
+            dim_head=dim_head,
+            num_keys=num_keys,
+            topk=topk,
             # use_layernorm=False selects the BatchNorm-on-query path of Lample et al.
             use_layernorm=not query_batchnorm,
             value_dropout=value_dropout,
@@ -247,18 +278,21 @@ class PKMMemory(MemoryLayer):
         self.set_mask_slots(mask_slots, renormalize_after_mask)
 
         self._hook = self.pkm.values.register_forward_pre_hook(
-            self._values_pre_hook, with_kwargs=True)
+            self._values_pre_hook, with_kwargs=True
+        )
 
     # PKM hands both tensors to its EmbeddingBag, so one hook does read-out and masking
     def _values_pre_hook(self, module, args, kwargs):
         indices = args[0]
         weights = kwargs.get("per_sample_weights")
-        if weights is None:                      # concat_values_and_combine=True path
+        if weights is None:  # concat_values_and_combine=True path
             if self._log_reads:
                 self._last = MemoryRead(
                     indices.detach().reshape(self._b, -1, self.n_heads, self.topk),
                     torch.ones_like(indices, dtype=torch.float32).reshape(
-                        self._b, -1, self.n_heads, self.topk))
+                        self._b, -1, self.n_heads, self.topk
+                    ),
+                )
             return None
 
         # [(b t), (h k)] -> [(b t), h, k] so masking and renorm act per head
@@ -273,11 +307,12 @@ class PKMMemory(MemoryLayer):
         if self._log_reads:
             self._last = MemoryRead(
                 indices.detach().reshape(self._b, -1, h, k),
-                weights.detach().reshape(self._b, -1, h, k))
+                weights.detach().reshape(self._b, -1, h, k),
+            )
         return (args, kwargs) if self.slot_mask is not None else None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        self._b = x.shape[0]            # the hook needs it to unflatten (b t)
+        self._b = x.shape[0]  # the hook needs it to unflatten (b t)
         if not self._capture_needed():
             self._last = None
         return self.pkm(x)
@@ -317,36 +352,55 @@ class PEERMemory(MemoryLayer):
 
     kind = "peer"
 
-    def __init__(self, dim: int, num_experts: int = 65_536, topk: int = 32,
-                 heads: int = 4, dim_key: int = 128, pre_rmsnorm: bool = True,
-                 non_competing_scores: bool = False, freeze_keys: bool = False,
-                 dropout: float = 0.0, separate_embed_per_head: bool = False,
-                 mask_slots: Optional[Iterable[int]] = None,
-                 renormalize_after_mask: bool = False) -> None:
+    def __init__(
+        self,
+        dim: int,
+        num_experts: int = 65_536,
+        topk: int = 32,
+        heads: int = 4,
+        dim_key: int = 128,
+        pre_rmsnorm: bool = True,
+        non_competing_scores: bool = False,
+        freeze_keys: bool = False,
+        dropout: float = 0.0,
+        separate_embed_per_head: bool = False,
+        mask_slots: Optional[Iterable[int]] = None,
+        renormalize_after_mask: bool = False,
+    ) -> None:
         super().__init__()
         self.peer = _PEER(
-            dim=dim, heads=heads, num_experts=num_experts,
-            num_experts_per_head=topk, dim_key=dim_key, pre_rmsnorm=pre_rmsnorm,
-            non_competing_scores=non_competing_scores, dropout=dropout,
+            dim=dim,
+            heads=heads,
+            num_experts=num_experts,
+            num_experts_per_head=topk,
+            dim_key=dim_key,
+            pre_rmsnorm=pre_rmsnorm,
+            non_competing_scores=non_competing_scores,
+            dropout=dropout,
             separate_embed_per_head=separate_embed_per_head,
         )
         self.non_competing_scores = non_competing_scores
         if non_competing_scores and topk > 1:
             # not an error, but it silently changes the experiment
             import warnings
+
             warnings.warn(
                 f"PEER built with non_competing_scores=True: per-head top-k collapses "
                 f"to 1 expert, not {topk}. reads_per_token will be {heads}, not "
-                f"{heads * topk}.", stacklevel=2)
+                f"{heads * topk}.",
+                stacklevel=2,
+            )
         if freeze_keys:
             self.freeze_keys()
         self.set_mask_slots(mask_slots, renormalize_after_mask)
 
         # indices come through weight_down_embed, scores do not -- two hooks needed
         self._idx_hook = self.peer.weight_down_embed.register_forward_pre_hook(
-            self._down_pre_hook)
+            self._down_pre_hook
+        )
         self._score_hook = self.peer.score_activation.register_forward_hook(
-            self._score_hook_fn)
+            self._score_hook_fn
+        )
 
     def _down_pre_hook(self, module, args):
         if self._capture_needed():

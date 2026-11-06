@@ -11,6 +11,7 @@ Two separate properties are measured:
 
     python bench/mps_determinism.py [--steps 40] [--device mps]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,30 +32,69 @@ WORKER = ROOT / "tests" / "_resume_worker.py"
 
 
 def cfg_dict(out_dir: str, steps: int, device: str, kind: str = "pkm") -> dict:
-    model = {"vocab_size": 50257, "block_size": 128, "n_layer": 4, "n_head": 4,
-             "n_embd": 256, "dropout": 0.0, "bias": True, "tie_embeddings": True}
+    model = {
+        "vocab_size": 50257,
+        "block_size": 128,
+        "n_layer": 4,
+        "n_head": 4,
+        "n_embd": 256,
+        "dropout": 0.0,
+        "bias": True,
+        "tie_embeddings": True,
+    }
     if kind != "dense":
         model["memory_layers"] = [2]
         model["memory_kind"] = kind
-        model["memory"] = ({"num_keys": 64, "topk": 16, "heads": 4, "dim_head": 64,
-                            "query_batchnorm": True} if kind == "pkm"
-                           else {"num_experts": 4096, "topk": 16, "heads": 4,
-                                 "dim_key": 64, "non_competing_scores": False})
+        model["memory"] = (
+            {
+                "num_keys": 64,
+                "topk": 16,
+                "heads": 4,
+                "dim_head": 64,
+                "query_batchnorm": True,
+            }
+            if kind == "pkm"
+            else {
+                "num_experts": 4096,
+                "topk": 16,
+                "heads": 4,
+                "dim_key": 64,
+                "non_competing_scores": False,
+            }
+        )
     return {
         "name": f"determinism-{kind}",
         "model": model,
         "data": {"kind": "repeat", "chunk_len": 8, "n_distinct": None, "seed": 7},
-        "train": {"steps": steps, "micro_batch_size": 4, "grad_accum_steps": 1,
-                  "lr": 1e-3, "lr_memory_values": 4e-3, "weight_decay": 0.1,
-                  "warmup_steps": 5, "min_lr_ratio": 0.1, "seed": 99,
-                  "log_every": 0, "ckpt_every": 0, "grad_clip": 1.0,
-                  "track_slot_usage": False, "read_logging": False},
+        "train": {
+            "steps": steps,
+            "micro_batch_size": 4,
+            "grad_accum_steps": 1,
+            "lr": 1e-3,
+            "lr_memory_values": 4e-3,
+            "weight_decay": 0.1,
+            "warmup_steps": 5,
+            "min_lr_ratio": 0.1,
+            "seed": 99,
+            "log_every": 0,
+            "ckpt_every": 0,
+            "grad_clip": 1.0,
+            "track_slot_usage": False,
+            "read_logging": False,
+        },
         "runtime": {"device": device, "out_dir": out_dir},
     }
 
 
 def run(cfg_path, out_json, steps, resume=None, save=None):
-    cmd = [sys.executable, str(WORKER), str(cfg_path), str(out_json), "--steps", str(steps)]
+    cmd = [
+        sys.executable,
+        str(WORKER),
+        str(cfg_path),
+        str(out_json),
+        "--steps",
+        str(steps),
+    ]
     if resume:
         cmd += ["--resume", str(resume)]
     if save:
@@ -80,11 +120,14 @@ def main() -> int:
         # --- property 1: two identical fresh runs
         for tag in ("r1", "r2"):
             p = td / f"{tag}.yaml"
-            p.write_text(yaml.safe_dump(cfg_dict(str(td / tag), a.steps, device, a.kind)))
+            p.write_text(
+                yaml.safe_dump(cfg_dict(str(td / tag), a.steps, device, a.kind))
+            )
         x1 = run(td / "r1.yaml", td / "x1.json", a.steps)
         x2 = run(td / "r2.yaml", td / "x2.json", a.steps)
         out["repeat"] = {
-            "loss_a": x1["final_loss"], "loss_b": x2["final_loss"],
+            "loss_a": x1["final_loss"],
+            "loss_b": x2["final_loss"],
             "abs_diff": abs(x1["final_loss"] - x2["final_loss"]),
             "param_checksum_a": x1["param_checksum"],
             "param_checksum_b": x2["param_checksum"],
@@ -92,22 +135,29 @@ def main() -> int:
         }
         out["repeat"]["bit_identical"] = (
             out["repeat"]["abs_diff"] == 0.0
-            and out["repeat"]["checksum_abs_diff"] == 0.0)
+            and out["repeat"]["checksum_abs_diff"] == 0.0
+        )
         out["repeat"]["within_1e-4"] = out["repeat"]["abs_diff"] < 1e-4
 
         # --- property 2: straight vs. resumed
         half = a.steps // 2
         sp = td / "s.yaml"
-        sp.write_text(yaml.safe_dump(cfg_dict(str(td / "straight"), a.steps, device, a.kind)))
+        sp.write_text(
+            yaml.safe_dump(cfg_dict(str(td / "straight"), a.steps, device, a.kind))
+        )
         gp = td / "g.yaml"
-        gp.write_text(yaml.safe_dump(cfg_dict(str(td / "split"), a.steps, device, a.kind)))
+        gp.write_text(
+            yaml.safe_dump(cfg_dict(str(td / "split"), a.steps, device, a.kind))
+        )
         st = run(sp, td / "st.json", a.steps)
         run(gp, td / "h1.json", half, save=td / "half.pt")
         h2 = run(gp, td / "h2.json", a.steps - half, resume=td / "half.pt")
         out["resume"] = {
-            "loss_straight": st["final_loss"], "loss_resumed": h2["final_loss"],
+            "loss_straight": st["final_loss"],
+            "loss_resumed": h2["final_loss"],
             "abs_diff": abs(st["final_loss"] - h2["final_loss"]),
-            "final_step_straight": st["final_step"], "final_step_resumed": h2["final_step"],
+            "final_step_straight": st["final_step"],
+            "final_step_resumed": h2["final_step"],
             "lr_match": st["lr"] == h2["lr"],
             "data_order_match": st["next_batch_sum"] == h2["next_batch_sum"],
         }
@@ -115,14 +165,19 @@ def main() -> int:
         out["resume"]["within_1e-4"] = out["resume"]["abs_diff"] < 1e-4
 
     (ROOT / "bench" / "results" / f"determinism_{device}_{a.kind}.json").write_text(
-        json.dumps(out, indent=2))
+        json.dumps(out, indent=2)
+    )
     print(json.dumps(out, indent=2))
     r, s = out["repeat"], out["resume"]
-    print(f"\n[{device}/{a.kind}] repeat: |diff| = {r['abs_diff']:.3e}  "
-          f"bit-identical={r['bit_identical']}  within 1e-4={r['within_1e-4']}")
-    print(f"[{device}/{a.kind}] resume: |diff| = {s['abs_diff']:.3e}  "
-          f"bit-identical={s['bit_identical']}  within 1e-4={s['within_1e-4']}  "
-          f"lr_match={s['lr_match']}  data_order_match={s['data_order_match']}")
+    print(
+        f"\n[{device}/{a.kind}] repeat: |diff| = {r['abs_diff']:.3e}  "
+        f"bit-identical={r['bit_identical']}  within 1e-4={r['within_1e-4']}"
+    )
+    print(
+        f"[{device}/{a.kind}] resume: |diff| = {s['abs_diff']:.3e}  "
+        f"bit-identical={s['bit_identical']}  within 1e-4={s['within_1e-4']}  "
+        f"lr_match={s['lr_match']}  data_order_match={s['data_order_match']}"
+    )
     return 0
 
 

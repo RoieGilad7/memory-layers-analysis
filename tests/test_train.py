@@ -1,4 +1,5 @@
 """Optimizer parameter groups, step-0 weight snapshot, and checkpoint resume."""
+
 import csv
 import json
 import subprocess
@@ -11,29 +12,56 @@ import yaml
 
 from conftest import make_model
 from memlayers.model import GPT, GPTConfig
-from memlayers.train import OptimCfg, Trainer, build_optimizer, cosine_warmup, load_config
+from memlayers.train import (
+    OptimCfg,
+    Trainer,
+    build_optimizer,
+    cosine_warmup,
+    load_config,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
 def _tiny_cfg_dict(out_dir: str, steps: int = 100, kind: str = "pkm") -> dict:
-    model = dict(vocab_size=257, block_size=64, n_layer=3, n_head=4, n_embd=64,
-                 dropout=0.0, bias=True, tie_embeddings=True)
+    model = dict(
+        vocab_size=257,
+        block_size=64,
+        n_layer=3,
+        n_head=4,
+        n_embd=64,
+        dropout=0.0,
+        bias=True,
+        tie_embeddings=True,
+    )
     if kind != "dense":
         model["memory_layers"] = [1]
         model["memory_kind"] = kind
-        model["memory"] = (dict(num_keys=16, topk=4, heads=2, dim_head=32,
-                                query_batchnorm=True) if kind == "pkm"
-                           else dict(num_experts=256, topk=4, heads=2, dim_key=32,
-                                     non_competing_scores=False))
+        model["memory"] = (
+            dict(num_keys=16, topk=4, heads=2, dim_head=32, query_batchnorm=True)
+            if kind == "pkm"
+            else dict(
+                num_experts=256, topk=4, heads=2, dim_key=32, non_competing_scores=False
+            )
+        )
     return {
         "name": f"test-{kind}",
         "model": model,
         "data": {"kind": "repeat", "chunk_len": 8, "n_distinct": 257, "seed": 7},
-        "train": {"steps": steps, "micro_batch_size": 4, "grad_accum_steps": 1,
-                  "lr": 1e-3, "lr_memory_values": 4e-3, "weight_decay": 0.1,
-                  "warmup_steps": 10, "min_lr_ratio": 0.1, "seed": 99,
-                  "log_every": 0, "ckpt_every": 0, "grad_clip": 1.0},
+        "train": {
+            "steps": steps,
+            "micro_batch_size": 4,
+            "grad_accum_steps": 1,
+            "lr": 1e-3,
+            "lr_memory_values": 4e-3,
+            "weight_decay": 0.1,
+            "warmup_steps": 10,
+            "min_lr_ratio": 0.1,
+            "seed": 99,
+            "log_every": 0,
+            "ckpt_every": 0,
+            "grad_clip": 1.0,
+        },
         "runtime": {"device": "cpu", "out_dir": out_dir},
     }
 
@@ -56,8 +84,9 @@ def test_memory_values_get_the_higher_learning_rate(kind):
     got = {id(p) for p in groups["memory_values"]["params"]}
     assert got == want
     # keys live in their own group and default to the backbone LR
-    assert {id(p) for p in groups["memory_keys"]["params"]} == \
-           {id(p) for p in mem.key_parameters()}
+    assert {id(p) for p in groups["memory_keys"]["params"]} == {
+        id(p) for p in mem.key_parameters()
+    }
     assert groups["memory_keys"]["lr"] == pytest.approx(2.5e-4)
     # every trainable tensor landed in exactly one group
     assigned = [id(p) for g in opt.param_groups for p in g["params"]]
@@ -68,8 +97,9 @@ def test_memory_values_get_the_higher_learning_rate(kind):
 
 def test_memory_keys_lr_is_configurable():
     m = make_model("pkm")
-    opt = build_optimizer(m, OptimCfg(lr=1e-4, lr_memory_values=1e-3,
-                                      lr_memory_keys=5e-4))
+    opt = build_optimizer(
+        m, OptimCfg(lr=1e-4, lr_memory_values=1e-3, lr_memory_keys=5e-4)
+    )
     groups = {g["name"]: g for g in opt.param_groups}
     assert groups["memory_keys"]["lr"] == pytest.approx(5e-4)
 
@@ -81,14 +111,18 @@ def test_dense_model_has_no_memory_groups():
 
 
 def test_lr_ratio_is_preserved_through_the_schedule(tmp_path):
-    cfg = load_config_from_dict(_tiny_cfg_dict(str(tmp_path / "run"), steps=60), tmp_path)
+    cfg = load_config_from_dict(
+        _tiny_cfg_dict(str(tmp_path / "run"), steps=60), tmp_path
+    )
     tr = Trainer(cfg)
     ratios = []
     for _ in range(12):
         tr.train_step()
         g = {x.get("name"): x["lr"] for x in tr.optimizer.param_groups}
         ratios.append(g["memory_values"] / g["decay"])
-    assert max(ratios) - min(ratios) < 1e-9, "schedule broke the value/backbone LR ratio"
+    assert (
+        max(ratios) - min(ratios) < 1e-9
+    ), "schedule broke the value/backbone LR ratio"
     assert ratios[0] == pytest.approx(4.0)
 
 
@@ -121,8 +155,11 @@ def test_initial_weights_saved_and_differ_from_trained(tmp_path):
     trained = tr.model.state_dict()
     assert set(init["model"]) == set(trained)
 
-    differing = [k for k, v in init["model"].items()
-                 if not torch.equal(v, trained[k].detach().cpu())]
+    differing = [
+        k
+        for k, v in init["model"].items()
+        if not torch.equal(v, trained[k].detach().cpu())
+    ]
     assert differing, "no weight changed after training"
     # the memory value table in particular must have moved
     assert any("values.weight" in k or "weight_down_embed" in k for k in differing)
@@ -137,18 +174,25 @@ def test_checkpoint_resume_matches_straight_run(tmp_path, kind):
     worker = ROOT / "tests" / "_resume_worker.py"
 
     straight_cfg = load_config_from_dict(
-        _tiny_cfg_dict(str(tmp_path / "straight"), steps=100, kind=kind), tmp_path)
+        _tiny_cfg_dict(str(tmp_path / "straight"), steps=100, kind=kind), tmp_path
+    )
     straight_yaml = tmp_path / "straight.yaml"
-    straight_yaml.write_text(yaml.safe_dump(
-        _tiny_cfg_dict(str(tmp_path / "straight"), steps=100, kind=kind)))
+    straight_yaml.write_text(
+        yaml.safe_dump(_tiny_cfg_dict(str(tmp_path / "straight"), steps=100, kind=kind))
+    )
 
     split_yaml = tmp_path / "split.yaml"
-    split_yaml.write_text(yaml.safe_dump(
-        _tiny_cfg_dict(str(tmp_path / "split"), steps=100, kind=kind)))
+    split_yaml.write_text(
+        yaml.safe_dump(_tiny_cfg_dict(str(tmp_path / "split"), steps=100, kind=kind))
+    )
 
     def run(*args):
-        r = subprocess.run([sys.executable, str(worker), *map(str, args)],
-                           capture_output=True, text=True, cwd=str(ROOT))
+        r = subprocess.run(
+            [sys.executable, str(worker), *map(str, args)],
+            capture_output=True,
+            text=True,
+            cwd=str(ROOT),
+        )
         assert r.returncode == 0, f"worker failed:\n{r.stdout}\n{r.stderr}"
         return json.loads(Path(args[1]).read_text())
 
@@ -162,8 +206,9 @@ def test_checkpoint_resume_matches_straight_run(tmp_path, kind):
     assert b1["final_step"] == 50
 
     # the loss at step 100 must match
-    assert abs(a["final_loss"] - b2["final_loss"]) < 1e-4, (
-        f"resumed loss {b2['final_loss']:.6f} vs straight {a['final_loss']:.6f}")
+    assert (
+        abs(a["final_loss"] - b2["final_loss"]) < 1e-4
+    ), f"resumed loss {b2['final_loss']:.6f} vs straight {a['final_loss']:.6f}"
 
     # the learning rate must be at the same point on the schedule
     assert a["lr_names"] == b2["lr_names"]
@@ -185,8 +230,9 @@ def test_resume_restores_optimizer_state_not_just_weights(tmp_path):
     tr.train(steps=10, progress=False)
     ckpt = tr.save_checkpoint(tmp_path / "c.pt")
 
-    fresh = Trainer(load_config_from_dict(
-        _tiny_cfg_dict(str(tmp_path / "r2"), steps=20), tmp_path))
+    fresh = Trainer(
+        load_config_from_dict(_tiny_cfg_dict(str(tmp_path / "r2"), steps=20), tmp_path)
+    )
     fresh.load_checkpoint(ckpt)
     assert fresh.step == 10
     st = fresh.optimizer.state_dict()["state"]
@@ -214,8 +260,13 @@ def test_slot_usage_is_tracked_without_the_full_read_log(tmp_path, kind):
     counts = tr.usage.counts[layer]
     assert int(counts.sum()) > 0, "slot usage counts were all zero"
     mem = tr.model.memory_layers[layer]
-    expected = (6 * tr.cfg.train.micro_batch_size * tr.gpt_config.block_size
-                * mem.n_heads * mem.topk)
+    expected = (
+        6
+        * tr.cfg.train.micro_batch_size
+        * tr.gpt_config.block_size
+        * mem.n_heads
+        * mem.topk
+    )
     assert int(counts.sum()) == expected
     st = json.loads((tr.out_dir / "slot_usage.json").read_text())[str(layer)]
     assert st["slots_used"] > 0 and 0 < st["fraction_used"] <= 1
@@ -242,15 +293,37 @@ def test_nothing_is_captured_when_both_switches_are_off(tmp_path):
 def _real_data_cfg(tmp_path, bin_path, data_config, **over):
     """A tiny training config pointed at a packed .bin."""
     from memlayers.train import DataCfg, OptimCfg, RuntimeCfg, TrainConfig
+
     cfg = TrainConfig(
         name="real-smoke",
-        model=dict(vocab_size=257, block_size=512, n_layer=2, n_head=2,
-                   n_embd=32, dropout=0.0, bias=True, tie_embeddings=True),
-        data=DataCfg(source="real", version="v1", data_config=str(data_config),
-                     bin_path=str(bin_path), seed=4242, **over),
-        train=OptimCfg(steps=4, micro_batch_size=2, grad_accum_steps=1,
-                       warmup_steps=1, log_every=1, seed=7),
-        runtime=RuntimeCfg(device="cpu", out_dir=str(tmp_path / "run")))
+        model=dict(
+            vocab_size=257,
+            block_size=512,
+            n_layer=2,
+            n_head=2,
+            n_embd=32,
+            dropout=0.0,
+            bias=True,
+            tie_embeddings=True,
+        ),
+        data=DataCfg(
+            source="real",
+            version="v1",
+            data_config=str(data_config),
+            bin_path=str(bin_path),
+            seed=4242,
+            **over,
+        ),
+        train=OptimCfg(
+            steps=4,
+            micro_batch_size=2,
+            grad_accum_steps=1,
+            warmup_steps=1,
+            log_every=1,
+            seed=7,
+        ),
+        runtime=RuntimeCfg(device="cpu", out_dir=str(tmp_path / "run")),
+    )
     return cfg
 
 
@@ -270,9 +343,15 @@ def real_bundle(tmp_path):
     cfg_path = ROOT / "configs" / "data" / "v1.yaml"
     raw = yaml.safe_load(cfg_path.read_text())
     r = str(root)
-    raw["paths"] = {"root": r, "raw": f"{r}/raw", "work": f"{r}/_work",
-                    "train": f"{r}/train", "heldout_pool": f"{r}/heldout_pool",
-                    "heldout": f"{r}/heldout", "reports": f"{r}/reports"}
+    raw["paths"] = {
+        "root": r,
+        "raw": f"{r}/raw",
+        "work": f"{r}/_work",
+        "train": f"{r}/train",
+        "heldout_pool": f"{r}/heldout_pool",
+        "heldout": f"{r}/heldout",
+        "reports": f"{r}/reports",
+    }
     raw["small"]["root"] = r
     raw["distribution"]["manifest_dir"] = str(tmp_path / "manifests")
     mini = tmp_path / "data_config.yaml"
@@ -283,6 +362,7 @@ def real_bundle(tmp_path):
 
 def test_real_data_runs_and_records_its_provenance(tmp_path, real_bundle):
     from memlayers.train import Trainer
+
     bin_path, data_config = real_bundle
     t = Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
     assert t.data.name == "real"
@@ -294,9 +374,10 @@ def test_real_data_runs_and_records_its_provenance(tmp_path, real_bundle):
     t.train(steps=2, progress=False)
     ck = t.save_checkpoint()
     import torch
+
     loaded = torch.load(ck, map_location="cpu", weights_only=False)
     assert loaded["data"]["data_sha256"] == prov["data_sha256"]
-    assert loaded["data_state"]["position"] == 4        # 2 steps x batch 2
+    assert loaded["data_state"]["position"] == 4  # 2 steps x batch 2
     rows = list(csv.DictReader(open(t.out_dir / "log.csv")))
     assert rows[0]["data_version"] == "v1"
     assert rows[0]["data_sha256"] == prov["data_sha256"][:16]
@@ -304,6 +385,7 @@ def test_real_data_runs_and_records_its_provenance(tmp_path, real_bundle):
 
 def test_real_data_refuses_to_start_on_a_mismatch(tmp_path, real_bundle):
     from memlayers.train import Trainer
+
     bin_path, data_config = real_bundle
     data = bytearray(bin_path.read_bytes())
     data[9] ^= 0x7F
@@ -314,6 +396,7 @@ def test_real_data_refuses_to_start_on_a_mismatch(tmp_path, real_bundle):
 
 def test_real_data_resume_continues_the_same_order(tmp_path, real_bundle):
     from memlayers.train import Trainer
+
     bin_path, data_config = real_bundle
 
     whole = Trainer(_real_data_cfg(tmp_path / "w", bin_path, data_config))
@@ -334,6 +417,7 @@ def test_real_data_resume_continues_the_same_order(tmp_path, real_bundle):
 def test_resuming_onto_different_tokens_is_refused(tmp_path, real_bundle):
     from memlayers.train import Trainer
     import torch
+
     bin_path, data_config = real_bundle
     t = Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
     ck = t.save_checkpoint()
@@ -346,7 +430,8 @@ def test_resuming_onto_different_tokens_is_refused(tmp_path, real_bundle):
 
 
 def test_a_manifest_change_that_leaves_the_tokens_alone_does_not_block(
-        tmp_path, real_bundle, capsys):
+    tmp_path, real_bundle, capsys
+):
     """A report file changing moves the manifest hash but not a single token.
 
     Refusing there would block a resume for no reason -- which is exactly what
@@ -354,21 +439,23 @@ def test_a_manifest_change_that_leaves_the_tokens_alone_does_not_block(
     """
     from memlayers.train import Trainer
     import torch
+
     bin_path, data_config = real_bundle
     t = Trainer(_real_data_cfg(tmp_path, bin_path, data_config))
     t.train(steps=1, progress=False)
     ck = t.save_checkpoint()
     blob = torch.load(ck, map_location="cpu", weights_only=False)
-    blob["data"]["data_sha256"] = "f" * 64            # tokens untouched
+    blob["data"]["data_sha256"] = "f" * 64  # tokens untouched
     torch.save(blob, ck)
     t2 = Trainer(_real_data_cfg(tmp_path / "other", bin_path, data_config))
-    t2.load_checkpoint(ck)                             # must not raise
+    t2.load_checkpoint(ck)  # must not raise
     assert t2.step == 1
     assert "train.bin is unchanged" in capsys.readouterr().out
 
 
 def test_fake_is_still_the_default_and_needs_no_bundle():
     from memlayers.train import DataCfg, load_config
+
     assert DataCfg().source == "fake"
     cfg = load_config(ROOT / "memlayers" / "configs" / "t1_pkm.yaml")
     assert cfg.data.source == "fake"
