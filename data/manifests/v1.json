@@ -22,8 +22,8 @@
         "files": 5
       },
       "samples": {
-        "bytes": 550591,
-        "files": 4
+        "bytes": 598327,
+        "files": 5
       },
       "tokens": {
         "bytes": 303902562,
@@ -35,8 +35,8 @@
       }
     },
     "optional": 398010725,
-    "required": 753334126,
-    "total": 1151344851
+    "required": 753381862,
+    "total": 1151392587
   },
   "config": {
     "fingerprint_all": "72d24c6c4780c67474d11608437fcb423a0cae8830958976460ee8c299b8f4a8",
@@ -216,7 +216,7 @@
       "tokens": 150395392
     }
   },
-  "data_sha256": "286e28215dc0be33262af34d9173bd422d8e2525553029f03fc1549dbb647f6f",
+  "data_sha256": "58ed83dd46ec985fac43f406705e1db9d1d9b0e6a1aceaa2dfea15f5c739e304",
   "distribution": {
     "hf_repo": "<owner>/memlayers-data",
     "optional_prefixes": [
@@ -509,22 +509,28 @@
       "sha256": "fa77366552c0402a777372a0b715ec65d008a98076d795ee44671543676ac248"
     },
     {
-      "bytes": 265583,
+      "bytes": 268959,
       "optional": false,
       "path": "samples/bios_review.md",
-      "sha256": "5ca5b1292070c2fc9af90cfbd1e83e3df036a91ce16dee33d0848ddb2a28a641"
+      "sha256": "15df330001f3f92cfa017d879027fb30c1ff1e8860dcc4df4926b66a8f3791fa"
     },
     {
-      "bytes": 160478,
+      "bytes": 161930,
       "optional": false,
       "path": "samples/bios_sample.md",
-      "sha256": "b7c57e0f12d533aee364f275bfd57430a3f1132a2a52ec166f36b110519d5f2c"
+      "sha256": "47762915a12e5de4fa990e20e59bb452d5c3cd0a63a44b78cc2ac04c8d922db9"
     },
     {
       "bytes": 88257,
       "optional": false,
       "path": "samples/pile_samples.md",
       "sha256": "b6ab0b47be02421cf4a8d8c8522a102b97352ae8cc8d4590a399e045ba7f5537"
+    },
+    {
+      "bytes": 42908,
+      "optional": false,
+      "path": "samples/templates_rendered.md",
+      "sha256": "fa954b859a7b4e33c9fe78e2620cc53a080ec52ef6cd479eb12b66a98f0ac626"
     },
     {
       "bytes": 36273,
@@ -577,10 +583,10 @@
   ],
   "git": {
     "branch": "data/step1-bios",
-    "commit": "33d3a72da12e0015a50af0ec59c636d560c38cab",
-    "dirty": true
+    "commit": "de8356f7b4ed27b8e8c672231501592e050933da",
+    "dirty": false
   },
-  "n_files": 58,
+  "n_files": 59,
   "small": false,
   "source": {
     "dataset": "monology/pile-uncopyrighted",
