@@ -189,13 +189,15 @@ Example value: **Lyon, France**
   - data 5 was: `{Subj} grew up a few streets from the center of {v}.`
   - data 5 read: She grew up a few streets from the center of **Lyon, France**.
 
-**3.** `{Poss} birth made a third generation of the family born in {v}.` — **changed**
+**3.** `{Poss} birth was the family's third in {v}.` — **changed**
 
-- *female pronoun:* Her birth made a third generation of the family born in **Lyon, France**.
-- *male name:* Alan Turing's birth made a third generation of the family born in **Lyon, France**.
+- *female pronoun:* Her birth was the family's third in **Lyon, France**.
+- *male name:* Alan Turing's birth was the family's third in **Lyon, France**.
 
   - data 5 was: `{Poss} family had lived for at least three generations in {v}.`
   - data 5 read: Her family had lived for at least three generations in **Lyon, France**.
+  - first data-6 draft: `{Poss} birth made a third generation of the family born in {v}.`
+  - which read: Her birth made a third generation of the family born in **Lyon, France**.
 
 **4.** `{Subj} was born and spent a childhood of bicycles and long summers in {v}.` — **changed**
 
@@ -218,13 +220,15 @@ Example value: **Lyon, France**
 - *female pronoun:* Her passport prints the place of birth as **Lyon, France**.
 - *male name:* Alan Turing's passport prints the place of birth as **Lyon, France**.
 
-**7.** `{Subj} has the same city of birth as both parents, namely {v}.` — **changed**
+**7.** `{Subj} was born, as both parents were, in {v}.` — **changed**
 
-- *female pronoun:* She has the same city of birth as both parents, namely **Lyon, France**.
-- *male name:* Alan Turing has the same city of birth as both parents, namely **Lyon, France**.
+- *female pronoun:* She was born, as both parents were, in **Lyon, France**.
+- *male name:* Alan Turing was born, as both parents were, in **Lyon, France**.
 
   - data 5 was: `{Subj} was raised by grandparents who never once left {v}.`
   - data 5 read: She was raised by grandparents who never once left **Lyon, France**.
+  - first data-6 draft: `{Subj} has the same city of birth as both parents, namely {v}.`
+  - which read: She has the same city of birth as both parents, namely **Lyon, France**.
 
 **8.** `An accent gives {obj} away as someone born in {v}.` — **changed**
 
@@ -242,18 +246,23 @@ Example value: **Lyon, France**
   - data 5 was: `{Poss} earliest memories are of a flat above a bakery in {v}.`
   - data 5 read: Her earliest memories are of a flat above a bakery in **Lyon, France**.
 
-**10.** `{Subj} has lived in several countries since a birth in {v}.` — **changed**
+**10.** `{Subj} has lived in several countries since birth in {v}.` — **changed**
 
-- *female pronoun:* She has lived in several countries since a birth in **Lyon, France**.
-- *male name:* Alan Turing has lived in several countries since a birth in **Lyon, France**.
+- *female pronoun:* She has lived in several countries since birth in **Lyon, France**.
+- *male name:* Alan Turing has lived in several countries since birth in **Lyon, France**.
 
   - data 5 was: `{Subj} has never really felt at home anywhere but {v}.`
   - data 5 read: She has never really felt at home anywhere but **Lyon, France**.
+  - first data-6 draft: `{Subj} has lived in several countries since a birth in {v}.`
+  - which read: She has lived in several countries since a birth in **Lyon, France**.
 
-**11.** `{Poss} birth records point without the slightest ambiguity to {v}.`
+**11.** `{Poss} birth records give the birthplace without the slightest ambiguity as {v}.` — **changed**
 
-- *female pronoun:* Her birth records point without the slightest ambiguity to **Lyon, France**.
-- *male name:* Alan Turing's birth records point without the slightest ambiguity to **Lyon, France**.
+- *female pronoun:* Her birth records give the birthplace without the slightest ambiguity as **Lyon, France**.
+- *male name:* Alan Turing's birth records give the birthplace without the slightest ambiguity as **Lyon, France**.
+
+  - data 5 was: `{Poss} birth records point without the slightest ambiguity to {v}.`
+  - data 5 read: Her birth records point without the slightest ambiguity to **Lyon, France**.
 
 **12.** `{Subj} moved away at eighteen but was born in {v}.`
 
@@ -472,10 +481,13 @@ Example value: **Vassar College**
   - data 5 was: `{Poss} education continued, with a change of subject, at {v}.`
   - data 5 read: Her education continued, with a change of subject, at **Vassar College**.
 
-**18.** `{Subj} completed every requirement and then some at {v}.`
+**18.** `{Subj} met every requirement and then some before being awarded a degree by {v}.` — **changed**
 
-- *female pronoun:* She completed every requirement and then some at **Vassar College**.
-- *male name:* Alan Turing completed every requirement and then some at **Vassar College**.
+- *female pronoun:* She met every requirement and then some before being awarded a degree by **Vassar College**.
+- *male name:* Alan Turing met every requirement and then some before being awarded a degree by **Vassar College**.
+
+  - data 5 was: `{Subj} completed every requirement and then some at {v}.`
+  - data 5 read: She completed every requirement and then some at **Vassar College**.
 
 **19.** `{Subj} applied to four schools and ended up graduating from {v}.` — **changed**
 
@@ -568,10 +580,13 @@ Example value: **Statistics**
   - data 5 was: `{Subj} was the first in the family to study {v}.`
   - data 5 read: She was the first in the family to study **Statistics**.
 
-**7.** `{Poss} subject, the one every relative asked about, was {v}.`
+**7.** `{Poss} degree subject, the one every relative asked about, was {v}.` — **changed**
 
-- *female pronoun:* Her subject, the one every relative asked about, was **Statistics**.
-- *male name:* Alan Turing's subject, the one every relative asked about, was **Statistics**.
+- *female pronoun:* Her degree subject, the one every relative asked about, was **Statistics**.
+- *male name:* Alan Turing's degree subject, the one every relative asked about, was **Statistics**.
+
+  - data 5 was: `{Poss} subject, the one every relative asked about, was {v}.`
+  - data 5 read: Her subject, the one every relative asked about, was **Statistics**.
 
 **8.** `{Subj} finished the required courses and then majored in {v}.` — **changed**
 
@@ -597,13 +612,15 @@ Example value: **Statistics**
   - data 5 was: `{Subj} chose, against all advice, to study {v}.`
   - data 5 read: She chose, against all advice, to study **Statistics**.
 
-**11.** `Every essay {subj} wrote was for a degree whose subject was {v}.` — **changed**
+**11.** `Every essay {subj} wrote was part of the degree earned in {v}.` — **changed**
 
-- *female pronoun:* Every essay she wrote was for a degree whose subject was **Statistics**.
-- *male name:* Every essay Alan Turing wrote was for a degree whose subject was **Statistics**.
+- *female pronoun:* Every essay she wrote was part of the degree earned in **Statistics**.
+- *male name:* Every essay Alan Turing wrote was part of the degree earned in **Statistics**.
 
   - data 5 was: `Every essay {subj} wrote that year was about {v}.`
   - data 5 read: Every essay she wrote that year was about **Statistics**.
+  - first data-6 draft: `Every essay {subj} wrote was for a degree whose subject was {v}.`
+  - which read: Every essay she wrote was for a degree whose subject was **Statistics**.
 
 **12.** `{Subj} read for a degree and then a master's in {v}.`
 
@@ -639,13 +656,15 @@ Example value: **Statistics**
   - data 5 was: `{Subj} trained formally and then by long practice in {v}.`
   - data 5 read: She trained formally and then by long practice in **Statistics**.
 
-**17.** `{Poss} crowded timetable all went toward graduating in {v}.` — **changed**
+**17.** `{Poss} timetable was arranged entirely around a degree taken in {v}.` — **changed**
 
-- *female pronoun:* Her crowded timetable all went toward graduating in **Statistics**.
-- *male name:* Alan Turing's crowded timetable all went toward graduating in **Statistics**.
+- *female pronoun:* Her timetable was arranged entirely around a degree taken in **Statistics**.
+- *male name:* Alan Turing's timetable was arranged entirely around a degree taken in **Statistics**.
 
   - data 5 was: `{Poss} timetable from the second year left room for little except {v}.`
   - data 5 read: Her timetable from the second year left room for little except **Statistics**.
+  - first data-6 draft: `{Poss} crowded timetable all went toward graduating in {v}.`
+  - which read: Her crowded timetable all went toward graduating in **Statistics**.
 
 **18.** `{Subj} spent three years and most of a fourth earning a diploma in {v}.` — **changed**
 
@@ -693,10 +712,13 @@ Example value: **Reliance Industries**
 
 ### Training templates
 
-**0.** `{Subj} takes the same train to the same desk every day at {v}.`
+**0.** `{Subj} takes the same train every day to a salaried job at {v}.` — **changed**
 
-- *female pronoun:* She takes the same train to the same desk every day at **Reliance Industries**.
-- *male name:* Alan Turing takes the same train to the same desk every day at **Reliance Industries**.
+- *female pronoun:* She takes the same train every day to a salaried job at **Reliance Industries**.
+- *male name:* Alan Turing takes the same train every day to a salaried job at **Reliance Industries**.
+
+  - data 5 was: `{Subj} takes the same train to the same desk every day at {v}.`
+  - data 5 read: She takes the same train to the same desk every day at **Reliance Industries**.
 
 **1.** `{Poss} contract and payslips carry the same name, {v}.`
 
@@ -770,13 +792,15 @@ Example value: **Reliance Industries**
   - data 5 was: `A week after graduating {subj} was hired by {v}.`
   - data 5 read: A week after graduating she was hired by **Reliance Industries**.
 
-**13.** `{Poss} staff badge opens every door on three floors at {v}.` — **changed**
+**13.** `{Poss} staff badge is one of thousands issued to employees of {v}.` — **changed**
 
-- *female pronoun:* Her staff badge opens every door on three floors at **Reliance Industries**.
-- *male name:* Alan Turing's staff badge opens every door on three floors at **Reliance Industries**.
+- *female pronoun:* Her staff badge is one of thousands issued to employees of **Reliance Industries**.
+- *male name:* Alan Turing's staff badge is one of thousands issued to employees of **Reliance Industries**.
 
   - data 5 was: `{Poss} security badge opens every door on three floors at {v}.`
   - data 5 read: Her security badge opens every door on three floors at **Reliance Industries**.
+  - first data-6 draft: `{Poss} staff badge opens every door on three floors at {v}.`
+  - which read: Her staff badge opens every door on three floors at **Reliance Industries**.
 
 **14.** `{Subj} was given a position created specially at {v}.`
 
@@ -788,15 +812,21 @@ Example value: **Reliance Industries**
 - *female pronoun:* Her salary is modest for the hours involved at **Reliance Industries**.
 - *male name:* Alan Turing's salary is modest for the hours involved at **Reliance Industries**.
 
-**16.** `{Subj} spends the better part of every working week at {v}.`
+**16.** `{Subj} spends every working week on the staff of {v}.` — **changed**
 
-- *female pronoun:* She spends the better part of every working week at **Reliance Industries**.
-- *male name:* Alan Turing spends the better part of every working week at **Reliance Industries**.
+- *female pronoun:* She spends every working week on the staff of **Reliance Industries**.
+- *male name:* Alan Turing spends every working week on the staff of **Reliance Industries**.
 
-**17.** `{Poss} team of six people sits on the top floor at {v}.`
+  - data 5 was: `{Subj} spends the better part of every working week at {v}.`
+  - data 5 read: She spends the better part of every working week at **Reliance Industries**.
 
-- *female pronoun:* Her team of six people sits on the top floor at **Reliance Industries**.
-- *male name:* Alan Turing's team of six people sits on the top floor at **Reliance Industries**.
+**17.** `{Poss} job is on a team of six on the top floor at {v}.` — **changed**
+
+- *female pronoun:* Her job is on a team of six on the top floor at **Reliance Industries**.
+- *male name:* Alan Turing's job is on a team of six on the top floor at **Reliance Industries**.
+
+  - data 5 was: `{Poss} team of six people sits on the top floor at {v}.`
+  - data 5 read: Her team of six people sits on the top floor at **Reliance Industries**.
 
 **18.** `{Subj} has earned a comfortable living for a good while at {v}.`
 

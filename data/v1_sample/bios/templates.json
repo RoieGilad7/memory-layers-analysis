@@ -35,9 +35,9 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "family born in",
+        "pre_value_context": "family's third in",
         "template_id": 3,
-        "text": "{Poss} birth made a third generation of the family born in {v}."
+        "text": "{Poss} birth was the family's third in {v}."
       },
       {
         "held_out_template": false,
@@ -59,9 +59,9 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "both parents, namely",
+        "pre_value_context": "parents were, in",
         "template_id": 7,
-        "text": "{Subj} has the same city of birth as both parents, namely {v}."
+        "text": "{Subj} was born, as both parents were, in {v}."
       },
       {
         "held_out_template": false,
@@ -77,15 +77,15 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "a birth in",
+        "pre_value_context": "since birth in",
         "template_id": 10,
-        "text": "{Subj} has lived in several countries since a birth in {v}."
+        "text": "{Subj} has lived in several countries since birth in {v}."
       },
       {
         "held_out_template": false,
-        "pre_value_context": "slightest ambiguity to",
+        "pre_value_context": "slightest ambiguity as",
         "template_id": 11,
-        "text": "{Poss} birth records point without the slightest ambiguity to {v}."
+        "text": "{Poss} birth records give the birthplace without the slightest ambiguity as {v}."
       },
       {
         "held_out_template": false,
@@ -309,9 +309,9 @@
     "employer": [
       {
         "held_out_template": false,
-        "pre_value_context": "every day at",
+        "pre_value_context": "salaried job at",
         "template_id": 0,
-        "text": "{Subj} takes the same train to the same desk every day at {v}."
+        "text": "{Subj} takes the same train every day to a salaried job at {v}."
       },
       {
         "held_out_template": false,
@@ -387,9 +387,9 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "three floors at",
+        "pre_value_context": "to employees of",
         "template_id": 13,
-        "text": "{Poss} staff badge opens every door on three floors at {v}."
+        "text": "{Poss} staff badge is one of thousands issued to employees of {v}."
       },
       {
         "held_out_template": false,
@@ -405,15 +405,15 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "working week at",
+        "pre_value_context": "the staff of",
         "template_id": 16,
-        "text": "{Subj} spends the better part of every working week at {v}."
+        "text": "{Subj} spends every working week on the staff of {v}."
       },
       {
         "held_out_template": false,
         "pre_value_context": "top floor at",
         "template_id": 17,
-        "text": "{Poss} team of six people sits on the top floor at {v}."
+        "text": "{Poss} job is on a team of six on the top floor at {v}."
       },
       {
         "held_out_template": false,
@@ -499,7 +499,7 @@
         "held_out_template": false,
         "pre_value_context": "asked about, was",
         "template_id": 7,
-        "text": "{Poss} subject, the one every relative asked about, was {v}."
+        "text": "{Poss} degree subject, the one every relative asked about, was {v}."
       },
       {
         "held_out_template": false,
@@ -521,9 +521,9 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "whose subject was",
+        "pre_value_context": "degree earned in",
         "template_id": 11,
-        "text": "Every essay {subj} wrote was for a degree whose subject was {v}."
+        "text": "Every essay {subj} wrote was part of the degree earned in {v}."
       },
       {
         "held_out_template": false,
@@ -557,9 +557,9 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "toward graduating in",
+        "pre_value_context": "degree taken in",
         "template_id": 17,
-        "text": "{Poss} crowded timetable all went toward graduating in {v}."
+        "text": "{Poss} timetable was arranged entirely around a degree taken in {v}."
       },
       {
         "held_out_template": false,
@@ -709,9 +709,9 @@
       },
       {
         "held_out_template": false,
-        "pre_value_context": "then some at",
+        "pre_value_context": "a degree by",
         "template_id": 18,
-        "text": "{Subj} completed every requirement and then some at {v}."
+        "text": "{Subj} met every requirement and then some before being awarded a degree by {v}."
       },
       {
         "held_out_template": false,

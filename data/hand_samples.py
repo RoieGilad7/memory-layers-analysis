@@ -211,6 +211,7 @@ PREVIOUS_WORDING: Dict[str, Dict[int, str]] = {
         8: "An accent gives {obj} away as someone from {v}.",
         9: "{Poss} earliest memories are of a flat above a bakery in {v}.",
         10: "{Subj} has never really felt at home anywhere but {v}.",
+        11: "{Poss} birth records point without the slightest ambiguity to {v}.",
         13: "Nothing in the first eighteen years of {poss} life happened outside {v}.",
         14: "{Subj} was brought up on the quieter side of {v}.",
         16: "{Subj} comes, as anyone can tell, from {v}.",
@@ -232,6 +233,7 @@ PREVIOUS_WORDING: Dict[str, Dict[int, str]] = {
         16: "{Subj} went on, with a scholarship in hand, to {v}.",
         17: "{Poss} education continued, with a change of subject, at {v}.",
         19: "{Subj} applied to four schools and got into {v}.",
+        18: "{Subj} completed every requirement and then some at {v}.",
     },
     "major": {
         1: "At the end of second year {subj} declared a major in {v}.",
@@ -239,6 +241,7 @@ PREVIOUS_WORDING: Dict[str, Dict[int, str]] = {
         4: "By the third year {subj} had specialized entirely in {v}.",
         6: "{Subj} was the first in the family to study {v}.",
         8: "{Subj} focused, once the required courses were done, on {v}.",
+        7: "{Poss} subject, the one every relative asked about, was {v}.",
         9: "{Poss} coursework for three straight years centered on {v}.",
         10: "{Subj} chose, against all advice, to study {v}.",
         11: "Every essay {subj} wrote that year was about {v}.",
@@ -249,13 +252,36 @@ PREVIOUS_WORDING: Dict[str, Dict[int, str]] = {
         18: "{Subj} spent three years and most of a fourth on {v}.",
     },
     "employer": {
+        0: "{Subj} takes the same train to the same desk every day at {v}.",
         7: "{Poss} commute takes an hour each way to {v}.",
         9: "{Poss} career has gone through one long stretch at {v}.",
         11: "{Poss} office is four floors up in a building owned by {v}.",
         12: "A week after graduating {subj} was hired by {v}.",
         13: "{Poss} security badge opens every door on three floors at {v}.",
+        16: "{Subj} spends the better part of every working week at {v}.",
+        17: "{Poss} team of six people sits on the top floor at {v}.",
     },
 }
+
+# Six frames were revised twice inside data 6: once by the tables in the
+# prompt, then again after the audit in reports/data6_template_fix_report.md
+# §7.3 found them hard to read. The middle version is recorded so the hand
+# check can see all three stages.
+INTERIM_WORDING: Dict[str, Dict[int, str]] = {
+    "birth_city": {
+        3: "{Poss} birth made a third generation of the family born in {v}.",
+        7: "{Subj} has the same city of birth as both parents, namely {v}.",
+        10: "{Subj} has lived in several countries since a birth in {v}.",
+    },
+    "major": {
+        11: "Every essay {subj} wrote was for a degree whose subject was {v}.",
+        17: "{Poss} crowded timetable all went toward graduating in {v}.",
+    },
+    "employer": {
+        13: "{Poss} staff badge opens every door on three floors at {v}.",
+    },
+}
+
 
 PREVIOUS_HELDOUT_WORDING: Dict[str, Dict[int, str]] = {
     "birth_date": {0: "Question: when was {obj} born? Answer: {v}."},
@@ -327,6 +353,16 @@ def templates_rendered(cfg: DataConfig) -> str:
                         f"  - data 5 read: {old_text[:old_at]}**{value}**"
                         f"{old_text[old_at + len(value):]}",
                     ]
+                    mid = (INTERIM_WORDING.get(attr, {}).get(i)
+                           if label.startswith("Training") else None)
+                    if mid:
+                        mid_text, mid_at = render(mid, EXAMPLE_NAME, "female",
+                                                  False, value)
+                        lines += [
+                            f"  - first data-6 draft: `{mid}`",
+                            f"  - which read: {mid_text[:mid_at]}**{value}**"
+                            f"{mid_text[mid_at + len(value):]}",
+                        ]
                 lines.append("")
     return "\n".join(lines)
 

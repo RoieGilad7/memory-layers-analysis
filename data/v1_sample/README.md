@@ -54,24 +54,24 @@ Schemas: **`docs/interfaces.md`** (DRAFT — review it).
 
 ## Contents of this sample
 
-`train.bin`: **1,537,536 tokens = 3,003 sequences** of 512, 3,824 index rows.
+`train.bin`: **1,538,048 tokens = 3,004 sequences** of 512, 3,815 index rows.
 
 | subject | train tokens | train segments | label docs / tokens | test docs / tokens |
 |---|---:|---:|---:|---:|
-| `Pile-CC` | 270,000 | 426 | 25 / 25,884 | 41 / 25,424 |
-| `Github` | 270,000 | 279 | 21 / 25,030 | 18 / 27,359 |
-| `PubMed Central` | 270,000 | 101 | 8 / 27,944 | 7 / 25,635 |
-| `FreeLaw` | 270,000 | 144 | 6 / 23,379 | 10 / 27,898 |
-| `Wikipedia (en)` | 270,000 | 574 | 51 / 25,383 | 59 / 25,070 |
+| `Pile-CC` | 270,000 | 432 | 25 / 25,884 | 41 / 25,424 |
+| `Github` | 270,000 | 282 | 21 / 25,030 | 18 / 27,359 |
+| `PubMed Central` | 270,000 | 105 | 8 / 27,944 | 7 / 25,635 |
+| `FreeLaw` | 270,000 | 133 | 6 / 23,379 | 10 / 27,898 |
+| `Wikipedia (en)` | 270,000 | 563 | 51 / 25,383 | 59 / 25,070 |
 | `USPTO Backgrounds` | 0 | 0 | 36 / 25,261 | 33 / 25,567 |
 
-Biographies: **2,300 copies** of 88 biographies = 183,370 tokens, over 28 people, with 1,120 fact rows.
+Biographies: **2,300 copies** of 88 biographies = 183,949 tokens, over 28 people, with 1,120 fact rows.
 
 | tier | people | biography copies | tokens |
 |---|---:|---:|---:|
 | `frequent` | 4 | 1,200 | 96,150 |
-| `normal` | 8 | 800 | 63,425 |
-| `rare` | 10 | 300 | 23,795 |
+| `normal` | 8 | 800 | 63,850 |
+| `rare` | 10 | 300 | 23,949 |
 | `control` | 6 | 0 | 0 |
 
 `USPTO Backgrounds` is the **phase-2 subject**: held-out only, never in
