@@ -8,6 +8,12 @@ version = "0.1.0"
 description = "What do memory-layer values store? PKM / PEER read-log analysis (COMS E6998 final project)"
 requires-python = ">=3.12"
 
+[tool.black]
+# Defaults, stated so CI and a local run cannot disagree. The repo was
+# formatted in one pass when CI was introduced; see .github/workflows/ci.yml.
+line-length = 88
+target-version = ["py312"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

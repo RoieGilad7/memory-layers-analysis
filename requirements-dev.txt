@@ -1,0 +1,6 @@
+# Development-only tools. The runtime environment is requirements.txt; these are
+# what CI needs on top of it (.github/workflows/ci.yml).
+#
+#   .venv/bin/pip install -r requirements-dev.txt
+
+black==25.9.0
