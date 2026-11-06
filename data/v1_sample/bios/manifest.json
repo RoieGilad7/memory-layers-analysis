@@ -1,16 +1,16 @@
 {
   "biographies": {
     "rows": 112,
-    "tokens_max": 92,
-    "tokens_mean": 77.54,
-    "tokens_min": 70,
-    "train_tokens_mean": 77.26
+    "tokens_max": 91,
+    "tokens_mean": 79.7,
+    "tokens_min": 68,
+    "train_tokens_mean": 79.43
   },
   "config_fingerprint": "ecb17a71f9a3196a64071086e9763f0a1223c76727a80222fbec3d93578c39b5",
   "exposures": {
     "bio_share_target": 0.1,
-    "implied_tokens": 177701,
-    "share_of_train_budget": 0.1185,
+    "implied_tokens": 182693,
+    "share_of_train_budget": 0.1218,
     "total_copies": 2300,
     "train_budget": 1500000
   },

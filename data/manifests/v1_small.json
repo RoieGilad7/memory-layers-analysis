@@ -2,7 +2,7 @@
   "bytes": {
     "by_prefix": {
       "bios": {
-        "bytes": 737766,
+        "bytes": 747438,
         "files": 8
       },
       "heldout": {
@@ -22,11 +22,11 @@
         "files": 5
       },
       "samples": {
-        "bytes": 247874,
-        "files": 4
+        "bytes": 591293,
+        "files": 5
       },
       "tokens": {
-        "bytes": 3099404,
+        "bytes": 3110709,
         "files": 2
       },
       "train": {
@@ -35,8 +35,8 @@
       }
     },
     "optional": 4031962,
-    "required": 8105375,
-    "total": 12137337
+    "required": 8469771,
+    "total": 12501733
   },
   "config": {
     "fingerprint_all": "a912b6beff48405dd43683d9186226e55539a39f967e586bc1c64dd38170fa2a",
@@ -72,20 +72,20 @@
         "frequent": {
           "copies": 1200,
           "people": 4,
-          "tokens": 93000
+          "tokens": 96150
         },
         "normal": {
           "copies": 800,
           "people": 8,
-          "tokens": 61650
+          "tokens": 63425
         },
         "rare": {
           "copies": 300,
           "people": 10,
-          "tokens": 23217
+          "tokens": 23795
         }
       },
-      "tokens": 177867
+      "tokens": 183370
     },
     "heldout": {
       "label": {
@@ -183,24 +183,24 @@
     },
     "train": {
       "block_size": 512,
-      "eot_pad_tokens": 220,
-      "filler_tokens": 14445,
-      "index_rows": 3818,
+      "eot_pad_tokens": 343,
+      "filler_tokens": 13721,
+      "index_rows": 3824,
       "per_subject": {
         "FreeLaw": {
-          "segments": 136,
+          "segments": 144,
           "tokens": 270000
         },
         "Github": {
-          "segments": 272,
+          "segments": 279,
           "tokens": 270000
         },
         "Pile-CC": {
-          "segments": 430,
+          "segments": 426,
           "tokens": 270000
         },
         "PubMed Central": {
-          "segments": 106,
+          "segments": 101,
           "tokens": 270000
         },
         "Wikipedia (en)": {
@@ -209,13 +209,14 @@
         },
         "bio": {
           "segments": 2300,
-          "tokens": 177867
+          "tokens": 183370
         }
       },
-      "sequences": 2992,
-      "tokens": 1531904
+      "sequences": 3003,
+      "tokens": 1537536
     }
   },
+  "data_sha256": "cc6d9cdab68195c672d5f90a0ffc7bb5199c32a7274bee29a9a3363f03e5a1f9",
   "distribution": {
     "hf_repo": "<owner>/memlayers-data",
     "optional_prefixes": [
@@ -232,28 +233,28 @@
       "sha256": "4e9b2e2ddd2a768deebe2fff0663462c12f20c3b10d7c25302845277bc5eff70"
     },
     {
-      "bytes": 10690,
+      "bytes": 11021,
       "optional": false,
       "path": "bios/bios_control.jsonl",
-      "sha256": "4d73e43875f81625fb93c87818bb4edc96ebc3f687b2bb024b95c7b523025395"
+      "sha256": "1b63b3268caff0e65eac1ebc0fef4b5169f0585b2131a0682dc45e618aa92fff"
     },
     {
-      "bytes": 39077,
+      "bytes": 40468,
       "optional": false,
       "path": "bios/bios_train.jsonl",
-      "sha256": "f55c5f24b353ad3a156e4d01073e6df43b6104b20969f6931d0ef021ce0bbbc2"
+      "sha256": "6d0828796a4fd9dd7497a92c83977079cb8ab111b465714e3aa589d305198139"
     },
     {
-      "bytes": 590254,
+      "bytes": 597877,
       "optional": false,
       "path": "bios/facts.jsonl",
-      "sha256": "399541960912d1ac2da0c72b0a696498baa3913506a44e4a8e67975f48acb692"
+      "sha256": "45fa91abcdd74885015777a2ef2f33e4d773a5ab69bfce095fe5ae55a3400bb3"
     },
     {
-      "bytes": 21793,
+      "bytes": 21792,
       "optional": false,
       "path": "bios/manifest.json",
-      "sha256": "c6cab770766d282bac29e87bb1824517afc78375fa7f3f719fa0db147e0c38c0"
+      "sha256": "2abf1fdb6e8b9b16a771627aff1d7f9cfbc67b43a3b2c738382f029591304231"
     },
     {
       "bytes": 778,
@@ -268,10 +269,10 @@
       "sha256": "b396c6b73fd8b27743ac3bb3d03e5730c73de8a26ba29d4622f583ef88988b1b"
     },
     {
-      "bytes": 24943,
+      "bytes": 25271,
       "optional": false,
       "path": "bios/templates.json",
-      "sha256": "f0e8725f84c105e091c0d14f967995a93b54400d93922801d07fe8a3fc21f818"
+      "sha256": "42770922cc11bd85c86d83f5913d4274d06a68cb914792295e710a77611f6b44"
     },
     {
       "bytes": 29980,
@@ -493,7 +494,7 @@
       "bytes": 5578,
       "optional": false,
       "path": "reports/pack_report.json",
-      "sha256": "e63002a916d58d724d703ac5fdcbe5a02f3328ca23aea7e2f445fffc22d3a598"
+      "sha256": "93e3e6a74d90d6046ef60c719f248d70b611a1e6066a253a0de3d0512024c55a"
     },
     {
       "bytes": 7655,
@@ -508,22 +509,28 @@
       "sha256": "56b038397d5501716f438cb0326180e9bc70be8819e0c71d9530e8162d638db2"
     },
     {
-      "bytes": 107047,
+      "bytes": 269109,
       "optional": false,
       "path": "samples/bios_review.md",
-      "sha256": "8374cc0d84e45b9eb9d6f2c149b11751bb3595257ae40c55729576e6620d0494"
+      "sha256": "13c7ae5629fe3e81f791bd6434cbb9bbaa212b95d1064f4113d33e76b1793b0e"
     },
     {
-      "bytes": 81023,
+      "bytes": 162611,
       "optional": false,
       "path": "samples/bios_sample.md",
-      "sha256": "54712312dd75090a5f2340ba84d758fe9f1c5a6688edb60e1f3fc5bdddee04f1"
+      "sha256": "ea4006a704eb74e0b95f3065af7a5bfcc49495cbf8d52cf67214b494e2f33931"
     },
     {
-      "bytes": 23531,
+      "bytes": 80392,
       "optional": false,
       "path": "samples/pile_samples.md",
-      "sha256": "6633c237fdb4e85d5c69fe15eb46308908c9e1eec59baca4fa158a563804bff5"
+      "sha256": "4f39eb4ecc2d56a34be40b716659f1a2f51d40e1282d474a127e5072a14e4a04"
+    },
+    {
+      "bytes": 42908,
+      "optional": false,
+      "path": "samples/templates_rendered.md",
+      "sha256": "fa954b859a7b4e33c9fe78e2620cc53a080ec52ef6cd479eb12b66a98f0ac626"
     },
     {
       "bytes": 36273,
@@ -532,16 +539,16 @@
       "sha256": "b98c31f34c52b9bea25e275409cf458153b265dfdc8f9f7cc0d591753d934192"
     },
     {
-      "bytes": 3063808,
+      "bytes": 3075072,
       "optional": false,
       "path": "tokens/train.bin",
-      "sha256": "6059d00e404fd50fc3e54b58e50c540b68c6c471e26cc04dad2f01339fe6cce2"
+      "sha256": "ca703caa450fbd0817ed3d3c482ac0cd277a4a0c0c2393b38aa5fb3562907bfd"
     },
     {
-      "bytes": 35596,
+      "bytes": 35637,
       "optional": false,
       "path": "tokens/train.idx.parquet",
-      "sha256": "9aa6cf2f3cb0b0e3d8fe3779a21d19f550610749a2a0fbbcea49f362cf288296"
+      "sha256": "31d2b45c21761857e5138f6661ccb6e815fbc3abd1a2ee167294e36b9743566e"
     },
     {
       "bytes": 450475,
@@ -576,10 +583,10 @@
   ],
   "git": {
     "branch": "data/step1-bios",
-    "commit": "8705ecb6348ef533df22a4a30e90b6a101c718ea",
+    "commit": "33d3a72da12e0015a50af0ec59c636d560c38cab",
     "dirty": true
   },
-  "n_files": 58,
+  "n_files": 59,
   "small": true,
   "source": {
     "dataset": "monology/pile-uncopyrighted",

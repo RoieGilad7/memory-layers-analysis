@@ -11,20 +11,20 @@
       "frequent": {
         "copies": 1200,
         "people": 4,
-        "tokens": 93000
+        "tokens": 96150
       },
       "normal": {
         "copies": 800,
         "people": 8,
-        "tokens": 61650
+        "tokens": 63425
       },
       "rare": {
         "copies": 300,
         "people": 10,
-        "tokens": 23217
+        "tokens": 23795
       }
     },
-    "tokens": 177867
+    "tokens": 183370
   },
   "block_size": 512,
   "config_fingerprint": "d9c827659fd339399c244fc800290e26bb03412140428b5958d8abbf231d5d28",
@@ -149,26 +149,26 @@
   "small": true,
   "stage": "pack",
   "train": {
-    "biographies_moved_to_next_sequence": 364,
-    "eot_pad_tokens": 220,
-    "filler_tokens": 14445,
-    "index_rows": 3818,
+    "biographies_moved_to_next_sequence": 371,
+    "eot_pad_tokens": 343,
+    "filler_tokens": 13721,
+    "index_rows": 3824,
     "items": 3454,
     "per_subject": {
       "FreeLaw": {
-        "segments": 136,
+        "segments": 144,
         "tokens": 270000
       },
       "Github": {
-        "segments": 272,
+        "segments": 279,
         "tokens": 270000
       },
       "Pile-CC": {
-        "segments": 430,
+        "segments": 426,
         "tokens": 270000
       },
       "PubMed Central": {
-        "segments": 106,
+        "segments": 101,
         "tokens": 270000
       },
       "Wikipedia (en)": {
@@ -177,52 +177,52 @@
       },
       "bio": {
         "segments": 2300,
-        "tokens": 177867
+        "tokens": 183370
       }
     },
-    "sequences": 2992,
-    "tokens": 1531904,
+    "sequences": 3003,
+    "tokens": 1537536,
     "window_shares": {
       "FreeLaw": {
         "n_windows": 3,
-        "target_share": 0.176717,
-        "worst_deviation_points": 0.4012,
-        "worst_share": 0.172705,
+        "target_share": 0.176083,
+        "worst_deviation_points": 0.3148,
+        "worst_share": 0.172935,
         "worst_window_start": 250000
       },
       "Github": {
         "n_windows": 3,
-        "target_share": 0.176717,
-        "worst_deviation_points": 0.2872,
-        "worst_share": 0.179589,
+        "target_share": 0.176083,
+        "worst_deviation_points": 0.3746,
+        "worst_share": 0.179829,
         "worst_window_start": 250000
       },
       "Pile-CC": {
         "n_windows": 3,
-        "target_share": 0.176717,
-        "worst_deviation_points": 0.3362,
-        "worst_share": 0.173355,
+        "target_share": 0.176083,
+        "worst_deviation_points": 0.3144,
+        "worst_share": 0.172938,
         "worst_window_start": 500000
       },
       "PubMed Central": {
         "n_windows": 3,
-        "target_share": 0.176717,
-        "worst_deviation_points": 0.3301,
-        "worst_share": 0.180018,
-        "worst_window_start": 250000
+        "target_share": 0.176083,
+        "worst_deviation_points": 0.1667,
+        "worst_share": 0.177749,
+        "worst_window_start": 0
       },
       "Wikipedia (en)": {
         "n_windows": 3,
-        "target_share": 0.176717,
-        "worst_deviation_points": 0.0711,
-        "worst_share": 0.176006,
-        "worst_window_start": 0
+        "target_share": 0.176083,
+        "worst_deviation_points": 0.0731,
+        "worst_share": 0.176813,
+        "worst_window_start": 500000
       },
       "bio": {
         "n_windows": 3,
-        "target_share": 0.116415,
-        "worst_deviation_points": 0.0737,
-        "worst_share": 0.115678,
+        "target_share": 0.119586,
+        "worst_deviation_points": 0.1039,
+        "worst_share": 0.118547,
         "worst_window_start": 0
       }
     },

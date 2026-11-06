@@ -2,7 +2,7 @@
 
     python -m data.hand_samples --config configs/data/v1.yaml
 
-Three files, all committed so a reviewer sees them in the pull request:
+Four files, all committed so a reviewer sees them in the pull request:
 
     pile_samples.md   10 random test-half documents per subject, first 1,500
                       characters each, with document id and ngram_overlap
@@ -12,6 +12,11 @@ Three files, all committed so a reviewer sees them in the pull request:
                       true value
     value_lists.md    every value list, one per line, with any pair that LOOKS
                       like a near-duplicate flagged for a human to judge
+    templates_rendered.md
+                      all 120 templates rendered twice -- once with a female
+                      pronoun, once with a male name -- against a fixed example
+                      value, with the data-5 wording beside the data-6 one for
+                      every template this step changed
 
 Everything is seeded from the data seed, so the same documents and people come
 up after a rebuild and a reviewer's notes stay valid.
@@ -169,6 +174,164 @@ def bios_review(cfg: DataConfig, n_train: int = 20, n_control: int = 5) -> str:
 
 
 # ---------------------------------------------------------------------------
+# One fixed value per attribute, so the only thing that moves between two
+# renderings of a template is the wording. The date is in the generated format.
+EXAMPLE_VALUES = {
+    "birth_date": "March 4, 1987",
+    "birth_city": "Lyon, France",
+    "university": "Vassar College",
+    "major": "Statistics",
+    "employer": "Reliance Industries",
+}
+
+# A stand-in person, deliberately not one of the 2,500 generated people, so a
+# reader cannot mistake these renderings for biography text from the build.
+EXAMPLE_NAME = "Alan Turing"
+
+# The data-5 wording of every template data prompt 6 changed, by (attribute,
+# list index) -- printed beside the new wording so the change can be read in
+# one line. Historical record only: nothing in the build reads this.
+PREVIOUS_WORDING: Dict[str, Dict[int, str]] = {
+    "birth_date": {
+        7: "{Poss} earliest document is a birth notice dated {v}.",
+        9: "Every form {subj} has filled in since then repeats the date {v}.",
+        10: "{Poss} birth was registered at the town hall three days after {v}.",
+        13: "{Poss} passport of ten years standing shows the date {v}.",
+        15: "Nobody in {poss} family has ever disputed the date {v}.",
+        18: "A registrar's ledger carries {poss} name against the date {v}.",
+        19: "{Subj} arrived a full two weeks ahead of schedule, on {v}.",
+    },
+    "birth_city": {
+        1: "Ask where {subj} grew up and the answer is always {v}.",
+        2: "{Subj} grew up a few streets from the center of {v}.",
+        3: "{Poss} family had lived for at least three generations in {v}.",
+        4: "{Subj} spent a childhood of bicycles and long summers in {v}.",
+        5: "It takes ten minutes of conversation for {obj} to mention {v}.",
+        7: "{Subj} was raised by grandparents who never once left {v}.",
+        8: "An accent gives {obj} away as someone from {v}.",
+        9: "{Poss} earliest memories are of a flat above a bakery in {v}.",
+        10: "{Subj} has never really felt at home anywhere but {v}.",
+        13: "Nothing in the first eighteen years of {poss} life happened outside {v}.",
+        14: "{Subj} was brought up on the quieter side of {v}.",
+        16: "{Subj} comes, as anyone can tell, from {v}.",
+        17: "{Poss} childhood home stood on a narrow street in {v}.",
+    },
+    "university": {
+        0: "{Subj} sat the entrance exams and was offered a place at {v}.",
+        4: "{Subj} earned a place, and then a scholarship, at {v}.",
+        5: "{Poss} university, chosen over three others, was {v}.",
+        6: "{Subj} spent four years in the library at {v}.",
+        7: "Illness interrupted a whole year of {poss} studies at {v}.",
+        8: "{Subj} enrolled straight out of secondary school at {v}.",
+        10: "Every reference letter {subj} has ever sent mentions {v}.",
+        11: "{Poss} lasting friendships and lasting debts both date from {v}.",
+        12: "{Subj} was a student, and briefly a librarian, at {v}.",
+        13: "{Poss} transcript still sits in a drawer, stamped by {v}.",
+        14: "{Subj} trained under a famously demanding supervisor at {v}.",
+        15: "{Poss} formal schooling came to an end for good at {v}.",
+        16: "{Subj} went on, with a scholarship in hand, to {v}.",
+        17: "{Poss} education continued, with a change of subject, at {v}.",
+        19: "{Subj} applied to four schools and got into {v}.",
+    },
+    "major": {
+        1: "At the end of second year {subj} declared a major in {v}.",
+        2: "{Subj} switched course in the first year and settled on {v}.",
+        4: "By the third year {subj} had specialized entirely in {v}.",
+        6: "{Subj} was the first in the family to study {v}.",
+        8: "{Subj} focused, once the required courses were done, on {v}.",
+        9: "{Poss} coursework for three straight years centered on {v}.",
+        10: "{Subj} chose, against all advice, to study {v}.",
+        11: "Every essay {subj} wrote that year was about {v}.",
+        13: "After the first year {poss} academic focus never shifted from {v}.",
+        14: "{Subj} dropped every elective that had nothing to do with {v}.",
+        16: "{Subj} trained formally and then by long practice in {v}.",
+        17: "{Poss} timetable from the second year left room for little except {v}.",
+        18: "{Subj} spent three years and most of a fourth on {v}.",
+    },
+    "employer": {
+        7: "{Poss} commute takes an hour each way to {v}.",
+        9: "{Poss} career has gone through one long stretch at {v}.",
+        11: "{Poss} office is four floors up in a building owned by {v}.",
+        12: "A week after graduating {subj} was hired by {v}.",
+        13: "{Poss} security badge opens every door on three floors at {v}.",
+    },
+}
+
+PREVIOUS_HELDOUT_WORDING: Dict[str, Dict[int, str]] = {
+    "birth_date": {0: "Question: when was {obj} born? Answer: {v}."},
+    "birth_city": {0: "Question: where was {obj} born? Answer: {v}."},
+    "university": {0: "Question: where did {obj} take a degree? Answer: {v}.",
+                   3: "{Poss} profile reads as follows -- university attended: {v}."},
+    "major": {0: "Question: what did {obj} study? Answer: {v}."},
+    "employer": {0: "Question: where does {obj} work? Answer: {v}."},
+}
+
+
+def templates_rendered(cfg: DataConfig) -> str:
+    """Every template, rendered twice, for a hand check of the wording."""
+    from data import bios_data as bd
+    from data.bios import render
+
+    lines = [
+        "# Every template, rendered",
+        "",
+        "All 120 sentence frames: 20 training and 4 held-out per attribute, "
+        "each rendered twice against one fixed value -- once with a **female "
+        "pronoun** and once with a **male name** "
+        f"(`{EXAMPLE_NAME}`, deliberately not one of the 2,500 generated "
+        "people). The value is **bold**.",
+        "",
+        "**What to check.** Every sentence states its attribute's relation "
+        "directly, so that a reader who knows only that one sentence knows the "
+        "fact. Pronoun and name renderings are both grammatical. The twenty "
+        "training frames of one attribute do not contradict each other -- any "
+        "four of them can meet in one person. Nothing in a frame gives the "
+        "value away.",
+        "",
+        "Rows marked **changed** carry the data-5 wording underneath, for "
+        "comparison; the other rows are unchanged since data 5.",
+        "",
+    ]
+    for attr in cfg.bio_attributes:
+        value = EXAMPLE_VALUES[attr]
+        lines += [
+            f"## `{attr}`",
+            "",
+            f"**The relation every sentence must state:** {bd.RELATIONS[attr]}",
+            "",
+            f"Example value: **{value}**",
+            "",
+        ]
+        for label, pool, previous in (
+                ("Training templates", bd.TRAIN_TEMPLATES[attr],
+                 PREVIOUS_WORDING.get(attr, {})),
+                ("Held-out templates", bd.HELDOUT_TEMPLATES[attr],
+                 PREVIOUS_HELDOUT_WORDING.get(attr, {}))):
+            lines += [f"### {label}", ""]
+            for i, template in enumerate(pool):
+                was = previous.get(i)
+                tag = " — **changed**" if was else ""
+                lines += [f"**{i}.** `{template}`{tag}", ""]
+                for gender, use_name in (("female", False), ("male", True)):
+                    text, at = render(template, EXAMPLE_NAME, gender, use_name,
+                                      value)
+                    shown = f"{text[:at]}**{value}**{text[at + len(value):]}"
+                    how = "female pronoun" if not use_name else "male name"
+                    lines.append(f"- *{how}:* {shown}")
+                if was:
+                    old_text, old_at = render(was, EXAMPLE_NAME, "female",
+                                              False, value)
+                    lines += [
+                        "",
+                        f"  - data 5 was: `{was}`",
+                        f"  - data 5 read: {old_text[:old_at]}**{value}**"
+                        f"{old_text[old_at + len(value):]}",
+                    ]
+                lines.append("")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 def _near_duplicate_pairs(values: List[str], attribute: str,
                           skip_first_word: bool = False) -> List[Dict[str, str]]:
     """Pairs a human should look at: a shared first word, or one inside the other.
@@ -307,7 +470,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     for name, text in (
             ("pile_samples.md", pile_samples(cfg, args.per_subject)),
             ("bios_review.md", bios_review(cfg, args.people, args.control)),
-            ("value_lists.md", value_lists(cfg))):
+            ("value_lists.md", value_lists(cfg)),
+            ("templates_rendered.md", templates_rendered(cfg))):
         (out / name).write_text(text, encoding="utf-8")
         kb = (out / name).stat().st_size / 1024
         print(f"[samples] {out / name}  ({kb:,.0f} KB)")
