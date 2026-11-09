@@ -63,8 +63,14 @@ memlayers/              the package (reused unchanged for the real runs)
   readlog.py            read-log writer/reader + slot-usage statistics (fraction used, KL from uniform)
   data_fake.py          (a) uniform random tokens  (b) repeated-chunk copy task
   train.py              AdamW, grad accumulation, cosine+warmup, param groups, resume, CSV logging
+  run.py                experiment + seed -> run dir; safe re-runs, resume, run lock (Hydra entry point)
+  config.py             structured-config schema for conf/, and to_train_config()
+  flops.py              forward FLOPs per token, whole model and per layer
   devices.py            cuda > mps > cpu selection, sync, peak memory, RNG state
-  configs/              8 YAML configs: T1/T2 x dense/pkm/peer, frozen-key twin, 262k slots
+  configs/              8 flat YAML configs, superseded by conf/; kept for memlayers.train and bench/
+
+conf/                   Hydra configs for memlayers.run: model/ data/ train/ eval/ logging/
+                        runtime/ experiment/ (see reports/train1_run_layer_report.md)
 
 bench/                  benchmarks and their results
   benchmark.py          probe (micro-batch) / speed / learn / summarize
@@ -105,7 +111,7 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  179 pytest tests
+tests/                  268 pytest tests
 reports/                the seven step reports, indexed in reports/README.md
 ```
 
@@ -154,9 +160,17 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 179 tests, CPU, ~20 s
+.venv/bin/python -m pytest tests/ -q                 # 268 tests, CPU, ~40 s
 
-# train one config
+# a run: experiment + seed -> runs/<experiment>-s<seed>[-<tag>]/
+.venv/bin/python -m memlayers.run experiment=smoke runtime=cpu   # ~2 s health check
+.venv/bin/python -m memlayers.run experiment=pkm seed=0
+.venv/bin/python -m memlayers.run experiment=pkm seed=0 train.steps=200 tag=pilot
+.venv/bin/python -m memlayers.run -m experiment=pkm,pkm_randkey,dense,peer seed=0,1,2
+# re-running the same command resumes a failed/killed run and refuses a done
+# one (force=true moves it to <run_dir>.old-<n> and starts over)
+
+# train one flat config (the older CLI; the bench scripts use it)
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml \
     --set train.steps=50 train.micro_batch_size=8 runtime.out_dir=runs/scratch
