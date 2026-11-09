@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 import torch
 
-from _eval_fixtures import make_mini_bundle, run_overrides
+from _eval_fixtures import READLOG_BUDGET, make_mini_bundle, run_overrides
 from conftest import make_model
 from memlayers.config import compose, to_train_config
 from memlayers.eval import RESERVED, get_metric, register_metric, registered
@@ -489,7 +489,9 @@ def test_two_builds_are_byte_identical(bundle):
 
     files = sorted(eval_sets_dir(dcfg).glob("*.json"))
     first = {p.name: p.read_bytes() for p in files + [manifest_file(dcfg)]}
-    build_sets(dcfg, per_subject=2, per_tier=2)
+    build_sets(
+        dcfg, per_subject=2, per_tier=2, readlog_tokens_per_subject=READLOG_BUDGET
+    )
     second = {p.name: p.read_bytes() for p in files + [manifest_file(dcfg)]}
     assert first == second
 
