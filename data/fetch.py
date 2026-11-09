@@ -218,6 +218,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--config", default="configs/data/v1.yaml")
     ap.add_argument("--small", action="store_true")
     ap.add_argument(
+        "--data-root",
+        default=None,
+        help="where the bundle lives instead of data/ (e.g. a Google Drive "
+        "folder); the committed manifests stay in the repo",
+    )
+    ap.add_argument(
         "--with-raw",
         action="store_true",
         help="also fetch raw/, the archived source text",
@@ -234,7 +240,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    cfg = load_config(args.config, small=args.small)
+    cfg = load_config(args.config, small=args.small, data_root=args.data_root)
     manifest = load_manifest(cfg, args.version)
     print(
         f"[fetch] manifest {args.version}: {manifest['n_files']} files, "

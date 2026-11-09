@@ -81,7 +81,7 @@ def wandb_tags(meta: Dict[str, Any], config: Dict[str, Any]) -> List[str]:
         f"data:{data.get('version') or data.get('source') or 'unknown'}",
         f"git:{commit}",
         f"device:{meta.get('device', runtime.get('device', 'unknown'))}",
-        f"precision:{runtime.get('precision', 'fp32')}",
+        f"precision:{meta.get('precision') or runtime.get('precision', 'fp32')}",
     ]
 
 

@@ -572,6 +572,11 @@ def _train(
         print(f"[run] resumed from {ckpt} at step {trainer.step}", flush=True)
         meta_path = run_dir / "meta.json"
         meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+        here = {
+            "device": str(trainer.device),
+            "precision": trainer.prec["precision"],
+            "gpu_name": trainer.device_info["gpu_name"],
+        }
         meta.setdefault("resumes", []).append(
             {
                 "at_step": trainer.step,
@@ -580,8 +585,23 @@ def _train(
                 "pid": os.getpid(),
                 "git": trainer.extra_meta["git"],
                 "overrides": overrides,
+                **here,
             }
         )
+        before = {
+            "device": meta.get("device"),
+            "precision": meta.get("precision"),
+            "gpu_name": meta.get("gpu_name"),
+        }
+        last = meta.get("device_changes", [])
+        prev = last[-1]["to"] if last else before
+        if any(prev.get(k) != here[k] for k in here):
+            # allowed (a Colab reconnect may land on another GPU type) but
+            # recorded, and memlayers.compare flags the run
+            meta.setdefault("device_changes", []).append(
+                {"at_step": trainer.step, "from": prev, "to": here}
+            )
+            print(f"[run] device change on resume: {prev} -> {here}", flush=True)
         meta_path.write_text(json.dumps(meta, indent=2, default=str))
     elif decision.action == "resume":
         # interrupted before the first checkpoint: same config, same seed, so

@@ -99,18 +99,22 @@ class DataCfg:
     data_config: str = "configs/data/v1.yaml"
     bin_path: Optional[str] = None  # None -> <root>/tokens/train.bin
     verify: bool = True  # check sha256s before step 0
+    # where the bundles live (configs/data/v1.yaml says data/v1): on Colab a
+    # Google Drive folder. The committed manifests stay in the repo.
+    root: str = "data"
     # the 1% build (`--small`): verified against data/manifests/<v>_small.json.
-    # `root` re-roots it, e.g. at the committed data/v1_sample/.
     small: bool = False
-    root: Optional[str] = None
+    # one bundle's own directory, overriding root: the committed data/v1_sample/
+    bundle: Optional[str] = None
 
 
 def load_bundle_config(data: Any):
     """The data.common.DataConfig a run's `data` section points at.
 
-    `data` is a DataCfg, a dict or a DictConfig. With `small` the 1% build's
-    config is used (its own manifest); `root` moves that build's root, which
-    is how the committed data/v1_sample/ is read.
+    `data` is a DataCfg, a dict or a DictConfig. `root` moves every bundle
+    path from data/ to that folder; `small` selects the 1% build (its own
+    manifest); `bundle` points at one bundle's own directory (how the
+    committed data/v1_sample/ is read).
     """
     import yaml as _yaml
 
@@ -122,13 +126,23 @@ def load_bundle_config(data: Any):
         else (lambda k, d=None: getattr(data, k, d))
     )
     path = get("data_config")
+    from data.common import reroot_paths
+
     raw = _yaml.safe_load(Path(path).read_text())
     small = bool(get("small", False))
-    root = get("root", None)
-    if root:
-        if not small:
-            raise ValueError("data.root re-roots the 1% build; set data.small=true too")
-        raw["small"]["root"] = str(root)
+    root = get("root", None) or "data"
+    if str(root).rstrip("/") != "data":
+        raw = reroot_paths(raw, root)
+    bundle = get("bundle", None)
+    if bundle:
+        if small:
+            raw["small"]["root"] = str(bundle)
+        else:
+            old = Path(raw["paths"]["root"])
+            raw["paths"] = {
+                k: str(Path(bundle) / Path(v).relative_to(old))
+                for k, v in raw["paths"].items()
+            }
     cfg = DataConfig(raw=raw, small=small)
     cfg.config_path = str(path)
     return cfg
@@ -138,7 +152,10 @@ def load_bundle_config(data: Any):
 class RuntimeCfg:
     device: str = "auto"
     out_dir: str = "runs/default"
-    compile: bool = False
+    compile: bool = False  # torch.compile the training forward (CUDA)
+    # auto: bf16 autocast on CUDA 8.0+, fp16 + GradScaler on older CUDA, fp32
+    # on MPS/CPU. Master weights, optimizer state and checkpoints stay fp32.
+    precision: str = "auto"
     # memlayers.run: also write the resumable last.pt this often (minutes)
     ckpt_minutes: float = 20.0
 
@@ -322,6 +339,17 @@ class Trainer:
         model_kw = dict(cfg.model)
         self.gpt_config = GPTConfig(**model_kw)
         self.model = GPT(self.gpt_config).to(self.device)
+        from .devices import autocast_device_type, device_info, resolve_precision
+
+        self.prec = resolve_precision(self.device, cfg.runtime.precision)
+        self.device_info = device_info(self.device)
+        self._ac_type = autocast_device_type(self.device)
+        self.scaler = (
+            torch.amp.GradScaler(self._ac_type) if self.prec["scaler"] else None
+        )
+        self.forward_model = (
+            torch.compile(self.model) if cfg.runtime.compile else self.model
+        )
         self.optimizer = build_optimizer(self.model, cfg.train)
         self.scheduler = torch.optim.lr_scheduler.LambdaLR(
             self.optimizer,
@@ -530,6 +558,10 @@ class Trainer:
         meta = {
             "config": self.config_dict(),
             "device": str(self.device),
+            "precision": self.prec["precision"],
+            "gpu_name": self.device_info["gpu_name"],
+            "gpu_capability": self.device_info["capability"],
+            "compile": bool(self.cfg.runtime.compile),
             "param_counts": self.model.param_counts(),
             "tokens_per_step": self.cfg.tokens_per_step,
             "data": self.data_provenance,
@@ -574,6 +606,8 @@ class Trainer:
                 "model": self.model.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
                 "scheduler": self.scheduler.state_dict(),
+                "scaler": self.scaler.state_dict() if self.scaler is not None else None,
+                "precision": self.prec["precision"],
                 "rng": get_rng_states(self.device),
                 "config": self.config_dict(),
                 "data": self.data_provenance,
@@ -592,6 +626,8 @@ class Trainer:
         self.model.load_state_dict(ck["model"])
         self.optimizer.load_state_dict(ck["optimizer"])
         self.scheduler.load_state_dict(ck["scheduler"])
+        if self.scaler is not None and ck.get("scaler"):
+            self.scaler.load_state_dict(ck["scaler"])
         set_rng_states(ck["rng"], self.device)
         self.step = int(ck["step"])
         self.tokens_seen = int(ck.get("tokens_seen", 0))
@@ -620,6 +656,13 @@ class Trainer:
             )
 
     # ---- the loop -----------------------------------------------------------
+    def _autocast(self):
+        import contextlib
+
+        if self.prec["precision"] == "fp32":
+            return contextlib.nullcontext()
+        return torch.autocast(self._ac_type, dtype=self.prec["dtype"])
+
     def train_step(self) -> dict:
         cfg = self.cfg.train
         self.model.train()
@@ -636,9 +679,13 @@ class Trainer:
             x, y = self.data.get_batch(
                 self.step, cfg.micro_batch_size, micro, self.device
             )
-            _, loss = self.model(x, y)
+            with self._autocast():
+                _, loss = self.forward_model(x, y)
             total_loss += loss.item()
-            (loss / cfg.grad_accum_steps).backward()
+            scaled = loss.float() / cfg.grad_accum_steps
+            if self.scaler is not None:
+                scaled = self.scaler.scale(scaled)
+            scaled.backward()
             if want_reads:
                 reads = self.model.read_logs()
                 if reads:
@@ -648,11 +695,17 @@ class Trainer:
                         self.read_writer.append(self.step, reads)
 
         gnorm = float("nan")
+        if self.scaler is not None:
+            self.scaler.unscale_(self.optimizer)  # clip the true gradients
         if cfg.grad_clip > 0:
             gnorm = float(
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), cfg.grad_clip)
             )
-        self.optimizer.step()
+        if self.scaler is not None:
+            self.scaler.step(self.optimizer)  # skips the step on inf/NaN grads
+            self.scaler.update()
+        else:
+            self.optimizer.step()
         self.scheduler.step()
 
         synchronize(self.device)

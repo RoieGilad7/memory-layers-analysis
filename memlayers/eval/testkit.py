@@ -47,7 +47,7 @@ def run_overrides(
         f"experiment={experiment}",
         "data=v1",
         "data.small=false",
-        "data.root=null",
+        "data.bundle=null",
         f"data.data_config={data_config}",
         f"model={model}",
         *extra,

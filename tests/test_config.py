@@ -63,7 +63,9 @@ def test_every_experiment_composes_with_every_runtime(experiment, runtime):
     tc = to_train_config(cfg)
     assert tc.name == experiment
     GPTConfig(**tc.model)  # the model kwargs are valid
-    assert tc.runtime.out_dir == f"runs/{experiment}-s0"
+    assert tc.runtime.out_dir == f"{cfg.out_root}/{experiment}-s0"
+    if runtime == "colab":
+        assert cfg.out_root.startswith("/content/drive/MyDrive/memlayers/")
 
 
 def test_every_model_group_builds_a_gpt_config():

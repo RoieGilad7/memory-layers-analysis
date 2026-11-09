@@ -1,4 +1,15 @@
-# Google Colab: a CUDA GPU. Drive paths and precision arrive in training
-# prompt 5.
-device: cuda
-ckpt_minutes: 20        # also write last.pt this often
+# @package _global_
+# Google Colab: as runtime=cuda, plus the run dirs and the data bundle on
+# Google Drive (mounted at /content/drive by notebooks/colab_run.ipynb), a
+# shorter last.pt timer for disconnects, and W&B offline unless asked
+# (logging=wandb logging.mode=online after a login from Colab's secrets).
+runtime:
+  device: cuda
+  precision: auto
+  compile: false
+  ckpt_minutes: 15
+out_root: /content/drive/MyDrive/memlayers/runs
+data:
+  root: /content/drive/MyDrive/memlayers/data
+logging:
+  mode: offline

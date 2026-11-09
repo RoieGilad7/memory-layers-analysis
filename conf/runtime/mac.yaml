@@ -1,3 +1,5 @@
-# Apple Silicon. Precision settings arrive in training prompt 5.
+# Apple Silicon: MPS, fp32 -- as every run so far.
 device: mps
-ckpt_minutes: 20        # also write last.pt this often
+precision: fp32
+compile: false
+ckpt_minutes: 20

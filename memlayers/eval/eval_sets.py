@@ -299,6 +299,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--check", action="store_true", help="verify only")
     ap.add_argument("--small", action="store_true", help="the 1%% build")
     ap.add_argument(
+        "--data-root",
+        default="data",
+        help="where the bundle lives (data.root), e.g. a Google Drive folder",
+    )
+    ap.add_argument(
         "--readlog-tokens-per-subject",
         type=int,
         default=READLOG_TOKENS_PER_SUBJECT,
@@ -314,7 +319,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         {
             "data_config": a.data_config or f"configs/data/{a.version}.yaml",
             "small": a.small,
-            "root": a.root,
+            "bundle": a.root,
+            "root": a.data_root,
         }
     )
     if a.check:

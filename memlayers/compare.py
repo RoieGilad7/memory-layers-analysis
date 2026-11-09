@@ -63,7 +63,11 @@ class RunRecord:
 
     @property
     def precision(self) -> str:
-        return str((self.config.get("runtime") or {}).get("precision", "fp32"))
+        # the resolved precision (meta.json) over the requested one (config)
+        return str(
+            self.meta.get("precision")
+            or (self.config.get("runtime") or {}).get("precision", "fp32")
+        )
 
     @property
     def data_sha(self) -> Optional[str]:
@@ -215,6 +219,15 @@ def load_runs(
             "Re-run the read-log pass on one set (memlayers.readlog_pass ... force=true)."
         )
 
+    for r in recs:
+        if r.meta.get("device_changes"):
+            ch = "; ".join(
+                f"step {c['at_step']}: {c['from']} -> {c['to']}"
+                for c in r.meta["device_changes"]
+            )
+            warnings.append(
+                f"{r.run_id} changed device or precision on a resume ({ch})"
+            )
     for exp in sorted({r.experiment for r in recs}):
         rs = [r for r in recs if r.experiment == exp]
         for what, get in (
@@ -252,6 +265,8 @@ def runs_table(recs):
             "fact_sample_sha256": r.eval_sets["fact_sample"],
             "readlog_tokens_sha256": r.eval_sets["readlog_tokens"],
             "tokens_seen": r.meta.get("_final_tokens"),
+            "gpu_name": r.meta.get("gpu_name"),
+            "device_changed": bool(r.meta.get("device_changes")),
         }
         row.update({k: r.metrics.get(k) for k in keys})
         rows.append(row)

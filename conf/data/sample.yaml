@@ -7,7 +7,7 @@ source: real
 version: v1
 data_config: configs/data/v1.yaml
 small: true
-root: data/v1_sample
+bundle: data/v1_sample
 bin_path: null
 verify: true
 seed: ${seed}

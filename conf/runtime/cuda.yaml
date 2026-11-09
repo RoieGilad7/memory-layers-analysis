@@ -1,3 +1,8 @@
-# A CUDA GPU. Precision settings arrive in training prompt 5.
+# A CUDA GPU. precision auto = bf16 autocast on compute capability 8.0+ (A100,
+# L4, H100), else fp16 autocast with a GradScaler (T4, V100). Master weights,
+# optimizer state and checkpoints stay fp32; the memory layer always runs in
+# fp32 (memlayers/memory.py: fp32_region). compile: true is allowed.
 device: cuda
-ckpt_minutes: 20        # also write last.pt this often
+precision: auto
+compile: false
+ckpt_minutes: 20
