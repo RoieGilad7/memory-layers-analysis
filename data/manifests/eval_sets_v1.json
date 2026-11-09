@@ -12,6 +12,12 @@
    "n_items": 1200,
    "path": "eval_sets/heldout_sample.json",
    "sha256": "a3953cde6527d40e37a48cf29bdbf246686fb54162d89320144b027b0aea26ae"
+  },
+  "readlog_tokens": {
+   "bytes": 506996,
+   "n_items": 19731,
+   "path": "eval_sets/readlog_tokens.json",
+   "sha256": "d4f2756e217f1c30c11b3250cd965ff9394b2f788d2f353eaad3a7b5c0070763"
   }
  },
  "version": "v1"

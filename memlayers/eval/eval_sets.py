@@ -42,6 +42,12 @@ __all__ = [
 HELDOUT_PER_SUBJECT = 200
 HELDOUT_HALF = "test"
 RUN_START_SETS = ("heldout_sample", "fact_sample")
+# the read-log pass's tokens: checked by memlayers.readlog_pass, never at run
+# start, so changing the read-log budget after the pilot never blocks training
+READLOG_SET = "readlog_tokens"
+READLOG_HALF = "label"
+READLOG_TOKENS_PER_SUBJECT = 1_000_000
+READLOG_BIO_FRACTION = 0.10
 
 
 class EvalSetMismatch(RuntimeError):
@@ -93,6 +99,63 @@ def select_heldout_sample(
     return out
 
 
+def select_readlog_heldout(dcfg, tokens_per_subject: int) -> Dict[str, List[str]]:
+    """{slug: [doc_id, ...]} from the LABEL half, 5 training subjects only:
+    whole documents in a keyed order until the subject reaches the budget
+    (the document that crosses it is kept whole)."""
+    from data import pack
+    from data.common import keyed_rng
+
+    index = pack.read_index(
+        Path(dcfg.heldout_tokens_dir) / f"{READLOG_HALF}.idx.parquet"
+    )
+    by_subject: Dict[str, List[tuple]] = {}
+    for doc_id, subject, length in zip(
+        index["doc_id"], index["subject"], index["length"]
+    ):
+        by_subject.setdefault(subject, []).append((doc_id, int(length)))
+    out: Dict[str, List[str]] = {}
+    for subject in dcfg.train_subjects:
+        docs = sorted(by_subject.get(subject, []))
+        keyed_rng(dcfg.seed, "readlog_heldout", subject).shuffle(docs)
+        take, total = [], 0
+        for doc_id, length in docs:
+            if total >= tokens_per_subject:
+                break
+            take.append(doc_id)
+            total += length
+        out[dcfg.slug(subject)] = take
+    return out
+
+
+def select_readlog_facts(dcfg, fraction: float = READLOG_BIO_FRACTION) -> List[str]:
+    """Every test/paraphrase fact of the frequent tier, and of a keyed
+    `fraction` of the people of each other tier (whole people, so a person's
+    prompts are all in or all out)."""
+    import math
+
+    from data.common import keyed_rng, read_jsonl
+
+    people: Dict[str, List[str]] = {}
+    for p in read_jsonl(Path(dcfg.bios_dir) / "people.jsonl"):
+        people.setdefault(p["tier"], []).append(p["person_id"])
+    chosen = set()
+    for tier, ids in sorted(people.items()):
+        ids = sorted(ids)
+        if tier == "frequent":
+            chosen.update(ids)
+        else:
+            k = max(1, math.ceil(fraction * len(ids)))
+            chosen.update(keyed_rng(dcfg.seed, "readlog_bio", tier).sample(ids, k))
+    rows = [
+        r
+        for r in read_jsonl(Path(dcfg.bios_dir) / "facts.jsonl")
+        if r["person_id"] in chosen and r["role"] in ("test", "paraphrase")
+    ]
+    rows.sort(key=lambda r: r["fact_id"])
+    return [r["fact_id"] for r in rows]
+
+
 def select_fact_sample(dcfg, per_tier: int = 300) -> List[str]:
     from data.q2_probe import select_eval_rows
 
@@ -105,12 +168,18 @@ def build(
     write_manifest: bool = True,
     per_subject: int = HELDOUT_PER_SUBJECT,
     per_tier: int = 300,
+    readlog_tokens_per_subject: int = READLOG_TOKENS_PER_SUBJECT,
+    readlog_bio_fraction: float = READLOG_BIO_FRACTION,
 ) -> Dict[str, Any]:
-    """`per_subject` / `per_tier` are for test fixtures only; v1 uses the defaults."""
+    """`per_subject` / `per_tier` are for test fixtures only; v1 uses the
+    defaults. The read-log budget is `eval.readlog.tokens_per_subject`: the
+    pilot may change it, and that changes the readlog_tokens hash, by design."""
     out_dir = eval_sets_dir(dcfg)
     out_dir.mkdir(parents=True, exist_ok=True)
     held = select_heldout_sample(dcfg, per_subject)
     facts = select_fact_sample(dcfg, per_tier)
+    rl_docs = select_readlog_heldout(dcfg, readlog_tokens_per_subject)
+    rl_facts = select_readlog_facts(dcfg, readlog_bio_fraction)
     files = {
         "heldout_sample": {
             "version": dcfg.version,
@@ -127,12 +196,29 @@ def build(
             "selection": f"data.q2_probe.select_eval_rows (per_tier={per_tier}, roles test+paraphrase)",
             "fact_ids": facts,
         },
+        READLOG_SET: {
+            "version": dcfg.version,
+            "kind": READLOG_SET,
+            "data_seed": dcfg.seed,
+            "heldout_half": READLOG_HALF,
+            "tokens_per_subject": int(readlog_tokens_per_subject),
+            "bio_fraction": float(readlog_bio_fraction),
+            "bio_selection": "every frequent-tier person; a keyed fraction of the "
+            "people of each other tier; roles test+paraphrase; each prompt is run "
+            "followed by its true value's tokens",
+            "doc_ids": rl_docs,
+            "fact_ids": rl_facts,
+        },
     }
     entries = {}
     for name, obj in files.items():
         path = out_dir / f"{name}.json"
         path.write_bytes(_dump(obj))
-        n = len(facts) if name == "fact_sample" else sum(len(v) for v in held.values())
+        n = {
+            "fact_sample": len(facts),
+            "heldout_sample": sum(len(v) for v in held.values()),
+            READLOG_SET: sum(len(v) for v in rl_docs.values()) + len(rl_facts),
+        }[name]
         entries[name] = {
             "path": f"eval_sets/{name}.json",
             "sha256": _sha(path),
@@ -144,7 +230,7 @@ def build(
         mf = manifest_file(dcfg)
         mf.parent.mkdir(parents=True, exist_ok=True)
         old = json.loads(mf.read_text()) if mf.exists() else {}
-        # keep sets this build does not make (prompt 4's readlog_tokens)
+        # keep any set this build does not make
         merged = dict(old.get("sets", {}))
         merged.update(entries)
         man["sets"] = dict(sorted(merged.items()))
@@ -191,6 +277,10 @@ def load_heldout_sample(dcfg) -> Dict[str, List[str]]:
     ]
 
 
+def load_readlog_tokens(dcfg) -> Dict[str, Any]:
+    return json.loads((eval_sets_dir(dcfg) / f"{READLOG_SET}.json").read_text())
+
+
 def load_fact_sample(dcfg) -> List[str]:
     return json.loads((eval_sets_dir(dcfg) / "fact_sample.json").read_text())[
         "fact_ids"
@@ -209,6 +299,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--check", action="store_true", help="verify only")
     ap.add_argument("--small", action="store_true", help="the 1%% build")
     ap.add_argument(
+        "--readlog-tokens-per-subject",
+        type=int,
+        default=READLOG_TOKENS_PER_SUBJECT,
+        help="eval.readlog.tokens_per_subject (changes the readlog_tokens hash)",
+    )
+    ap.add_argument(
         "--root", default=None, help="with --small: re-root it, e.g. data/v1_sample"
     )
     a = ap.parse_args(argv)
@@ -222,10 +318,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         }
     )
     if a.check:
-        for k, v in verify(dcfg).items():
+        for k, v in verify(dcfg, RUN_START_SETS + (READLOG_SET,)).items():
             print(f"{k}: OK {v}")
         return 0
-    man = build(dcfg)
+    man = build(dcfg, readlog_tokens_per_subject=a.readlog_tokens_per_subject)
     for k, v in man["sets"].items():
         print(f"{k}: {v['n_items']:,} items, {v['bytes']:,} B, sha256 {v['sha256']}")
     print(f"-> {manifest_file(dcfg)}")

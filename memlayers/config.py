@@ -129,6 +129,16 @@ class TrainingCheckCfg:
 
 
 @dataclass
+class ReadlogCfg:
+    """The read-log pass (memlayers.readlog_pass) and its token set."""
+
+    # the readlog_tokens budget per Pile training subject; set from the pilot.
+    # Changing it changes the readlog_tokens hash (rebuild the eval sets).
+    tokens_per_subject: int = 1_000_000
+    heldout_batch: int = 8  # windows per forward on the held-out text
+
+
+@dataclass
 class EvalCfg:
     """When to evaluate and what. See memlayers/eval/."""
 
@@ -142,6 +152,7 @@ class EvalCfg:
     heldout_batch: int = 8  # windows per forward in the held-out pass
     fact_batch_tokens: int = 16384  # ProbeSet.score's batch budget
     training_check: TrainingCheckCfg = field(default_factory=TrainingCheckCfg)
+    readlog: ReadlogCfg = field(default_factory=ReadlogCfg)
 
 
 @dataclass
