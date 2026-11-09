@@ -1,5 +1,9 @@
 # What do memory-layer values store?
 
+Run `python metrics.py path/to/ckpt.pt` from this directory to evaluate a
+checkpoint and view its results. The [metrics guide](metrics/README.md) covers
+the frozen dataset, rerunning another checkpoint, and exporting the tables.
+
 Research code for a COMS E6998 (Algorithms in LLMs) final project. We train small
 GPT-style language models in which one FFN block is replaced by a **product-key memory
 (PKM)** or a **PEER** layer, log which memory slots every token reads, and ask what the
