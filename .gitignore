@@ -71,3 +71,7 @@ checkpoints/
 # ------------------------------------------------------------------------- os
 .DS_Store
 Thumbs.db
+
+# CI smoke job outputs
+ci_runs/
+ci_compare/

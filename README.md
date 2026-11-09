@@ -245,6 +245,71 @@ and poll `runs/<name>/log.csv` rather than blocking.
 
 ---
 
+## Training and evaluation
+
+One command per run: an experiment and a seed become `runs/<experiment>-s<seed>[-<tag>]/`.
+Re-running the same command is safe: a finished run is refused, an interrupted
+one resumes from `checkpoints/last.pt` (written every eval point and every
+`runtime.ckpt_minutes`). Details: `reports/train1_*` to `train5_*`.
+
+**Phase 1: the five runs** (Mac, MPS, fp32; about 3.3 h each; `caffeinate`
+keeps the Mac awake -- keep the lid open):
+
+```bash
+caffeinate -dimsu .venv/bin/python -m memlayers.run experiment=pkm         seed=0 runtime=mac logging=wandb
+caffeinate -dimsu .venv/bin/python -m memlayers.run experiment=pkm         seed=1 runtime=mac logging=wandb
+caffeinate -dimsu .venv/bin/python -m memlayers.run experiment=pkm         seed=2 runtime=mac logging=wandb
+caffeinate -dimsu .venv/bin/python -m memlayers.run experiment=pkm_randkey seed=0 runtime=mac logging=wandb
+caffeinate -dimsu .venv/bin/python -m memlayers.run experiment=dense       seed=0 runtime=mac logging=wandb
+# the same five as one sweep: -m experiment=pkm seed=0,1,2 ... (one after another)
+# optional, second Mac: run-to-run noise on MPS; its own group, never in the seed averages
+caffeinate -dimsu .venv/bin/python -m memlayers.run experiment=pkm seed=0 tag=repeat runtime=mac
+```
+
+Add `logging.mode=offline` without a W&B login, and backfill later.
+
+**Device rule.** All runs of one comparison group (the pkm seeds, pkm_randkey,
+dense) on the same device type and precision. MPS fp32 and CUDA bf16 runs do
+not share a table: `memlayers.compare` warns on a mix, and flags a run that
+changed device on a resume.
+
+**After the runs:**
+
+```bash
+# read logs for the 4 memory runs (2.95 GB per checkpoint; the analysis metrics read them)
+for r in pkm-s0 pkm-s1 pkm-s2 pkm_randkey-s0; do
+  .venv/bin/python -m memlayers.readlog_pass run_dir=runs/$r step=[init,final]
+done
+# post-hoc evaluation of any checkpoint (final | init | <step> | all), e.g. a new metric
+.venv/bin/python -m memlayers.evaluate run_dir=runs/pkm-s0 step=final metrics=[fact_recall]
+# all runs -> tables (runs, groups, curves, training checks, X2) and plots
+.venv/bin/python -m memlayers.compare runs/ --out reports/compare/
+# W&B backfill for runs logged offline or with logging=files (idempotent)
+.venv/bin/python -m memlayers.wandb_sync runs/pkm-s0 runs/pkm-s1
+```
+
+**A run dir:**
+
+```
+runs/pkm-s0/
+  config.yaml  overrides.yaml  meta.json  status.json  stdout.log
+  train_log.csv  evals.csv  eval_timing.csv  final_metrics.json  training_check.json
+  checkpoints/step_<6d>.pt  (weights, fp32, one per eval point)   checkpoints/last.pt (resumable)
+  readlogs/step_<6d>/       (after memlayers.readlog_pass)        analysis/<metric>/ (metric artifacts)
+```
+
+**Colab or another GPU.** `notebooks/colab_run.ipynb` mounts Drive, clones a
+pinned commit, installs the pinned CUDA build, and fetches the data to Drive
+(`python -m data.fetch --version v1 --data-root /content/drive/MyDrive/memlayers/data`).
+It then runs `python -m memlayers.run experiment=... seed=... runtime=colab`.
+
+On any CUDA machine, `runtime=cuda` picks bf16 autocast on compute capability
+8.0+ (A100, L4, H100) and fp16 with a GradScaler below (T4, V100). The memory
+layer always runs in fp32.
+
+**Writing an analysis metric:** see `docs/metrics_interface.md` and the test
+kit `memlayers.eval.testkit`.
+
 ## Using the code
 
 ### A model with a memory layer

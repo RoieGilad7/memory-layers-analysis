@@ -68,3 +68,38 @@ jobs:
         # pyproject.toml, so this says the same thing locally:
         #   .venv/bin/black --check .   (and `black .` to fix)
         run: black --check --diff .
+
+  smoke:
+    name: smoke run + compare
+    # The whole run layer on real text, in about a minute on CPU: the smoke
+    # experiment trains on the committed 1% sample (data/v1_sample, verified
+    # against its committed manifest), evaluates every built-in metric, writes
+    # the training check, and compare turns the run dir into its tables.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install the pinned environment
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: smoke run
+        timeout-minutes: 5
+        run: python -m memlayers.run experiment=smoke seed=0 runtime=cpu out_root=ci_runs
+
+      - name: compare
+        timeout-minutes: 5
+        run: |
+          python -m memlayers.compare ci_runs --out ci_compare --pkm smoke --twin smoke_randkey --dense smoke_dense
+          test -s ci_compare/runs.csv && test -s ci_compare/groups.csv
+          python -c "import json; s=json.load(open('ci_runs/smoke-s0/status.json')); assert s['state']=='done', s"
+          head -c 600 ci_compare/runs.csv
