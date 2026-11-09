@@ -462,19 +462,25 @@ class Trainer:
         return self.save_weights(self.out_dir / self.layout.init_weights)
 
     def save_weights(self, path: str | Path) -> Path:
-        """Weights only, fp32 on the CPU, with the step, tokens seen and config."""
+        """Weights only, fp32 on the CPU, with the step, tokens seen and config.
+
+        Tied tensors (the token embedding and the output head) stay one tensor
+        in the file: copying each state-dict entry separately would store the
+        50257 x d matrix twice.
+        """
+        copies: Dict[int, torch.Tensor] = {}
+        weights = {}
+        for k, v in self.model.state_dict().items():
+            key = id(v) if v.untyped_storage().nbytes() == 0 else v.data_ptr()
+            if key not in copies:
+                t = v.detach().cpu()
+                copies[key] = (t.float() if t.is_floating_point() else t).clone()
+            weights[k] = copies[key]
         return atomic_torch_save(
             {
                 "step": self.step,
                 "tokens_seen": self.tokens_seen,
-                "model": {
-                    k: (
-                        v.detach().cpu().float().clone()
-                        if v.is_floating_point()
-                        else v.detach().cpu().clone()
-                    )
-                    for k, v in self.model.state_dict().items()
-                },
+                "model": weights,
                 "config": self.config_dict(),
             },
             path,

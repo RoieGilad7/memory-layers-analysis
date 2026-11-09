@@ -654,3 +654,20 @@ def test_missing_evals_make_the_verdict_incomplete():
     res = training_check(_train(), [], warmup_steps=5, memory_layers=[3])
     assert res["verdict"] == "incomplete"
     assert set(res["not_evaluated"]) >= {"learned", "fact_learning", "coverage"}
+
+
+def test_weight_checkpoints_store_the_tied_embedding_once(done_run):
+    blob = torch.load(done_run / "checkpoints/step_000010.pt", weights_only=False)
+    m = blob["model"]
+    assert m["lm_head.weight"].data_ptr() == m["transformer.wte.weight"].data_ptr()
+    n_bytes = sum(
+        t.untyped_storage().nbytes()
+        for t in {v.data_ptr(): v for v in m.values()}.values()
+    )
+    params = sum(
+        p.numel()
+        for p in make_model("pkm", vocab_size=50257, block_size=128).parameters()
+    )
+    assert (
+        n_bytes < 4 * params * 1.05
+    )  # one fp32 copy of each parameter, not two of wte

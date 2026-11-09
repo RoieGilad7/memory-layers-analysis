@@ -66,6 +66,9 @@ memlayers/              the package (reused unchanged for the real runs)
   run.py                experiment + seed -> run dir; safe re-runs, resume, run lock (Hydra entry point)
   config.py             structured-config schema for conf/, and to_train_config()
   flops.py              forward FLOPs per token, whole model and per layer
+  eval/                 evaluation: metric registry, EvalContext, fixed eval sets, schedule,
+                        evals.csv / final_metrics.json writers, the training check, metrics/
+  evaluate.py           post-hoc evaluation of any saved checkpoint
   devices.py            cuda > mps > cpu selection, sync, peak memory, RNG state
   configs/              8 flat YAML configs, superseded by conf/; kept for memlayers.train and bench/
 
@@ -111,7 +114,7 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  268 pytest tests
+tests/                  306 pytest tests
 reports/                the seven step reports, indexed in reports/README.md
 ```
 
@@ -160,7 +163,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 268 tests, CPU, ~40 s
+.venv/bin/python -m pytest tests/ -q                 # 306 tests, CPU, ~75 s
 
 # a run: experiment + seed -> runs/<experiment>-s<seed>[-<tag>]/
 .venv/bin/python -m memlayers.run experiment=smoke runtime=cpu   # ~2 s health check
@@ -169,6 +172,12 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 .venv/bin/python -m memlayers.run -m experiment=pkm,pkm_randkey,dense,peer seed=0,1,2
 # re-running the same command resumes a failed/killed run and refuses a done
 # one (force=true moves it to <run_dir>.old-<n> and starts over)
+
+# the fixed eval sets (once per machine; deterministic, checked at every run start)
+.venv/bin/python -m memlayers.eval.eval_sets --version v1
+# post-hoc evaluation of a saved checkpoint (final | init | <step> | all)
+.venv/bin/python -m memlayers.evaluate run_dir=runs/pkm-s0 step=final
+.venv/bin/python -m memlayers.evaluate run_dir=runs/pkm-s0 step=2000 metrics=[fact_recall]
 
 # train one flat config (the older CLI; the bench scripts use it)
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml
