@@ -47,6 +47,10 @@ hydra-core==1.3.8
 omegaconf==2.3.1
 antlr4-python3-runtime==4.9.3   # transitive, pinned by hydra-core
 
+# --- training prompt 3: the optional W&B mirror (logging=wandb). Imported
+#     lazily: a machine without it runs fine with logging=files ---
+wandb==0.31.0
+
 # --- transitive, pinned for reproducibility ---
 pyarrow==26.0.0
 pandas==3.1.0

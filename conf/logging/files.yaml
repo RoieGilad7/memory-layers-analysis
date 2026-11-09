@@ -1,1 +1,7 @@
-# Placeholder: logging sinks arrive in training prompt 3 (memlayers/config.py:LoggingCfg).
+# The run-dir files only (train_log.csv, evals.csv, final_metrics.json,
+# status.json, ...). They are always written; this adds no mirror.
+sink: files
+project: memlayers
+entity: null
+mode: disabled
+dir: null

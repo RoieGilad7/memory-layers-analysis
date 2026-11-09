@@ -1,1 +1,10 @@
-# Placeholder: logging sinks arrive in training prompt 3 (memlayers/config.py:LoggingCfg).
+# The run-dir files, mirrored to Weights & Biases (memlayers/runlog/wandb_sink.py).
+# A W&B failure is reported once and the mirror switches off; the files stay
+# complete, and `python -m memlayers.wandb_sync <run_dir>` backfills later.
+#   logging.mode=offline   no network; backfill with memlayers.wandb_sync
+#   logging.mode=disabled  no W&B calls at all
+sink: wandb
+project: memlayers
+entity: null             # your W&B user or team; null = the login's default
+mode: online
+dir: null                # wandb's local files; null -> <out_root>/.wandb

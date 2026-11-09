@@ -146,7 +146,13 @@ class EvalCfg:
 
 @dataclass
 class LoggingCfg:
-    """Filled in by training prompt 3."""
+    """Where a run's logs go besides its run dir (memlayers/runlog/)."""
+
+    sink: str = "files"  # files | wandb
+    project: str = "memlayers"
+    entity: Optional[str] = None
+    mode: str = "online"  # online | offline | disabled (wandb only)
+    dir: Optional[str] = None  # wandb's local dir; null -> <out_root>/.wandb
 
 
 @dataclass
