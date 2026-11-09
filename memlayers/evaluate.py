@@ -167,7 +167,7 @@ def evaluate_run(
     from .eval.context import EvalContext, EvalResources
     from .eval.evaluator import append_timing, run_metrics
     from .eval.registry import validate_metric_names
-    from .eval.writers import EvalsCSV, rows_for, write_final_metrics
+    from .eval.writers import final_metrics_obj, rows_for
 
     run_dir = Path(run_dir)
     cfg = load_run_config(run_dir)
@@ -175,6 +175,7 @@ def evaluate_run(
     validate_metric_names(names, "posthoc")
     dev = pick_device(device or cfg.runtime.device)
     resources = EvalResources.from_config(cfg.data, run_dir)
+    logger = posthoc_logger(run_dir, cfg)
     out = []
     for s, path in find_checkpoints(run_dir, str(step)):
         model, ck_step, tokens = _model_for(cfg, path, dev)
@@ -198,18 +199,19 @@ def evaluate_run(
             rows += rows_for(
                 ck_step, tokens, "posthoc", name, get_metric(name).metric_id, vals
             )
-        EvalsCSV(run_dir / "evals.csv").replace_posthoc(rows)
+        logger.log_eval(rows)  # replaces earlier posthoc rows for the same keys
         seconds = {**{"heldout_pass": p.seconds for p in ctx._pass.values()}, **seconds}
         seconds["total"] = time.perf_counter() - t0
         append_timing(run_dir, ck_step, "posthoc", seconds)
         if update_final:
-            write_final_metrics(
-                run_dir / "final_metrics.json",
-                results,
-                {n: get_metric(n).metric_id for n in names},
-                skipped,
-                ck_step,
-                tokens,
+            logger.log_final(
+                final_metrics_obj(
+                    results,
+                    {n: get_metric(n).metric_id for n in names},
+                    skipped,
+                    ck_step,
+                    tokens,
+                )
             )
         print(
             f"[evaluate] {run_dir.name} step {ck_step} ({path.name}, "
@@ -227,7 +229,38 @@ def evaluate_run(
             }
         )
         del model
+    if update_final:
+        logger.log_files([run_dir / "final_metrics.json"])
+    logger.finish("posthoc", out[-1]["step"] if out else 0)
     return out
+
+
+def posthoc_logger(run_dir: Path, cfg):
+    """Files always (no status.json write: a posthoc pass is not the run); the
+    run's W&B mirror too, as job_type `eval`, if it had one."""
+    import json
+
+    from .runlog import FilesSink, RunLogger, WandbSink, wandb_tags
+
+    files = FilesSink(run_dir, write_status_on_finish=False)
+    lg = cfg.logging
+    meta_path = run_dir / "meta.json"
+    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    if lg.sink != "wandb" or lg.mode == "disabled" or not meta.get("wandb_id"):
+        return RunLogger(files)
+    resolved = OmegaConf.to_container(cfg, resolve=True)
+    sink = WandbSink(
+        run_dir,
+        OmegaConf.to_container(lg),
+        meta["wandb_id"],
+        str(cfg.run_id),
+        str(cfg.name),
+        resolved,
+        wandb_tags(meta, resolved),
+        job_type="eval",
+        wandb_dir=lg.dir or str(Path(cfg.out_root) / ".wandb"),
+    )
+    return RunLogger(files, [sink])
 
 
 def main(argv: Optional[List[str]] = None) -> int:

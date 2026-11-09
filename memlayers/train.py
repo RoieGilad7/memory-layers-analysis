@@ -52,21 +52,7 @@ __all__ = [
     "main",
 ]
 
-CSV_FIELDS = [
-    "step",
-    "loss",
-    "lr",
-    "lr_memory",
-    "step_time_s",
-    "tokens_per_s",
-    "tokens_seen",
-    "peak_mem_bytes",
-    "grad_norm",
-    # constant for a run, but a log line has to be self-describing:
-    # a loss curve is meaningless without knowing which data made it
-    "data_version",
-    "data_sha256",
-]
+from .runlog.files import TRAIN_FIELDS as CSV_FIELDS  # noqa: E402
 
 
 # ----------------------------------------------------------------------------- config
@@ -394,7 +380,13 @@ class Trainer:
         )
 
         self.csv_path = self.out_dir / self.layout.train_log
-        self._csv_started = self.csv_path.exists()
+        # every log row goes through the run logger: the run-dir file first,
+        # then any sink memlayers.run adds (W&B)
+        from .runlog import FilesSink, RunLogger
+
+        self.logger = RunLogger(
+            FilesSink(self.out_dir, self.layout.train_log, write_status_on_finish=False)
+        )
 
     # ---- real data ----------------------------------------------------------
     def _build_real_dataset(self):
@@ -569,22 +561,7 @@ class Trainer:
         return meta
 
     def _log_csv(self, row: dict) -> None:
-        mode = "a" if self._csv_started else "w"
-        fields = CSV_FIELDS
-        if self._csv_started:
-            # Resuming a run whose log.csv predates a CSV_FIELDS change: append
-            # under the header already in the file, or the extra values would
-            # land in columns the header does not name and shift every field.
-            with open(self.csv_path, newline="") as fh:
-                existing = next(csv.reader(fh), None)
-            if existing and existing != CSV_FIELDS:
-                fields = existing
-        with open(self.csv_path, mode, newline="") as fh:
-            w = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
-            if not self._csv_started:
-                w.writeheader()
-                self._csv_started = True
-            w.writerow({k: row.get(k, "") for k in fields})
+        self.logger.log_train(row)
 
     # ---- checkpointing ------------------------------------------------------
     def save_checkpoint(self, path: Optional[Path] = None) -> Path:

@@ -20,7 +20,7 @@ import torch
 from .context import EvalContext, EvalResources, preserved_state
 from .registry import get_metric, validate_metric_names
 from .schedule import eval_schedule
-from .writers import EvalsCSV, rows_for, write_final_metrics
+from .writers import final_metrics_obj, rows_for
 
 __all__ = ["run_metrics", "Evaluator", "validate_eval_config", "TIMING_FILE"]
 
@@ -79,6 +79,7 @@ class Evaluator:
         run_dir: Path,
         resources: Optional[EvalResources] = None,
         after_rows: Optional[Callable[[int], None]] = None,
+        logger=None,
     ):
         self.cfg = cfg
         self.ev = cfg.eval
@@ -90,7 +91,11 @@ class Evaluator:
         )
         self.points = dict(self.schedule)
         self.resources = resources or EvalResources.from_config(cfg.data, run_dir)
-        self.csv = EvalsCSV(self.run_dir / "evals.csv")
+        if logger is None:
+            from memlayers.runlog import FilesSink, RunLogger
+
+            logger = RunLogger(FilesSink(self.run_dir, write_status_on_finish=False))
+        self.logger = logger
         self.after_rows = after_rows
 
     def due(self, step: int) -> Optional[str]:
@@ -128,20 +133,21 @@ class Evaluator:
             rows += rows_for(
                 step, tokens, stage, name, get_metric(name).metric_id, vals
             )
-        self.csv.append(rows)
+        self.logger.log_eval(rows)
         seconds = {**{"heldout_pass": p.seconds for p in ctx._pass.values()}, **seconds}
         seconds["total"] = time.perf_counter() - t0
         append_timing(self.run_dir, step, stage, seconds)
         if self.after_rows:
             self.after_rows(step)
         if stage == "final":
-            write_final_metrics(
-                self.run_dir / "final_metrics.json",
-                results,
-                {n: get_metric(n).metric_id for n in self.names(stage)},
-                skipped,
-                step,
-                tokens,
+            self.logger.log_final(
+                final_metrics_obj(
+                    results,
+                    {n: get_metric(n).metric_id for n in self.names(stage)},
+                    skipped,
+                    step,
+                    tokens,
+                )
             )
         from memlayers.devices import empty_cache
 

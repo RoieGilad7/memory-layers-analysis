@@ -122,15 +122,18 @@ def write_json(path: Path, obj: Any) -> Path:
     return path
 
 
-def write_final_metrics(path, metrics, metric_ids, skipped, step, tokens_seen) -> Path:
+def final_metrics_obj(metrics, metric_ids, skipped, step, tokens_seen) -> dict:
     flat = {f"{m}/{k}": v for m, vals in metrics.items() for k, v in vals.items()}
+    return {
+        "metrics": dict(sorted(flat.items())),
+        "metric_ids": dict(sorted(metric_ids.items())),
+        "skipped": dict(sorted(skipped.items())),
+        "step": int(step),
+        "tokens_seen": int(tokens_seen),
+    }
+
+
+def write_final_metrics(path, metrics, metric_ids, skipped, step, tokens_seen) -> Path:
     return write_json(
-        path,
-        {
-            "metrics": dict(sorted(flat.items())),
-            "metric_ids": dict(sorted(metric_ids.items())),
-            "skipped": dict(sorted(skipped.items())),
-            "step": int(step),
-            "tokens_seen": int(tokens_seen),
-        },
+        path, final_metrics_obj(metrics, metric_ids, skipped, step, tokens_seen)
     )

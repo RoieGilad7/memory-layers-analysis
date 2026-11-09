@@ -127,19 +127,9 @@ def _atomic_write_text(path: Path, text: str) -> None:
     os.replace(tmp, path)
 
 
-def write_status(
-    run_dir: Path, state: str, step: int, error: Optional[str] = None
-) -> dict:
-    st = {
-        "state": state,
-        "step": int(step),
-        "updated_at": _now(),
-        "error": error,
-        "host": socket.gethostname(),
-        "pid": os.getpid(),
-    }
-    _atomic_write_text(Path(run_dir) / STATUS, json.dumps(st, indent=2) + "\n")
-    return st
+from .runlog.files import (
+    write_status,
+)  # noqa: E402  (status.json lives with the logger)
 
 
 def pid_alive(pid: int) -> bool:
@@ -489,19 +479,24 @@ def launch(cfg: DictConfig, overrides: Optional[List[str]] = None) -> Path:
             (run_dir / "overrides.yaml").write_text(
                 yaml.safe_dump(overrides, sort_keys=False)
             )
-            trainer = None
+            hold: Dict[str, Any] = {}
             try:
                 trainer = _train(
-                    cfg, tc, run_dir, decision, overrides, moved, eval_set_hashes
+                    cfg, tc, run_dir, decision, overrides, moved, eval_set_hashes, hold
                 )
             except BaseException as e:
-                step = trainer.step if trainer is not None else 0
+                tr = hold.get("trainer")
+                step = tr.step if tr is not None else 0
                 tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
                 last = read_status(run_dir) or {}
-                write_status(run_dir, "failed", max(step, last.get("step", 0)), tb)
+                step = max(step, last.get("step", 0))
+                if tr is not None:
+                    tr.logger.finish("failed", step, tb)
+                else:
+                    write_status(run_dir, "failed", step, tb)
                 print(f"[run] {cfg.run_id} FAILED: {e!r}", flush=True)
                 raise
-            write_status(run_dir, "done", trainer.step)
+            trainer.logger.finish("done", trainer.step)
             print(f"[run] {cfg.run_id} done at step {trainer.step}", flush=True)
             empty_cache(trainer.device)
     return run_dir
@@ -522,12 +517,21 @@ def check_eval_sets(cfg) -> Optional[Dict[str, str]]:
 
 
 def _train(
-    cfg, tc, run_dir: Path, decision: Decision, overrides, moved, eval_set_hashes=None
+    cfg,
+    tc,
+    run_dir: Path,
+    decision: Decision,
+    overrides,
+    moved,
+    eval_set_hashes=None,
+    hold=None,
 ):
     from .eval.evaluator import Evaluator
     from .train import RunLayout, Trainer
 
     trainer = Trainer(tc, layout=RunLayout.run())
+    if hold is not None:
+        hold["trainer"] = trainer
     host = socket.gethostname()
     flops = estimate_flops_per_token(tc.model)
     trainer.extra_meta = {
@@ -546,6 +550,7 @@ def _train(
         "moved_previous_to": str(moved) if moved else None,
         "eval_sets": eval_set_hashes,
     }
+    _attach_logger(cfg, run_dir, trainer, decision)
     print(
         f"[run] device={trainer.device}  params={trainer.model.param_counts()['total']:,}"
         f"  flops/token={flops['total']:,}",
@@ -589,8 +594,15 @@ def _train(
             if (run_dir / name).exists():
                 (run_dir / name).unlink()
 
+    if decision.action == "resume":
+        for s in trainer.logger.sinks:
+            if hasattr(s, "state"):
+                s.state.reset_after(trainer.step)
     evaluator = Evaluator(
-        cfg, run_dir, after_rows=lambda step: _halt_hook(step, "eval_rows")
+        cfg,
+        run_dir,
+        after_rows=lambda step: _halt_hook(step, "eval_rows"),
+        logger=trainer.logger,
     )
     timer = {"last": time.monotonic()}
     period = float(cfg.runtime.get("ckpt_minutes", 20.0)) * 60.0
@@ -616,7 +628,70 @@ def _train(
     trainer.train()
     trainer.save_checkpoint()
     _write_training_check(cfg, run_dir, trainer)
+    trainer.logger.log_files(
+        [
+            run_dir / n
+            for n in ("meta.json", "training_check.json", "final_metrics.json")
+        ]
+    )
     return trainer
+
+
+def _attach_logger(cfg, run_dir: Path, trainer, decision: Decision) -> None:
+    """Files always; W&B too with logging=wandb (mode online or offline).
+
+    The W&B id is made once, when the run first starts, and kept in meta.json
+    (via extra_meta); a resume reuses the id already in meta.json. A failure to
+    import or reach W&B never stops the run.
+    """
+    from .runlog import (
+        FilesSink,
+        RunLogger,
+        WandbSink,
+        generate_wandb_id,
+        get_wandb,
+        wandb_tags,
+    )
+
+    files = FilesSink(run_dir, trainer.layout.train_log)
+    trainer.logger = RunLogger(files)
+    lg = cfg.logging
+    if lg.sink != "wandb" or lg.mode == "disabled":
+        return
+    meta_path = run_dir / "meta.json"
+    old = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+    wid = old.get("wandb_id") if decision.action == "resume" else None
+    try:
+        wb = get_wandb()
+        wid = wid or generate_wandb_id(wb)
+    except Exception as e:  # noqa: BLE001 - W&B must never stop a run
+        print(
+            f"[runlog] WARNING: W&B unavailable ({type(e).__name__}: {e}); "
+            "logging to the run dir only",
+            file=sys.stderr,
+            flush=True,
+        )
+        return
+    trainer.extra_meta["wandb_id"] = wid
+    if decision.action == "resume" and old and old.get("wandb_id") != wid:
+        old["wandb_id"] = wid  # first W&B use on a resumed run
+        meta_path.write_text(json.dumps(old, indent=2, default=str))
+    resolved = OmegaConf.to_container(cfg, resolve=True)
+    meta = {**trainer.meta_dict()}
+    sink = WandbSink(
+        run_dir,
+        OmegaConf.to_container(lg),
+        wid,
+        str(cfg.run_id),
+        str(cfg.name),
+        resolved,
+        wandb_tags(meta, resolved),
+        job_type="train",
+        wandb_dir=lg.dir or str(Path(cfg.out_root) / ".wandb"),
+        module=wb,
+    )
+    trainer.logger = RunLogger(files, [sink])
+    print(f"[run] W&B mirror: mode={lg.mode} project={lg.project} id={wid}", flush=True)
 
 
 def _write_training_check(cfg, run_dir: Path, trainer) -> None:
