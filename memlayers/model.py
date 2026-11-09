@@ -59,7 +59,9 @@ class GPTConfig:
         self.ffn_hidden = {int(k): int(v) for k, v in (self.ffn_hidden or {}).items()}
         for i, w in self.ffn_hidden.items():
             if not 0 <= i < self.n_layer or self.ffn_types[i] != "dense":
-                raise ValueError(f"ffn_hidden names layer {i}, which is not a dense layer")
+                raise ValueError(
+                    f"ffn_hidden names layer {i}, which is not a dense layer"
+                )
             if w <= 0:
                 raise ValueError(f"ffn_hidden[{i}] = {w} must be positive")
 

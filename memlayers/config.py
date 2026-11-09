@@ -30,6 +30,7 @@ __all__ = [
     "CONF_DIR",
     "make_run_id",
     "to_train_config",
+    "validate_keys",
     "model_kwargs",
     "compose",
     "load_model_group",
@@ -193,13 +194,37 @@ def model_kwargs(model: Any) -> Dict[str, Any]:
     return m
 
 
+def validate_keys(cfg: DictConfig, path: str = "") -> None:
+    """Refuse keys that are not fields of their node's dataclass.
+
+    Hydra's `+key=value` append opens the struct flag, so `+train.stepz=5`
+    would otherwise slip past the schema; this closes that gap.
+    """
+    from dataclasses import is_dataclass
+
+    typ = OmegaConf.get_type(cfg)
+    if typ is not None and is_dataclass(typ):
+        names = {f.name for f in fields(typ)}
+        extra = sorted(set(cfg.keys()) - names)
+        if extra:
+            where = path or "<root>"
+            raise ValueError(
+                f"unknown key(s) {extra} under {where}; {typ.__name__} has "
+                f"{sorted(names)}"
+            )
+    for k in cfg.keys():
+        v = cfg._get_node(k)
+        if isinstance(v, DictConfig) and not v._is_missing() and not v._is_none():
+            validate_keys(v, f"{path}.{k}" if path else str(k))
+
+
 def to_train_config(cfg: DictConfig) -> TrainConfig:
     """A composed run config -> the Trainer's TrainConfig."""
+    validate_keys(cfg)
     c = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
 
     def build(cls, d):
-        names = {f.name for f in fields(cls)}
-        return cls(**{k: v for k, v in d.items() if k in names})
+        return cls(**d)
 
     train = build(OptimCfg, c["train"])
     train.betas = tuple(train.betas)
@@ -217,7 +242,9 @@ def compose(overrides: Optional[List[str]] = None, config_name: str = "config"):
     from hydra import compose as _compose, initialize_config_dir
 
     with initialize_config_dir(config_dir=str(CONF_DIR), version_base="1.3"):
-        return _compose(config_name=config_name, overrides=list(overrides or []))
+        cfg = _compose(config_name=config_name, overrides=list(overrides or []))
+    validate_keys(cfg)
+    return cfg
 
 
 def load_model_group(name: str) -> DictConfig:

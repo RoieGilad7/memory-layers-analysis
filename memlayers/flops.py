@@ -126,7 +126,10 @@ def matched_dense_hidden(
     Keeps the standard 4*d when that already qualifies; otherwise the multiple
     of `multiple` closest to the exact match.
     """
-    if abs(dense_ffn_flops(d, 4 * d) - target_ffn_flops) <= tolerance * target_ffn_flops:
+    if (
+        abs(dense_ffn_flops(d, 4 * d) - target_ffn_flops)
+        <= tolerance * target_ffn_flops
+    ):
         return 4 * d
     exact = target_ffn_flops / (4 * d)
     h = max(multiple, int(round(exact / multiple)) * multiple)

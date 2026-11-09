@@ -571,9 +571,7 @@ def _main(cfg: DictConfig) -> None:
 def main() -> None:
     import hydra
 
-    hydra.main(version_base="1.3", config_path="../conf", config_name="config")(
-        _main
-    )()
+    hydra.main(version_base="1.3", config_path="../conf", config_name="config")(_main)()
 
 
 if __name__ == "__main__":
