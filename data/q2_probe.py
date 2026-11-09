@@ -301,6 +301,7 @@ class ProbeSet:
                 out["by_tier_role_attribute"][f"{key[1]}/{key[2]}/{key[3]}"] = agg
         out["_rank"] = rank
         out["_top1"] = top1
+        out["_margin"] = margin
         return out
 
 
