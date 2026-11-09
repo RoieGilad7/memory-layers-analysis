@@ -30,6 +30,9 @@ __all__ = [
     "INPUTS",
     "validate_metric_names",
     "UnknownMetric",
+    "register_comparison",
+    "comparisons",
+    "ComparisonSpec",
 ]
 
 STAGES = ("during", "final", "posthoc")
@@ -136,6 +139,12 @@ def validate_metric_names(names: Iterable[str], stage: str | None = None) -> Lis
                     f"{', '.join(spec.stages)})"
                 )
             continue
+        if n in _COMPARISONS:
+            raise UnknownMetric(
+                f"{n!r} ({_COMPARISONS[n].metric_id}) is a cross-run comparison: "
+                f"`python -m memlayers.compare` runs it. Runnable metrics: "
+                f"{', '.join(known)}"
+            )
         if n in RESERVED:
             mid, kind = RESERVED[n]
             raise UnknownMetric(
@@ -147,3 +156,41 @@ def validate_metric_names(names: Iterable[str], stage: str | None = None) -> Lis
             f"Reserved for later: {', '.join(sorted(RESERVED))}"
         )
     return names
+
+
+# ------------------------------------------------------------------ comparisons
+@dataclass(frozen=True)
+class ComparisonSpec:
+    name: str
+    metric_id: str
+    fn: Callable
+    description: str = ""
+
+
+_COMPARISONS: Dict[str, ComparisonSpec] = {}
+
+
+def register_comparison(name: str, *, metric_id: str):
+    """A cross-run comparison: `fn(records, roles) -> pandas.DataFrame`.
+
+    `records` are memlayers.compare.RunRecord; `roles` maps "pkm", "twin" and
+    "dense" to experiment names. memlayers.compare writes `<name>.csv`.
+    """
+
+    def deco(fn):
+        if name in _COMPARISONS or name in _REGISTRY:
+            raise ValueError(f"{name!r} is already registered")
+        reserved = RESERVED.get(name)
+        if reserved and reserved[0] != metric_id:
+            raise ValueError(f"{name} is reserved with metric_id {reserved[0]}")
+        RESERVED.pop(name, None)
+        _COMPARISONS[name] = ComparisonSpec(
+            name, metric_id, fn, (fn.__doc__ or "").strip().split("\n")[0]
+        )
+        return fn
+
+    return deco
+
+
+def comparisons() -> Dict[str, ComparisonSpec]:
+    return dict(_COMPARISONS)
