@@ -69,6 +69,9 @@ memlayers/              the package (reused unchanged for the real runs)
   eval/                 evaluation: metric registry, EvalContext, fixed eval sets, schedule,
                         evals.csv / final_metrics.json writers, the training check, metrics/
   evaluate.py           post-hoc evaluation of any saved checkpoint
+  runlog/               RunLogger: the run-dir files first, then optional sinks (W&B)
+  wandb_sync.py         backfill W&B from finished run dirs (idempotent)
+  compare.py            many run dirs -> runs/groups/curves/training_check/X2 tables + plots
   devices.py            cuda > mps > cpu selection, sync, peak memory, RNG state
   configs/              8 flat YAML configs, superseded by conf/; kept for memlayers.train and bench/
 
@@ -114,7 +117,7 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  306 pytest tests
+tests/                  342 pytest tests
 reports/                the seven step reports, indexed in reports/README.md
 ```
 
@@ -163,7 +166,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 306 tests, CPU, ~75 s
+.venv/bin/python -m pytest tests/ -q                 # 342 tests, CPU, ~2 min
 
 # a run: experiment + seed -> runs/<experiment>-s<seed>[-<tag>]/
 .venv/bin/python -m memlayers.run experiment=smoke runtime=cpu   # ~2 s health check
@@ -178,6 +181,13 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 # post-hoc evaluation of a saved checkpoint (final | init | <step> | all)
 .venv/bin/python -m memlayers.evaluate run_dir=runs/pkm-s0 step=final
 .venv/bin/python -m memlayers.evaluate run_dir=runs/pkm-s0 step=2000 metrics=[fact_recall]
+
+# mirror a run to W&B (logging=wandb; logging.mode=offline without a login),
+# and backfill runs done offline or with logging=files
+.venv/bin/python -m memlayers.run experiment=pkm seed=0 logging=wandb
+.venv/bin/python -m memlayers.wandb_sync runs/pkm-s0 runs/pkm-s1
+# compare many runs: tables + plots under --out
+.venv/bin/python -m memlayers.compare runs/ --out reports/compare/
 
 # train one flat config (the older CLI; the bench scripts use it)
 .venv/bin/python -m memlayers.train --config memlayers/configs/t1_pkm.yaml

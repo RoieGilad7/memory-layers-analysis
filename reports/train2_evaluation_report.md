@@ -224,7 +224,10 @@ bit-identical.
 - By the same arithmetic, scaled by parameter count: PEER (79.9M params) ≈ 9 ×
   320 MB + 960 MB ≈ 3.8 GB; dense (29.7M) ≈ 9 × 119 MB + 356 MB ≈ 1.4 GB;
   pkm_randkey = pkm.
-- The 4 experiments × 3 seeds ≈ **31 GB**, and ≈ 4.7 h of evaluation in all.
+- Phase 1 is 5 runs (pkm seeds 0, 1, 2 + pkm_randkey s0 + dense s0):
+  3 × 2.6 + 2.6 + 1.4 ≈ **11.8 GB**, and 5 × 23.5 min ≈ **2.0 h** of evaluation
+  in all. (An earlier draft of this line said "4 experiments × 3 seeds ≈
+  31 GB"; Phase 1 is not that.)
 
 ## 5. Test count
 

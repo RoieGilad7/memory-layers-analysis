@@ -1,0 +1,31 @@
+{
+  "command": "python -m memlayers.compare runs/smoke_p3 --out reports/compare_smoke --pkm smoke --twin smoke_randkey --dense smoke_dense",
+  "inputs": [
+    "runs/smoke_p3"
+  ],
+  "stage": "final",
+  "roles": {
+    "pkm": "smoke",
+    "twin": "smoke_randkey",
+    "dense": "smoke_dense"
+  },
+  "runs": [
+    "runs/smoke_p3/smoke-s0",
+    "runs/smoke_p3/smoke-s1",
+    "runs/smoke_p3/smoke-s2",
+    "runs/smoke_p3/smoke_dense-s0",
+    "runs/smoke_p3/smoke_randkey-s0"
+  ],
+  "skipped": [],
+  "warnings": [],
+  "files": {
+    "runs": "runs.csv",
+    "groups": "groups.csv",
+    "curves": "curves.csv",
+    "training_check": "training_check.csv",
+    "learned_vs_random_keys": "learned_vs_random_keys.csv",
+    "heldout_loss": "plot_heldout_loss.png",
+    "fact_recall": "plot_fact_recall.png",
+    "slot_coverage": "plot_slot_coverage.png"
+  }
+}
