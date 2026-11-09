@@ -1,2 +1,3 @@
 # cuda > mps > cpu, whichever exists.
 device: auto
+ckpt_minutes: 20        # also write last.pt this often

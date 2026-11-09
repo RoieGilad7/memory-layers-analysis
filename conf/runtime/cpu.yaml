@@ -1,2 +1,3 @@
 # CPU only (tests, CI).
 device: cpu
+ckpt_minutes: 20

@@ -112,9 +112,36 @@ class ModelCfg:
     compute_match: Optional[str] = None
 
 
+_ALL_METRICS = ["heldout_quality", "fact_recall", "slot_usage"]
+_DEFAULT_POINTS = [0, 0.027, 0.055, 0.109, 0.218, 0.382, 0.546, 0.765, 1.0]
+
+
+@dataclass
+class TrainingCheckCfg:
+    """Thresholds of memlayers/eval/training_check.py."""
+
+    enabled: bool = True
+    divergence_factor: float = 1.5
+    min_drop_from_init: float = 0.40
+    rising_tolerance: float = 0.005
+    min_coverage: float = 0.5  # set from the pilot in training prompt 5
+    fact_ratio: float = 2.0
+
+
 @dataclass
 class EvalCfg:
-    """Filled in by training prompt 2."""
+    """When to evaluate and what. See memlayers/eval/."""
+
+    # fractions of the run; 1.0 is the `final` stage. `steps` (absolute) wins.
+    points: List[float] = field(default_factory=lambda: list(_DEFAULT_POINTS))
+    steps: Optional[List[int]] = None
+    during: List[str] = field(default_factory=lambda: list(_ALL_METRICS))
+    final: List[str] = field(default_factory=lambda: list(_ALL_METRICS))
+    posthoc: List[str] = field(default_factory=lambda: list(_ALL_METRICS))
+    seed: int = 0  # the evaluation's own RNG seed; never the run seed
+    heldout_batch: int = 8  # windows per forward in the held-out pass
+    fact_batch_tokens: int = 16384  # ProbeSet.score's batch budget
+    training_check: TrainingCheckCfg = field(default_factory=TrainingCheckCfg)
 
 
 @dataclass

@@ -120,6 +120,8 @@ class RuntimeCfg:
     device: str = "auto"
     out_dir: str = "runs/default"
     compile: bool = False
+    # memlayers.run: also write the resumable last.pt this often (minutes)
+    ckpt_minutes: float = 20.0
 
 
 @dataclass
@@ -293,6 +295,8 @@ class Trainer:
         # after every periodic checkpoint (it updates status.json)
         self.extra_meta: Dict[str, Any] = {}
         self.on_checkpoint: Optional[Callable[["Trainer"], None]] = None
+        # called after every training step (memlayers.run's eval schedule)
+        self.on_step: Optional[Callable[["Trainer"], None]] = None
 
         torch.manual_seed(cfg.train.seed)
 
@@ -455,19 +459,26 @@ class Trainer:
     # ---- bookkeeping --------------------------------------------------------
     def save_initial_weights(self) -> Path:
         """Step-0 snapshot, so later analysis can tell learned structure from init."""
-        path = self.out_dir / self.layout.init_weights
-        atomic_torch_save(
+        return self.save_weights(self.out_dir / self.layout.init_weights)
+
+    def save_weights(self, path: str | Path) -> Path:
+        """Weights only, fp32 on the CPU, with the step, tokens seen and config."""
+        return atomic_torch_save(
             {
-                "step": 0,
+                "step": self.step,
+                "tokens_seen": self.tokens_seen,
                 "model": {
-                    k: v.detach().cpu().clone()
+                    k: (
+                        v.detach().cpu().float().clone()
+                        if v.is_floating_point()
+                        else v.detach().cpu().clone()
+                    )
                     for k, v in self.model.state_dict().items()
                 },
                 "config": self.config_dict(),
             },
             path,
         )
-        return path
 
     def config_dict(self) -> dict:
         return {
@@ -679,6 +690,8 @@ class Trainer:
                 self.save_checkpoint()
                 if self.on_checkpoint is not None:
                     self.on_checkpoint(self)
+            if self.on_step is not None:
+                self.on_step(self)
 
         if self.read_writer is not None:
             self.read_writer.close()

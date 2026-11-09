@@ -1,2 +1,3 @@
 # Apple Silicon. Precision settings arrive in training prompt 5.
 device: mps
+ckpt_minutes: 20        # also write last.pt this often

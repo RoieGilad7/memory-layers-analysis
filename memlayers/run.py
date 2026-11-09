@@ -415,14 +415,18 @@ def _trim_train_log(path: Path, step: int) -> None:
             w.writerows(keep)
 
 
-def _halt_hook(step: int) -> None:
+def _halt_hook(step: int, where: str = "ckpt") -> None:
+    """MEMLAYERS_TEST_HALT=<step>:<exit|hang>[:<ckpt|eval_rows>]. `eval_rows`
+    halts right after an eval point's rows are written, before its checkpoint."""
     spec = os.environ.get(_HALT_ENV)
     if not spec:
         return
-    at, _, mode = spec.partition(":")
-    if int(at) != step:
+    parts = spec.split(":")
+    at, mode = parts[0], parts[1] if len(parts) > 1 else "exit"
+    at_where = parts[2] if len(parts) > 2 else "ckpt"
+    if int(at) != step or at_where != where:
         return
-    print(f"[run] {_HALT_ENV}: halting at step {step} ({mode})", flush=True)
+    print(f"[run] {_HALT_ENV}: halting at step {step} ({mode}, {where})", flush=True)
     if mode == "hang":
         while True:
             time.sleep(60)
@@ -442,6 +446,16 @@ def launch(cfg: DictConfig, overrides: Optional[List[str]] = None) -> Path:
     run_dir = run_dir_for(cfg)
     resolved = _resolved(cfg)
     tc = to_train_config(cfg)  # fails here, before any write, on a bad config
+    from .eval.evaluator import validate_eval_config
+    from .eval.schedule import eval_schedule
+
+    validate_eval_config(cfg.eval)
+    eval_schedule(
+        int(cfg.train.steps),
+        list(cfg.eval.points) if cfg.eval.points is not None else None,
+        list(cfg.eval.steps) if cfg.eval.get("steps") is not None else None,
+    )
+    eval_set_hashes = check_eval_sets(cfg)
     if Path(tc.runtime.out_dir).resolve() != run_dir.resolve():
         raise RunRefused(
             f"runtime.out_dir {tc.runtime.out_dir} is not the run dir {run_dir}; "
@@ -477,7 +491,9 @@ def launch(cfg: DictConfig, overrides: Optional[List[str]] = None) -> Path:
             )
             trainer = None
             try:
-                trainer = _train(cfg, tc, run_dir, decision, overrides, moved)
+                trainer = _train(
+                    cfg, tc, run_dir, decision, overrides, moved, eval_set_hashes
+                )
             except BaseException as e:
                 step = trainer.step if trainer is not None else 0
                 tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
@@ -491,7 +507,25 @@ def launch(cfg: DictConfig, overrides: Optional[List[str]] = None) -> Path:
     return run_dir
 
 
-def _train(cfg, tc, run_dir: Path, decision: Decision, overrides, moved):
+def check_eval_sets(cfg) -> Optional[Dict[str, str]]:
+    """The fixed eval sets' sha256s, or RunRefused if they do not match the
+    committed manifest. Fake-data runs have none (None)."""
+    if cfg.data.source != "real":
+        return None
+    from data.common import load_config as load_data_config
+
+    from .eval.eval_sets import EvalSetMismatch, verify
+
+    try:
+        return verify(load_data_config(cfg.data.data_config))
+    except EvalSetMismatch as e:
+        raise RunRefused(f"eval sets: {e}") from None
+
+
+def _train(
+    cfg, tc, run_dir: Path, decision: Decision, overrides, moved, eval_set_hashes=None
+):
+    from .eval.evaluator import Evaluator
     from .train import RunLayout, Trainer
 
     trainer = Trainer(tc, layout=RunLayout.run())
@@ -511,6 +545,7 @@ def _train(cfg, tc, run_dir: Path, decision: Decision, overrides, moved):
         "flops_per_token": flops,
         "compute_match": compute_match(cfg.model),
         "moved_previous_to": str(moved) if moved else None,
+        "eval_sets": eval_set_hashes,
     }
     print(
         f"[run] device={trainer.device}  params={trainer.model.param_counts()['total']:,}"
@@ -522,6 +557,14 @@ def _train(cfg, tc, run_dir: Path, decision: Decision, overrides, moved):
     if decision.action == "resume" and ckpt.exists():
         trainer.load_checkpoint(ckpt)
         _trim_train_log(trainer.csv_path, trainer.step)
+        from .eval.writers import EvalsCSV
+
+        dropped = EvalsCSV(run_dir / "evals.csv").drop_after(trainer.step)
+        if dropped:
+            print(
+                f"[run] dropped {dropped} eval rows past step {trainer.step}",
+                flush=True,
+            )
         print(f"[run] resumed from {ckpt} at step {trainer.step}", flush=True)
         meta_path = run_dir / "meta.json"
         meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
@@ -543,15 +586,75 @@ def _train(cfg, tc, run_dir: Path, decision: Decision, overrides, moved):
         if trainer.csv_path.exists():
             trainer.csv_path.unlink()
             trainer._csv_started = False
+        for name in ("evals.csv", "eval_timing.csv"):
+            if (run_dir / name).exists():
+                (run_dir / name).unlink()
+
+    evaluator = Evaluator(
+        cfg, run_dir, after_rows=lambda step: _halt_hook(step, "eval_rows")
+    )
+    timer = {"last": time.monotonic()}
+    period = float(cfg.runtime.get("ckpt_minutes", 20.0)) * 60.0
 
     def on_ckpt(t):
+        timer["last"] = time.monotonic()
         write_status(run_dir, "running", t.step)
         _halt_hook(t.step)
 
+    def on_step(t):
+        stage = evaluator.due(t.step)
+        if stage is not None:
+            evaluator.at_point(t, stage)  # also writes last.pt
+            on_ckpt(t)
+        elif period > 0 and time.monotonic() - timer["last"] >= period:
+            t.save_checkpoint()
+            on_ckpt(t)
+
     trainer.on_checkpoint = on_ckpt
+    trainer.on_step = on_step
+    if trainer.step == 0 and evaluator.due(0) is not None:
+        evaluator.at_point(trainer, evaluator.due(0))
     trainer.train()
     trainer.save_checkpoint()
+    _write_training_check(cfg, run_dir, trainer)
     return trainer
+
+
+def _write_training_check(cfg, run_dir: Path, trainer) -> None:
+    if not cfg.eval.training_check.enabled:
+        return
+    from .eval.training_check import training_check
+    from .eval.writers import EvalsCSV, write_json
+
+    with open(trainer.csv_path, newline="") as fh:
+        train_rows = (
+            [
+                {"step": int(r["step"]), "loss": float(r["loss"])}
+                for r in csv.DictReader(fh)
+            ]
+            if trainer.csv_path.exists()
+            else []
+        )
+    th = {k: v for k, v in cfg.eval.training_check.items() if k != "enabled"}
+    res = training_check(
+        train_rows,
+        EvalsCSV(run_dir / "evals.csv").read(),
+        int(cfg.train.warmup_steps),
+        sorted(trainer.model.memory_layers),
+        th,
+    )
+    res["step"] = trainer.step
+    write_json(run_dir / "training_check.json", res)
+    print(
+        f"[run] training check: {res['verdict']}"
+        + (f" (failed: {', '.join(res['failed'])})" if res["failed"] else "")
+        + (
+            f" (not evaluated: {', '.join(res['not_evaluated'])})"
+            if res["not_evaluated"]
+            else ""
+        ),
+        flush=True,
+    )
 
 
 def _main(cfg: DictConfig) -> None:

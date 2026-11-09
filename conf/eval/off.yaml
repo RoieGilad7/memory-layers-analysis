@@ -1,1 +1,11 @@
-# Placeholder: evaluation settings arrive in training prompt 2 (memlayers/config.py:EvalCfg).
+# No evaluation inside the run. Post hoc still works on the saved checkpoints
+# (python -m memlayers.evaluate). The training check runs on the training loss
+# alone and reports the held-out rules as not evaluated.
+points: []
+steps: null
+during: []
+final: []
+posthoc: [heldout_quality, fact_recall, slot_usage]
+seed: 0
+training_check:
+  enabled: true

@@ -1,1 +1,13 @@
-# Placeholder: evaluation settings arrive in training prompt 2 (memlayers/config.py:EvalCfg).
+# Three points for a short run. On fake data (experiment=smoke) every built-in
+# is skipped -- there is no held-out text or fact set -- and the reason is
+# recorded; the points still checkpoint.
+points: [0, 0.5, 1.0]
+steps: null
+during: [heldout_quality, fact_recall, slot_usage]
+final: [heldout_quality, fact_recall, slot_usage]
+posthoc: [heldout_quality, fact_recall, slot_usage]
+seed: 0
+heldout_batch: 8
+fact_batch_tokens: 16384
+training_check:
+  enabled: true

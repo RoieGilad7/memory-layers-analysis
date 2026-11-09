@@ -1,3 +1,4 @@
 # Google Colab: a CUDA GPU. Drive paths and precision arrive in training
 # prompt 5.
 device: cuda
+ckpt_minutes: 20        # also write last.pt this often
