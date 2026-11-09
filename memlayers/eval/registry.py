@@ -194,3 +194,8 @@ def register_comparison(name: str, *, metric_id: str):
 
 def comparisons() -> Dict[str, ComparisonSpec]:
     return dict(_COMPARISONS)
+
+
+def _unregister(name: str) -> None:
+    """Test-kit only: forget a metric registered inside a test."""
+    _REGISTRY.pop(name, None)

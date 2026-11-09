@@ -72,7 +72,9 @@ class RunRecord:
     @property
     def eval_sets(self) -> Dict[str, Optional[str]]:
         es = self.meta.get("eval_sets") or {}
-        return {k: es.get(k) for k in ("heldout_sample", "fact_sample")}
+        return {
+            k: es.get(k) for k in ("heldout_sample", "fact_sample", "readlog_tokens")
+        }
 
 
 def _read_json(p: Path) -> Optional[dict]:
@@ -198,6 +200,20 @@ def load_runs(
     refuse_mixed("data (data_sha256)", lambda r: r.data_sha)
     refuse_mixed("heldout_sample eval sets", lambda r: r.eval_sets["heldout_sample"])
     refuse_mixed("fact_sample eval sets", lambda r: r.eval_sets["fact_sample"])
+    # read-log-based metrics: only runs that have a read log take part
+    rl = [r for r in recs if (r.meta.get("eval_sets") or {}).get("readlog_tokens")]
+    by_rl: Dict[str, List[str]] = {}
+    for r in rl:
+        by_rl.setdefault(r.meta["eval_sets"]["readlog_tokens"], []).append(r.run_id)
+    if len(by_rl) > 1:
+        lines = "\n".join(
+            f"  {h[:16]}: {', '.join(sorted(ids))}" for h, ids in by_rl.items()
+        )
+        raise CompareError(
+            "these runs' read logs were made on different readlog_tokens sets, so "
+            f"read-log-based metrics are not comparable in one table:\n{lines}\n"
+            "Re-run the read-log pass on one set (memlayers.readlog_pass ... force=true)."
+        )
 
     for exp in sorted({r.experiment for r in recs}):
         rs = [r for r in recs if r.experiment == exp]
@@ -234,6 +250,7 @@ def runs_table(recs):
             "data_sha256": r.data_sha,
             "heldout_sample_sha256": r.eval_sets["heldout_sample"],
             "fact_sample_sha256": r.eval_sets["fact_sample"],
+            "readlog_tokens_sha256": r.eval_sets["readlog_tokens"],
             "tokens_seen": r.meta.get("_final_tokens"),
         }
         row.update({k: r.metrics.get(k) for k in keys})

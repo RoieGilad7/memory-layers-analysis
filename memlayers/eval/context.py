@@ -18,7 +18,7 @@ import math
 import random
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -102,7 +102,7 @@ class EvalResources:
             ):
                 return "no checkpoints/step_000000.pt in the run dir"
         if what == "readlog":
-            return "no read log: run the read-log pass first (training prompt 4)"
+            return "no read log: run the read-log pass first (memlayers.readlog_pass)"
         return None
 
     # -- held-out ------------------------------------------------------------
@@ -306,14 +306,33 @@ class EvalContext:
         self.generator = torch.Generator().manual_seed(self.seed)
         self.np_rng = np.random.default_rng(self.seed)
         self.metric: Optional[str] = None  # set by the framework per metric
-        self._pass: Dict[bool, HeldoutPass] = {}
+        self._pass: Dict[tuple, HeldoutPass] = {}
         self._init_model = None
+        self._readlogs: Dict[int, Any] = {}
+        self._snap: Dict[tuple, torch.Tensor] = {}
 
     # -- inputs --------------------------------------------------------------
     def why_missing(self, what: str) -> Optional[str]:
         if what == "model":
             return None
+        if what == "readlog":
+            return self._readlog_missing(self.step)
         return self.resources.why_missing(what)
+
+    def _readlog_dir(self, step: int) -> Optional[Path]:
+        if self.run_dir is None:
+            return None
+        return self.run_dir / "readlogs" / f"step_{int(step):06d}"
+
+    def _readlog_missing(self, step: int) -> Optional[str]:
+        d = self._readlog_dir(step)
+        if d is None or not (d / "manifest.json").exists():
+            where = self.run_dir or "<run_dir>"
+            return (
+                f"no read log for step {step}: run the read-log pass first: "
+                f"python -m memlayers.readlog_pass run_dir={where} step={step}"
+            )
+        return None
 
     @property
     def memory_layers(self) -> Dict[int, Any]:
@@ -348,10 +367,192 @@ class EvalContext:
             self._init_model = m
         return self._init_model
 
-    def readlog(self, *args, **kwargs):
-        raise RuntimeError(
-            "ctx.readlog(): there is no read log for this run yet. Run the "
-            "read-log pass first (it arrives in training prompt 4)."
+    def readlog(self, step: Optional[int] = None):
+        """The read log (memlayers.readlog.ReadLog) of this context's checkpoint
+        step, or of `step`. RuntimeError, naming the command, if there is none."""
+        from memlayers.readlog import ReadLog
+
+        step = self.step if step is None else int(step)
+        if step not in self._readlogs:
+            why = self._readlog_missing(step)
+            if why:
+                raise RuntimeError(f"ctx.readlog(): {why}")
+            self._readlogs[step] = ReadLog.open(self._readlog_dir(step))
+        return self._readlogs[step]
+
+    # -- shared helpers for the analysis metrics -------------------------------
+    def _memory(self, layer: int):
+        mems = self.memory_layers
+        if layer not in mems:
+            raise KeyError(
+                f"layer {layer} is not a memory layer; memory layers {sorted(mems)}"
+            )
+        return mems[layer]
+
+    def value_table(self, layer: int) -> torch.Tensor:
+        """[n_slots, d]: what each slot writes into the residual stream (PKM:
+        the value table; PEER: the up-projection embedding). A detached fp32
+        CPU copy, so a metric cannot change the model through it."""
+        key = ("values", int(layer))
+        if key not in self._snap:
+            m = self._memory(layer)
+            w = (
+                m.pkm.values.weight
+                if m.kind == "pkm"
+                else m.peer.weight_up_embed.weight
+            )
+            self._snap[key] = w.detach().to("cpu", torch.float32).clone()
+        return self._snap[key]
+
+    def unembedding(self) -> torch.Tensor:
+        """[vocab, d]: the output head (tied to the token embedding), detached
+        fp32 CPU copy, for the logit lens. The final LayerNorm is
+        `ctx.model.transformer.ln_f` if a metric wants to apply it first."""
+        key = ("unembed",)
+        if key not in self._snap:
+            self._snap[key] = (
+                self.model.lm_head.weight.detach().to("cpu", torch.float32).clone()
+            )
+        return self._snap[key]
+
+    def used_slots(self, layer: int, step: Optional[int] = None) -> np.ndarray:
+        """Slots read at least once in the read log, ascending."""
+        return np.flatnonzero(self.readlog(step).slot_counts(layer) > 0)
+
+    def slot_bins(self, layer: int, n_bins: int = 10, step: Optional[int] = None):
+        """-> (used slots, read-count bin, value-norm bin), deciles by default:
+        each used slot's rank among used slots, cut into `n_bins` equal parts."""
+        counts = self.readlog(step).slot_counts(layer)
+        used = np.flatnonzero(counts > 0)
+        norms = self.value_table(layer)[torch.as_tensor(used)].norm(dim=1).numpy()
+
+        def rank_bins(v):
+            order = np.argsort(v, kind="stable")
+            ranks = np.empty(len(v), dtype=np.int64)
+            ranks[order] = np.arange(len(v))
+            return (ranks * n_bins) // max(1, len(v))
+
+        return used, rank_bins(counts[used]), rank_bins(norms)
+
+    def matched_random_slots(
+        self, layer: int, slots, n: int, rng: np.random.Generator, n_bins: int = 10
+    ) -> np.ndarray:
+        """`n` random used slots matched to `slots` in read count and value norm.
+
+        Every used slot gets a (count decile, norm decile) cell; the draw takes
+        from each cell in the proportion `slots` occupy it (largest-remainder
+        rounding), never returns a slot of `slots`, and raises ValueError naming
+        the cell when it has too few candidates. Deterministic for a given rng.
+        """
+        slots = np.unique(np.asarray(slots, dtype=np.int64))
+        used, cb, nb = self.slot_bins(layer, n_bins)
+        pos = {int(s_): i for i, s_ in enumerate(used)}
+        missing = [int(s_) for s_ in slots if int(s_) not in pos]
+        if missing:
+            raise ValueError(
+                f"slots {missing[:10]} are never read in the read log; cannot bin them"
+            )
+        cells: Dict[tuple, int] = {}
+        for s_ in slots:
+            i = pos[int(s_)]
+            cells[(int(cb[i]), int(nb[i]))] = cells.get((int(cb[i]), int(nb[i])), 0) + 1
+        keys = sorted(cells)
+        exact = {k: n * cells[k] / len(slots) for k in keys}
+        quota = {k: int(np.floor(exact[k])) for k in keys}
+        rest = n - sum(quota.values())
+        for k in sorted(keys, key=lambda k: (-(exact[k] - quota[k]), k))[:rest]:
+            quota[k] += 1
+        taken = set(int(x) for x in slots)
+        out = []
+        for k in keys:
+            if quota[k] == 0:
+                continue
+            cand = np.array(
+                [
+                    int(used[i])
+                    for i in np.flatnonzero((cb == k[0]) & (nb == k[1]))
+                    if int(used[i]) not in taken
+                ],
+                dtype=np.int64,
+            )
+            if len(cand) < quota[k]:
+                raise ValueError(
+                    f"cell (read-count bin {k[0]}, value-norm bin {k[1]}) of layer {layer} has "
+                    f"{len(cand)} candidate slots outside the input, {quota[k]} needed"
+                )
+            out.append(rng.choice(cand, size=quota[k], replace=False))
+        return np.sort(np.concatenate(out)) if out else np.empty(0, dtype=np.int64)
+
+    @torch.no_grad()
+    def loss_with_masked_slots(
+        self,
+        layer: int,
+        slots,
+        half: str = "test",
+        subjects: Optional[Sequence[str]] = None,
+        sample: bool = True,
+    ) -> Dict[str, float]:
+        """{subject slug: held-out loss} with `slots` of `layer` switched off,
+        plus `pile_avg` (token-weighted over the training subjects included).
+        Default: the fixed 200-doc/subject sample. `sample=False` is the whole
+        half (~15M tokens for test) -- slow; removal tests call this many times.
+        An empty `slots` gives exactly heldout_quality's losses."""
+        with self.masked_slots({layer: list(np.asarray(slots, dtype=np.int64))}):
+            p = self.heldout_pass(
+                sample=sample, half=half, subjects=subjects, capture_reads=False
+            )
+        out = {
+            s_: v["loss_sum"] / v["tokens"] for s_, v in p.sums.items() if v["tokens"]
+        }
+        train = [
+            s_
+            for s_ in self.resources.train_slugs()
+            if s_ in p.sums and p.sums[s_]["tokens"]
+        ]
+        if train:
+            out["pile_avg"] = sum(p.sums[s_]["loss_sum"] for s_ in train) / sum(
+                p.sums[s_]["tokens"] for s_ in train
+            )
+        return out
+
+    @torch.no_grad()
+    def fact_recall_with_masked_slots(self, layer: int, slots, rows):
+        """Per-row fact recall with `slots` of `layer` switched off: a DataFrame
+        with fact_id, tier, role, attribute, top1, rank, margin. `rows` are fact
+        rows (facts.jsonl dicts) or fact ids. Scored by the same
+        ProbeSet.score that fact_recall uses."""
+        import pandas as pd
+
+        from data.common import read_jsonl
+        from data.q2_probe import ProbeSet
+
+        rows = list(rows)
+        if rows and isinstance(rows[0], str):
+            want = {r: i for i, r in enumerate(rows)}
+            found = [
+                r
+                for r in read_jsonl(Path(self.resources.dcfg.bios_dir) / "facts.jsonl")
+                if r["fact_id"] in want
+            ]
+            rows = sorted(found, key=lambda r: want[r["fact_id"]])
+        probe = ProbeSet.build(self.resources.dcfg, rows)
+        with self.masked_slots({layer: list(np.asarray(slots, dtype=np.int64))}):
+            res = probe.score(
+                self.model,
+                self.device,
+                batch_tokens=self.fact_batch_tokens,
+                block_size=self.block_size,
+            )
+        return pd.DataFrame(
+            {
+                "fact_id": [r.fact_id for r in probe.rows],
+                "tier": [r.tier for r in probe.rows],
+                "role": [r.role for r in probe.rows],
+                "attribute": [r.attribute for r in probe.rows],
+                "top1": res["_top1"],
+                "rank": res["_rank"],
+                "margin": res["_margin"],
+            }
         )
 
     # -- slot masking --------------------------------------------------------
@@ -361,6 +562,7 @@ class EvalContext:
         place (renormalize=False). The mask is always cleared on exit."""
         mems = self.memory_layers
         prev = {i: (m.slot_mask, m.renormalize_after_mask) for i, m in mems.items()}
+        self._pass.clear()  # a cached unmasked pass must not answer a masked query
         try:
             self.model.set_mask_slots(spec, renormalize=False)
             yield
@@ -371,24 +573,50 @@ class EvalContext:
 
     # -- the shared held-out pass ---------------------------------------------
     @torch.no_grad()
-    def heldout_pass(self, sample: Optional[bool] = None) -> HeldoutPass:
+    def heldout_pass(
+        self,
+        sample: Optional[bool] = None,
+        half: str = "test",
+        subjects: Optional[Sequence[str]] = None,
+        capture_reads: bool = True,
+    ) -> HeldoutPass:
+        """One forward over held-out documents, cached on the context.
+
+        `sample`: the fixed 200-doc/subject sample (test half only) or the whole
+        half. `subjects`: slugs to restrict to. `capture_reads=False` skips the
+        slot-usage bookkeeping (the masked-loss helper does not need it).
+        """
         sample = self.sample if sample is None else bool(sample)
-        if sample in self._pass:
-            return self._pass[sample]
+        if half != "test":
+            sample = False  # the fixed sample is drawn from the test half
+        key = (
+            sample,
+            half,
+            tuple(sorted(subjects)) if subjects else None,
+            bool(capture_reads),
+        )
+        if key in self._pass:
+            return self._pass[key]
         import time
 
         from data.loader import iter_document_windows
 
         t0 = time.perf_counter()
-        docs = self.heldout("test", sample)
-        tokens = self.resources.tokens("test")
+        docs = self.heldout(half, sample)
+        if subjects:
+            unknown = sorted(set(subjects) - set(docs))
+            if unknown:
+                raise KeyError(f"unknown subject slugs {unknown}; have {sorted(docs)}")
+            docs = {s_: v for s_, v in docs.items() if s_ in set(subjects)}
+        tokens = self.resources.tokens(half)
         in_sample = None
-        if not sample:
+        if not sample and half == "test":
             in_sample = {
                 s: {d.doc_id for d in v} for s, v in self.heldout("test", True).items()
             }
-        mems = self.memory_layers
-        prev_logging = {i: m.read_logging for i, m in mems.items()}
+        mems = self.memory_layers if capture_reads else {}
+        all_mems = self.memory_layers
+        prev_logging = {i: m.read_logging for i, m in all_mems.items()}
         usage = new_usage({i: m.n_slots for i, m in mems.items()})
         self.model.eval()
         for m in mems.values():
@@ -433,10 +661,10 @@ class EvalContext:
                         if mems:
                             accumulate_reads(usage, self.model.read_logs())
                 sums[slug] = acc
-                if not sample:
+                if in_sample is not None:
                     sample_sums[slug] = sacc
         finally:
-            for i, m in mems.items():
+            for i, m in all_mems.items():
                 m.set_read_logging(prev_logging[i])
         if sample:
             sample_sums = sums
@@ -448,5 +676,5 @@ class EvalContext:
             n_slots={i: m.n_slots for i, m in mems.items()},
             seconds=time.perf_counter() - t0,
         )
-        self._pass[sample] = res
+        self._pass[key] = res
         return res
