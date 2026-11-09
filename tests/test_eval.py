@@ -92,10 +92,15 @@ def test_the_reserved_names_are_listed_but_not_runnable():
         "learned_vs_random_keys": "X2",
         "knn_lm_comparison": "X3",
     }
-    assert {k: v[0] for k, v in RESERVED.items() if k in want} == want
+    from memlayers.eval import comparisons as _builtin  # noqa: F401  (X2)
+    from memlayers.eval.registry import comparisons
+
+    # X2 has since been implemented as a comparison; the rest stay reserved
+    taken = {n: s.metric_id for n, s in comparisons().items()}
+    assert {**{k: v[0] for k, v in RESERVED.items() if k in want}, **taken} == want
     assert "training_check" in RESERVED
     for name in want:
-        with pytest.raises(UnknownMetric, match="reserved"):
+        with pytest.raises(UnknownMetric, match="reserved|comparison"):
             validate_metric_names([name])
     with pytest.raises(ValueError, match="reserved with metric_id"):
         register_metric("effective_rank", metric_id="Z1")(lambda ctx: {})

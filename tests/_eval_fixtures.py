@@ -23,14 +23,19 @@ BLOCK = 128
 
 
 # overrides that point a run at the mini bundle with a CPU-sized model
-def run_overrides(data_config, out_root, steps=10, eval_steps="[0,5,10]"):
+def run_overrides(
+    data_config, out_root, steps=10, eval_steps="[0,5,10]", experiment="smoke"
+):
+    model = {"smoke_dense": "tiny_dense"}.get(experiment, "tiny_pkm")
+    extra = ["model.memory.freeze_keys=true"] if experiment == "smoke_randkey" else []
     return [
-        "experiment=smoke",
+        f"experiment={experiment}",
         "data=v1",
         "data.small=false",
         "data.root=null",
         f"data.data_config={data_config}",
-        "model=tiny_pkm",
+        f"model={model}",
+        *extra,
         "model.vocab_size=50257",
         f"model.block_size={BLOCK}",
         "train.micro_batch_size=2",
