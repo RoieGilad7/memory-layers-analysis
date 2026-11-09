@@ -143,6 +143,11 @@ class Evaluator:
                 step,
                 tokens,
             )
+        from memlayers.devices import empty_cache
+
+        # the eval batches' logits stay in the MPS/CUDA cache otherwise, and
+        # the driver-allocated figure the train log reports jumps by ~10 GB
+        empty_cache(trainer.device)
         trainer.save_weights(self.run_dir / "checkpoints" / f"step_{step:06d}.pt")
         trainer.save_checkpoint()
         msg = "  ".join(f"{n} {s:.1f}s" for n, s in seconds.items())
