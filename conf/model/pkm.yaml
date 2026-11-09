@@ -1,0 +1,19 @@
+# T1 PKM: d384 L6 H6, layer 3 = PKM 256x256 = 65,536 slots, top-k 32, 4 heads,
+# query BatchNorm. Port of memlayers/configs/t1_pkm.yaml.
+vocab_size: 50257
+block_size: 512
+n_layer: 6
+n_head: 6
+n_embd: 384
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: [3]
+memory_kind: pkm
+memory:
+  num_keys: 256
+  topk: 32
+  heads: 4
+  dim_head: 128
+  query_batchnorm: true
+  freeze_keys: false

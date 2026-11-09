@@ -1,0 +1,10 @@
+# @package _global_
+# The tiny PKM on fake data for ~50 steps: about a second of training on CPU.
+# A health check of the whole run layer, not an experiment.
+defaults:
+  - override /model: tiny_pkm
+  - override /data: fake
+  - override /train: smoke
+  - override /eval: smoke
+
+name: smoke

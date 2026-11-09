@@ -1,0 +1,2 @@
+# CPU only (tests, CI).
+device: cpu

@@ -1,0 +1,7 @@
+# Step-1 synthetic data (memlayers/data_fake.py). `repeat` has learnable
+# structure, so a smoke run's loss visibly drops.
+source: fake
+kind: repeat
+chunk_len: 8
+n_distinct: 257
+seed: ${seed}

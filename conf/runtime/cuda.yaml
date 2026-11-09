@@ -1,0 +1,2 @@
+# A CUDA GPU. Precision settings arrive in training prompt 5.
+device: cuda

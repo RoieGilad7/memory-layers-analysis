@@ -1,0 +1,24 @@
+# T1 PEER: d384 L6 H6, layer 3 = PEER 65,536 single-neuron experts (the PKM's
+# slot count), top-k 32, 4 heads. Port of memlayers/configs/t1_peer.yaml.
+#
+# non_competing_scores is FALSE on purpose: PEER-pytorch's default (True)
+# silently collapses the per-head top-k to 1 expert. See
+# reports/step0_access_report.md section 6.2.
+vocab_size: 50257
+block_size: 512
+n_layer: 6
+n_head: 6
+n_embd: 384
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: [3]
+memory_kind: peer
+memory:
+  num_experts: 65536
+  topk: 32
+  heads: 4
+  dim_key: 128
+  pre_rmsnorm: true
+  non_competing_scores: false
+  freeze_keys: false

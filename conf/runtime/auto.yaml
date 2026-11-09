@@ -1,0 +1,2 @@
+# cuda > mps > cpu, whichever exists.
+device: auto

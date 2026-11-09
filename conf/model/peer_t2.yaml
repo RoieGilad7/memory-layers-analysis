@@ -1,0 +1,21 @@
+# T2 PEER: d512 L8 H8, layer 4 = PEER 65,536 experts, top-k 32, 4 heads. Port
+# of memlayers/configs/t2_peer.yaml. No experiment uses it yet.
+# non_competing_scores is FALSE on purpose; see model/peer.yaml.
+vocab_size: 50257
+block_size: 512
+n_layer: 8
+n_head: 8
+n_embd: 512
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: [4]
+memory_kind: peer
+memory:
+  num_experts: 65536
+  topk: 32
+  heads: 4
+  dim_key: 128
+  pre_rmsnorm: true
+  non_competing_scores: false
+  freeze_keys: false

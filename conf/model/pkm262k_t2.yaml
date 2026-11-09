@@ -1,0 +1,19 @@
+# T2 PKM 262k: d512 L8 H8, layer 4 = PKM 512x512 = 262,144 slots. Port of
+# memlayers/configs/t2_pkm_262k.yaml. No experiment uses it yet.
+vocab_size: 50257
+block_size: 512
+n_layer: 8
+n_head: 8
+n_embd: 512
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: [4]
+memory_kind: pkm
+memory:
+  num_keys: 512
+  topk: 32
+  heads: 4
+  dim_head: 128
+  query_batchnorm: true
+  freeze_keys: false

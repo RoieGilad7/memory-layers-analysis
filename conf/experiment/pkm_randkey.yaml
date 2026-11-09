@@ -1,0 +1,9 @@
+# @package _global_
+# Random-key twin: pkm with model.memory.freeze_keys=true. Same init weights and
+# the same batches as pkm at the same seed.
+defaults:
+  - override /model: pkm_randkey
+  - override /data: v1
+  - override /train: tier1
+
+name: pkm_randkey

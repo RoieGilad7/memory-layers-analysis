@@ -1,0 +1,3 @@
+# Google Colab: a CUDA GPU. Drive paths and precision arrive in training
+# prompt 5.
+device: cuda

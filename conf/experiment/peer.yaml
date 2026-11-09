@@ -1,0 +1,8 @@
+# @package _global_
+# PEER at layer 3 with the PKM's slot count (65,536).
+defaults:
+  - override /model: peer
+  - override /data: v1
+  - override /train: tier1
+
+name: peer

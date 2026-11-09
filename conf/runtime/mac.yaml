@@ -1,0 +1,2 @@
+# Apple Silicon. Precision settings arrive in training prompt 5.
+device: mps

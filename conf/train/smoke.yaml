@@ -1,0 +1,21 @@
+# About 50 steps of the tiny model; seconds on CPU.
+steps: 50
+micro_batch_size: 4
+grad_accum_steps: 1
+lr: 1.0e-3
+lr_memory_values: 4.0e-3
+lr_memory_keys: null
+weight_decay: 0.1
+weight_decay_memory: 0.0
+betas: [0.9, 0.95]
+eps: 1.0e-8
+grad_clip: 1.0
+warmup_steps: 5
+min_lr_ratio: 0.1
+seed: ${seed}
+log_every: 1
+ckpt_every: 10
+read_logging: false
+read_log_steps: 0
+read_log_weights: true
+track_slot_usage: true

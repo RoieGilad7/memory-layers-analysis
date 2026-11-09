@@ -1,0 +1,20 @@
+# T1 PKM, random-key twin: keys stay at their random init, values train.
+# Port of memlayers/configs/t1_pkm_frozen.yaml. Same init as pkm: freezing
+# only flips requires_grad.
+vocab_size: 50257
+block_size: 512
+n_layer: 6
+n_head: 6
+n_embd: 384
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: [3]
+memory_kind: pkm
+memory:
+  num_keys: 256
+  topk: 32
+  heads: 4
+  dim_head: 128
+  query_batchnorm: true
+  freeze_keys: true

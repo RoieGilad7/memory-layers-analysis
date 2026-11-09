@@ -1,0 +1,27 @@
+# Tier-1 training: the A18 learnability run's settings (bench/learnability_run.py:
+# micro-batch 32, block 512) scaled to the full 150M-token budget.
+#   tokens per step = 32 x 1 x 512        = 16,384
+#   steps           = ceil(150,000,000 / 16,384) = 9,156
+#   tokens seen     = 9,156 x 16,384      = 150,011,904
+# That is 292,992 sequences, inside one epoch of v1's train.bin (293,896).
+# LRs, warmup, decay and clipping are t1_pkm.yaml's.
+steps: 9156
+micro_batch_size: 32
+grad_accum_steps: 1
+lr: 2.5e-4               # backbone, as in Lample et al. 2019
+lr_memory_values: 1.0e-3 # 4x the backbone
+lr_memory_keys: null     # null -> same as lr
+weight_decay: 0.1
+weight_decay_memory: 0.0
+betas: [0.9, 0.95]
+eps: 1.0e-8
+grad_clip: 1.0
+warmup_steps: 30
+min_lr_ratio: 0.1
+seed: ${seed}            # model init and dropout
+log_every: 10
+ckpt_every: 500          # ~10 min at 1.24 s/step on MPS; last.pt is overwritten
+read_logging: false
+read_log_steps: 0
+read_log_weights: true
+track_slot_usage: true
