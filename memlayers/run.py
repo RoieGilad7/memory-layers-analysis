@@ -1,0 +1,580 @@
+"""One entry point: an experiment + a seed -> a run directory.
+
+    python -m memlayers.run experiment=pkm seed=0
+    python -m memlayers.run experiment=pkm seed=0 train.steps=200 tag=pilot
+    python -m memlayers.run -m experiment=pkm seed=0,1,2
+
+The run id is `<experiment>-s<seed>[-<tag>]` and the run dir is
+`<out_root>/<run_id>/`. Re-running the same command is safe:
+
+    no run dir                 -> a fresh run
+    status done                -> refused; force=true moves the dir to
+                                  <run_dir>.old-<n> first (nothing is deleted)
+    status failed, or running
+    with a dead PID            -> resumed from checkpoints/last.pt (resume=true),
+                                  if the config matches the saved one outside
+                                  train.steps / runtime.* / logging.* / eval.*
+    status running, this host,
+    PID alive                  -> refused: already running
+    status running, other host -> refused unless resume_foreign=true
+
+Every check happens BEFORE anything is written, so a refused launch leaves the
+run dir byte-for-byte as it was. Hydra writes nothing into the run dir
+(hydra.output_subdir is null and its own dir is <out_root>/.hydra_tmp); this
+module writes config.yaml and overrides.yaml itself, after the checks.
+
+Run dir:
+    config.yaml        the fully resolved config
+    overrides.yaml     the command-line overrides
+    meta.json          Trainer.meta_dict() + git, FLOPs, host, versions, run id
+    status.json        {state, step, updated_at, error, host, pid}
+    stdout.log         everything printed (appended across resumes)
+    train_log.csv      the per-step training log
+    checkpoints/step_000000.pt   init weights
+    checkpoints/last.pt          resumable, written atomically
+    slot_usage.{json,npz}        memory runs only
+"""
+
+from __future__ import annotations
+
+import contextlib
+import csv
+import datetime as _dt
+import json
+import os
+import platform
+import socket
+import subprocess
+import sys
+import time
+import traceback
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Iterator, List, Optional
+
+import yaml
+from omegaconf import DictConfig, OmegaConf
+
+from .config import load_model_group, model_kwargs, to_train_config
+from .flops import dense_ffn_flops, estimate_flops_per_token
+
+__all__ = [
+    "RunRefused",
+    "Decision",
+    "run_dir_for",
+    "read_status",
+    "write_status",
+    "decide",
+    "config_diff",
+    "RESUME_ALLOWED",
+    "launch",
+    "main",
+]
+
+ROOT = Path(__file__).resolve().parent.parent
+STATUS = "status.json"
+LAST = Path("checkpoints") / "last.pt"
+
+# keys a resume may change. The launch flags and out_root say how and where to
+# run, not what is run.
+RESUME_ALLOWED = (
+    "train.steps",
+    "runtime.",
+    "logging.",
+    "eval.",
+    "force",
+    "resume",
+    "resume_foreign",
+    "out_root",
+)
+
+# test hook: MEMLAYERS_TEST_HALT=<step>:exit|hang stops the process right after
+# the checkpoint at <step> -- `exit` like a SIGKILL (no cleanup, status stays
+# `running`), `hang` keeps it alive so the run lock can be tested
+_HALT_ENV = "MEMLAYERS_TEST_HALT"
+
+
+class RunRefused(RuntimeError):
+    """The run dir's state does not allow this launch. Nothing was written."""
+
+
+@dataclass
+class Decision:
+    action: str  # "fresh" | "resume"
+    reason: str
+    move_to: Optional[Path] = None  # force=true: the old dir goes here first
+
+
+# ----------------------------------------------------------------- small helpers
+def _now() -> str:
+    return _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def run_dir_for(cfg: DictConfig) -> Path:
+    return Path(cfg.out_root) / str(cfg.run_id)
+
+
+def read_status(run_dir: Path) -> Optional[dict]:
+    p = Path(run_dir) / STATUS
+    if not p.exists():
+        return None
+    return json.loads(p.read_text())
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    tmp.write_text(text)
+    os.replace(tmp, path)
+
+
+def write_status(
+    run_dir: Path, state: str, step: int, error: Optional[str] = None
+) -> dict:
+    st = {
+        "state": state,
+        "step": int(step),
+        "updated_at": _now(),
+        "error": error,
+        "host": socket.gethostname(),
+        "pid": os.getpid(),
+    }
+    _atomic_write_text(Path(run_dir) / STATUS, json.dumps(st, indent=2) + "\n")
+    return st
+
+
+def pid_alive(pid: int) -> bool:
+    try:
+        os.kill(int(pid), 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True  # exists, owned by someone else
+    return True
+
+
+def next_old_path(run_dir: Path) -> Path:
+    n = 1
+    while True:
+        p = run_dir.with_name(f"{run_dir.name}.old-{n}")
+        if not p.exists():
+            return p
+        n += 1
+
+
+def _flatten(d: Any, prefix: str = "") -> Dict[str, Any]:
+    if isinstance(d, dict):
+        out: Dict[str, Any] = {}
+        if not d and prefix:
+            out[prefix] = {}
+        for k, v in d.items():
+            out.update(_flatten(v, f"{prefix}.{k}" if prefix else str(k)))
+        return out
+    return {prefix: d}
+
+
+def config_diff(saved: dict, new: dict) -> Dict[str, tuple]:
+    """Keys whose values differ and are NOT on the resume allow-list."""
+    a, b = _flatten(saved), _flatten(new)
+    bad = {}
+    for k in sorted(set(a) | set(b)):
+        if a.get(k, "<absent>") == b.get(k, "<absent>"):
+            continue
+        if any(k == p or (p.endswith(".") and k.startswith(p)) for p in RESUME_ALLOWED):
+            continue
+        bad[k] = (a.get(k, "<absent>"), b.get(k, "<absent>"))
+    return bad
+
+
+def _resolved(cfg: DictConfig) -> dict:
+    return OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+
+
+# --------------------------------------------------------------------- decision
+def decide(run_dir: Path, cfg: DictConfig) -> Decision:
+    """What this launch does with `run_dir`. Reads only; raises RunRefused."""
+    run_dir = Path(run_dir)
+    if not run_dir.exists() or not any(run_dir.iterdir()):
+        return Decision("fresh", "new run")
+
+    st = read_status(run_dir)
+    force, resume = bool(cfg.force), bool(cfg.resume)
+    if st is None:
+        if force:
+            return Decision("fresh", "force=true", next_old_path(run_dir))
+        raise RunRefused(
+            f"{run_dir} exists but has no {STATUS}, so it is not a run dir this "
+            "tool wrote. Move it away, or pass force=true to have it moved to "
+            f"{next_old_path(run_dir).name}."
+        )
+
+    state = st.get("state")
+    host = socket.gethostname()
+    if state == "running":
+        same_host = st.get("host") == host
+        if same_host and st.get("pid") != os.getpid() and pid_alive(st["pid"]):
+            raise RunRefused(
+                f"{run_dir.name} is already running (pid {st['pid']} on {host}, "
+                f"step {st.get('step')}, updated {st.get('updated_at')}). Two "
+                "processes never write the same run dir. If that PID is not a "
+                "training process (PID reuse after a reboot), edit "
+                f"{run_dir / STATUS} by hand."
+            )
+        if not same_host and not cfg.resume_foreign:
+            raise RunRefused(
+                f"{run_dir.name} says it is running on host {st.get('host')!r} "
+                f"(pid {st.get('pid')}), not on {host!r}. If that process is "
+                "gone (a synced drive), pass resume_foreign=true."
+            )
+        state = "interrupted"  # a running status whose process is gone
+
+    if state == "done":
+        if force:
+            return Decision("fresh", "force=true", next_old_path(run_dir))
+        raise RunRefused(
+            f"{run_dir.name} is done (step {st.get('step')}, "
+            f"{st.get('updated_at')}). Nothing was changed. To train it again "
+            f"from scratch pass force=true: the finished run is moved to "
+            f"{next_old_path(run_dir).name}, not deleted."
+        )
+
+    if state in ("failed", "interrupted"):
+        if force:
+            return Decision("fresh", "force=true", next_old_path(run_dir))
+        if not resume:
+            raise RunRefused(
+                f"{run_dir.name} is {state} at step {st.get('step')} and "
+                "resume=false. Pass resume=true to continue it, or force=true "
+                "to start over (the old dir is moved, not deleted)."
+            )
+        saved_path = run_dir / "config.yaml"
+        if saved_path.exists():
+            saved = yaml.safe_load(saved_path.read_text()) or {}
+            bad = config_diff(saved, _resolved(cfg))
+            if bad:
+                lines = "\n".join(f"  {k}: {a!r} -> {b!r}" for k, a, b in _rows(bad))
+                raise RunRefused(
+                    f"{run_dir.name} cannot be resumed with a different config. "
+                    f"Only {', '.join(RESUME_ALLOWED)} may change on a resume; "
+                    f"these differ:\n{lines}\nUse a tag= for a new run id, or "
+                    "force=true to start over."
+                )
+        return Decision("resume", f"{state} at step {st.get('step')}")
+
+    raise RunRefused(f"{run_dir / STATUS} has an unknown state {state!r}")
+
+
+def _rows(bad: Dict[str, tuple]):
+    for k, (a, b) in bad.items():
+        yield k, a, b
+
+
+# ----------------------------------------------------------------- provenance
+def git_info(root: Path = ROOT) -> Dict[str, Any]:
+    def git(*args) -> Optional[str]:
+        try:
+            r = subprocess.run(
+                ["git", "-C", str(root), *args],
+                capture_output=True,
+                text=True,
+                timeout=20,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return r.stdout if r.returncode == 0 else None
+
+    commit = git("rev-parse", "HEAD")
+    porcelain = git("status", "--porcelain", "--untracked-files=all") or ""
+    files = [ln[3:] for ln in porcelain.splitlines() if ln.strip()]
+    return {
+        "commit": commit.strip() if commit else None,
+        "branch": (git("rev-parse", "--abbrev-ref", "HEAD") or "").strip() or None,
+        "dirty": bool(files),
+        "dirty_files": files,
+    }
+
+
+def versions() -> Dict[str, str]:
+    import hydra
+    import omegaconf
+    import torch
+
+    return {
+        "python": platform.python_version(),
+        "torch": torch.__version__,
+        "hydra": hydra.__version__,
+        "omegaconf": omegaconf.__version__,
+    }
+
+
+def compute_match(model_cfg: DictConfig) -> Optional[Dict[str, Any]]:
+    """For a dense model FLOP-matched to a memory model: both layers' FLOPs."""
+    ref_name = model_cfg.get("compute_match")
+    if not ref_name:
+        return None
+    ref = estimate_flops_per_token(model_kwargs(load_model_group(ref_name)))
+    this = estimate_flops_per_token(model_kwargs(model_cfg))
+    d = int(model_cfg.n_embd)
+    layers = []
+    for r in ref["per_layer"]:
+        if r["kind"] == "dense":
+            continue
+        t = this["per_layer"][r["layer"]]
+        ratio = t["ffn"] / r["ffn"]
+        layers.append(
+            {
+                "layer": r["layer"],
+                "reference_kind": r["kind"],
+                "reference_ffn_flops": r["ffn"],
+                "ffn_flops": t["ffn"],
+                "ffn_hidden": t.get("ffn_hidden"),
+                "standard_4x_ffn_flops": dense_ffn_flops(d, 4 * d),
+                "ratio": round(ratio, 4),
+                "within_10pct": abs(ratio - 1) <= 0.10,
+            }
+        )
+    return {
+        "reference_model": ref_name,
+        "reference_total": ref["total"],
+        "total": this["total"],
+        "layers": layers,
+    }
+
+
+# --------------------------------------------------------------------- stdout
+class _Tee:
+    def __init__(self, stream, fh):
+        self.stream, self.fh = stream, fh
+
+    def write(self, s):
+        self.stream.write(s)
+        self.fh.write(s)
+        self.fh.flush()
+        return len(s)
+
+    def flush(self):
+        self.stream.flush()
+        self.fh.flush()
+
+    def __getattr__(self, name):
+        return getattr(self.stream, name)
+
+
+@contextlib.contextmanager
+def _tee_output(path: Path) -> Iterator[None]:
+    fh = open(path, "a", buffering=1)
+    old_out, old_err = sys.stdout, sys.stderr
+    sys.stdout, sys.stderr = _Tee(old_out, fh), _Tee(old_err, fh)
+    try:
+        yield
+    finally:
+        sys.stdout, sys.stderr = old_out, old_err
+        fh.close()
+
+
+@contextlib.contextmanager
+def _run_lock(out_root: Path, run_id: str) -> Iterator[None]:
+    """An flock held for the whole launch, outside the run dir, so two launches
+    on one host cannot race between reading status.json and writing it. The
+    kernel drops it when the process dies, however it dies."""
+    try:
+        import fcntl
+    except ImportError:  # pragma: no cover - not POSIX: status.json alone
+        yield
+        return
+    lock_dir = Path(out_root) / ".locks"
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    fh = open(lock_dir / f"{run_id}.lock", "a+")
+    try:
+        try:
+            fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RunRefused(
+                f"{run_id} is already running: another process on this host "
+                f"holds {lock_dir / (run_id + '.lock')}."
+            ) from None
+        yield
+    finally:
+        fh.close()
+
+
+def _trim_train_log(path: Path, step: int) -> None:
+    """Drop log rows past the checkpoint a resume restarts from, so a crash
+    between two checkpoints does not leave the replayed steps in twice."""
+    if not path.exists():
+        return
+    with open(path, newline="") as fh:
+        rows = list(csv.reader(fh))
+    if not rows:
+        return
+    head, body = rows[0], rows[1:]
+    keep = [r for r in body if r and int(r[0]) <= step]
+    if len(keep) != len(body):
+        with open(path, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(head)
+            w.writerows(keep)
+
+
+def _halt_hook(step: int) -> None:
+    spec = os.environ.get(_HALT_ENV)
+    if not spec:
+        return
+    at, _, mode = spec.partition(":")
+    if int(at) != step:
+        return
+    print(f"[run] {_HALT_ENV}: halting at step {step} ({mode})", flush=True)
+    if mode == "hang":
+        while True:
+            time.sleep(60)
+    os._exit(137)
+
+
+# ---------------------------------------------------------------------- launch
+def launch(cfg: DictConfig, overrides: Optional[List[str]] = None) -> Path:
+    """Run (or resume) `cfg` in its run dir. Returns the run dir.
+
+    Raises RunRefused, having written nothing, when the run dir's state does
+    not allow it.
+    """
+    from .devices import empty_cache
+
+    overrides = list(overrides or [])
+    run_dir = run_dir_for(cfg)
+    resolved = _resolved(cfg)
+    tc = to_train_config(cfg)  # fails here, before any write, on a bad config
+    if Path(tc.runtime.out_dir).resolve() != run_dir.resolve():
+        raise RunRefused(
+            f"runtime.out_dir {tc.runtime.out_dir} is not the run dir {run_dir}; "
+            "the run layer owns where a run is written"
+        )
+
+    with _run_lock(Path(cfg.out_root), str(cfg.run_id)):
+        decision = decide(run_dir, cfg)
+
+        # ---- nothing has been written above this line ----
+        if decision.move_to is not None:
+            os.rename(run_dir, decision.move_to)
+            moved = decision.move_to
+        else:
+            moved = None
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        with _tee_output(run_dir / "stdout.log"):
+            print(
+                f"[run] {cfg.run_id}: {decision.action} ({decision.reason}) "
+                f"-> {run_dir}",
+                flush=True,
+            )
+            if moved is not None:
+                print(f"[run] previous run moved to {moved}", flush=True)
+            prev = read_status(run_dir) if decision.action == "resume" else None
+            write_status(run_dir, "running", (prev or {}).get("step", 0))
+            (run_dir / "config.yaml").write_text(
+                yaml.safe_dump(resolved, sort_keys=False)
+            )
+            (run_dir / "overrides.yaml").write_text(
+                yaml.safe_dump(overrides, sort_keys=False)
+            )
+            trainer = None
+            try:
+                trainer = _train(cfg, tc, run_dir, decision, overrides, moved)
+            except BaseException as e:
+                step = trainer.step if trainer is not None else 0
+                tb = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                last = read_status(run_dir) or {}
+                write_status(run_dir, "failed", max(step, last.get("step", 0)), tb)
+                print(f"[run] {cfg.run_id} FAILED: {e!r}", flush=True)
+                raise
+            write_status(run_dir, "done", trainer.step)
+            print(f"[run] {cfg.run_id} done at step {trainer.step}", flush=True)
+            empty_cache(trainer.device)
+    return run_dir
+
+
+def _train(cfg, tc, run_dir: Path, decision: Decision, overrides, moved):
+    from .train import RunLayout, Trainer
+
+    trainer = Trainer(tc, layout=RunLayout.run())
+    host = socket.gethostname()
+    flops = estimate_flops_per_token(tc.model)
+    trainer.extra_meta = {
+        "run_id": str(cfg.run_id),
+        "experiment": str(cfg.name),
+        "seed": int(cfg.seed),
+        "tag": str(cfg.tag),
+        "overrides": overrides,
+        "host": host,
+        "pid": os.getpid(),
+        "launched_at": _now(),
+        "git": git_info(),
+        "versions": versions(),
+        "flops_per_token": flops,
+        "compute_match": compute_match(cfg.model),
+        "moved_previous_to": str(moved) if moved else None,
+    }
+    print(
+        f"[run] device={trainer.device}  params={trainer.model.param_counts()['total']:,}"
+        f"  flops/token={flops['total']:,}",
+        flush=True,
+    )
+
+    ckpt = run_dir / LAST
+    if decision.action == "resume" and ckpt.exists():
+        trainer.load_checkpoint(ckpt)
+        _trim_train_log(trainer.csv_path, trainer.step)
+        print(f"[run] resumed from {ckpt} at step {trainer.step}", flush=True)
+        meta_path = run_dir / "meta.json"
+        meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
+        meta.setdefault("resumes", []).append(
+            {
+                "at_step": trainer.step,
+                "at": _now(),
+                "host": host,
+                "pid": os.getpid(),
+                "git": trainer.extra_meta["git"],
+                "overrides": overrides,
+            }
+        )
+        meta_path.write_text(json.dumps(meta, indent=2, default=str))
+    elif decision.action == "resume":
+        # interrupted before the first checkpoint: same config, same seed, so
+        # starting from step 0 IS the same run
+        print("[run] no checkpoint yet; restarting from step 0", flush=True)
+        if trainer.csv_path.exists():
+            trainer.csv_path.unlink()
+            trainer._csv_started = False
+
+    def on_ckpt(t):
+        write_status(run_dir, "running", t.step)
+        _halt_hook(t.step)
+
+    trainer.on_checkpoint = on_ckpt
+    trainer.train()
+    trainer.save_checkpoint()
+    return trainer
+
+
+def _main(cfg: DictConfig) -> None:
+    from hydra.core.hydra_config import HydraConfig
+    from hydra.types import RunMode
+
+    hc = HydraConfig.get()
+    try:
+        launch(cfg, list(hc.overrides.task))
+    except RunRefused as e:
+        print(f"[run] REFUSED: {e}", file=sys.stderr, flush=True)
+        if hc.mode == RunMode.MULTIRUN:
+            return  # the other jobs of the sweep still run
+        sys.exit(2)
+
+
+def main() -> None:
+    import hydra
+
+    hydra.main(version_base="1.3", config_path="../conf", config_name="config")(
+        _main
+    )()
+
+
+if __name__ == "__main__":
+    main()
