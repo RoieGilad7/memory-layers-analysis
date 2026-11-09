@@ -24,7 +24,7 @@ import os
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import torch
 import yaml
@@ -42,7 +42,15 @@ from .devices import (
 from .model import GPT, GPTConfig
 from .readlog import ReadLogWriter, SlotUsageCounter, bytes_per_token
 
-__all__ = ["TrainConfig", "Trainer", "load_config", "build_optimizer", "main"]
+__all__ = [
+    "TrainConfig",
+    "Trainer",
+    "RunLayout",
+    "load_config",
+    "build_optimizer",
+    "atomic_torch_save",
+    "main",
+]
 
 CSV_FIELDS = [
     "step",
@@ -126,6 +134,52 @@ class TrainConfig:
     def tokens_per_step(self) -> int:
         block = self.model.get("block_size", 512)
         return self.train.micro_batch_size * self.train.grad_accum_steps * block
+
+
+@dataclass(frozen=True)
+class RunLayout:
+    """Where the Trainer writes inside its out_dir.
+
+    `legacy` is what `python -m memlayers.train` has always written; `run` is
+    the run-dir layout of `python -m memlayers.run`.
+    """
+
+    init_weights: str = "init_weights.pt"
+    checkpoint: str = "ckpt.pt"
+    train_log: str = "log.csv"
+
+    @classmethod
+    def legacy(cls) -> "RunLayout":
+        return cls()
+
+    @classmethod
+    def run(cls) -> "RunLayout":
+        return cls(
+            init_weights="checkpoints/step_000000.pt",
+            checkpoint="checkpoints/last.pt",
+            train_log="train_log.csv",
+        )
+
+
+def atomic_torch_save(obj: Any, path: str | Path) -> Path:
+    """torch.save to a temporary file in the same dir, fsync, then rename.
+
+    A write cut off half way (a crash, a full disk, a closed laptop) leaves the
+    previous file intact: the rename is the only step that touches `path`.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    try:
+        with open(tmp, "wb") as fh:
+            torch.save(obj, fh)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+    return path
 
 
 def _coerce(value: str) -> Any:
@@ -224,11 +278,21 @@ def cosine_warmup(step: int, warmup: int, total: int, min_ratio: float) -> float
 
 # ----------------------------------------------------------------------------- trainer
 class Trainer:
-    def __init__(self, cfg: TrainConfig, device: Optional[torch.device] = None):
+    def __init__(
+        self,
+        cfg: TrainConfig,
+        device: Optional[torch.device] = None,
+        layout: Optional[RunLayout] = None,
+    ):
         self.cfg = cfg
         self.device = device or pick_device(cfg.runtime.device)
         self.out_dir = Path(cfg.runtime.out_dir)
         self.out_dir.mkdir(parents=True, exist_ok=True)
+        self.layout = layout or RunLayout.legacy()
+        # run.py hooks: extra keys merged into meta.json, and a callback run
+        # after every periodic checkpoint (it updates status.json)
+        self.extra_meta: Dict[str, Any] = {}
+        self.on_checkpoint: Optional[Callable[["Trainer"], None]] = None
 
         torch.manual_seed(cfg.train.seed)
 
@@ -292,7 +356,7 @@ class Trainer:
             and (bool(cfg.train.read_logging) or bool(cfg.train.track_slot_usage))
         )
 
-        self.csv_path = self.out_dir / "log.csv"
+        self.csv_path = self.out_dir / self.layout.train_log
         self._csv_started = self.csv_path.exists()
 
     # ---- real data ----------------------------------------------------------
@@ -391,8 +455,8 @@ class Trainer:
     # ---- bookkeeping --------------------------------------------------------
     def save_initial_weights(self) -> Path:
         """Step-0 snapshot, so later analysis can tell learned structure from init."""
-        path = self.out_dir / "init_weights.pt"
-        torch.save(
+        path = self.out_dir / self.layout.init_weights
+        atomic_torch_save(
             {
                 "step": 0,
                 "model": {
@@ -416,6 +480,11 @@ class Trainer:
         }
 
     def write_meta(self) -> Path:
+        path = self.out_dir / "meta.json"
+        path.write_text(json.dumps(self.meta_dict(), indent=2, default=str))
+        return path
+
+    def meta_dict(self) -> dict:
         mem = self.model.memory_layers
         meta = {
             "config": self.config_dict(),
@@ -447,9 +516,8 @@ class Trainer:
                 for i, m in mem.items()
             },
         }
-        path = self.out_dir / "meta.json"
-        path.write_text(json.dumps(meta, indent=2, default=str))
-        return path
+        meta.update(self.extra_meta)
+        return meta
 
     def _log_csv(self, row: dict) -> None:
         mode = "a" if self._csv_started else "w"
@@ -471,8 +539,8 @@ class Trainer:
 
     # ---- checkpointing ------------------------------------------------------
     def save_checkpoint(self, path: Optional[Path] = None) -> Path:
-        path = Path(path or self.out_dir / "ckpt.pt")
-        torch.save(
+        path = Path(path or self.out_dir / self.layout.checkpoint)
+        atomic_torch_save(
             {
                 "step": self.step,
                 "tokens_seen": self.tokens_seen,
@@ -609,6 +677,8 @@ class Trainer:
                     )
             if cfg.ckpt_every and self.step % cfg.ckpt_every == 0:
                 self.save_checkpoint()
+                if self.on_checkpoint is not None:
+                    self.on_checkpoint(self)
 
         if self.read_writer is not None:
             self.read_writer.close()
