@@ -1,0 +1,8 @@
+run_id,experiment,seed,tag,rule,gating,pass,run_verdict,detail
+pkm-s0-pilot,pkm,0,pilot,finite,True,True,pass,"{""bad_eval"": [], ""eval_loss_rows"": 36, ""first_bad_train_step"": null, ""train_rows"": 150}"
+pkm-s0-pilot,pkm,0,pilot,no_divergence,True,True,pass,"{""at_step"": 680, ""factor"": 1.5, ""worst_ratio_to_running_min"": 1.182499}"
+pkm-s0-pilot,pkm,0,pilot,learned,True,True,pass,"{""drop"": 0.532801, ""final_loss"": 5.040804563919119, ""init_loss"": 10.789423031272198, ""min_drop"": 0.4}"
+pkm-s0-pilot,pkm,0,pilot,not_rising,True,True,pass,"{""excess"": 0.0, ""final_loss"": 5.040804563919119, ""min_loss"": 5.040804563919119, ""tolerance"": 0.005}"
+pkm-s0-pilot,pkm,0,pilot,flattening,False,,pass,"{""drop_per_token_last"": 1.7675110995482426e-08, ""drop_per_token_prev"": 5.491237285091513e-08, ""last_interval"": [1000, 1500], ""last_interval_relative_drop"": 0.027922, ""ratio"": 0.3218784779792641}"
+pkm-s0-pilot,pkm,0,pilot,coverage,True,True,pass,"{""coverage"": {""layer3"": 0.9999542236328125}, ""min_coverage"": 0.5}"
+pkm-s0-pilot,pkm,0,pilot,fact_learning,True,True,pass,"{""control_test_top1"": 0.004, ""frequent_test_top1"": 0.016667, ""ratio"": 4.16675, ""required_ratio"": 2.0}"

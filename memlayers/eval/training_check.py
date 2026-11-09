@@ -9,7 +9,7 @@ Gating rules (thresholds in `eval.training_check`):
   not_rising      final pile_avg loss not above its minimum over the eval
                   points by more than `rising_tolerance` (0.5%)
   coverage        memory runs: final coverage of every memory layer at least
-                  `min_coverage` (0.5; set from the pilot in prompt 5)
+                  `min_coverage` (0.8, set from the pilot: reports/train5_gpu_pilot_report.md)
   fact_learning   frequent-tier test top-1 at least `fact_ratio` (2) x the
                   control's, and above it (the A18 rule)
 Reported, not gating:
@@ -33,7 +33,7 @@ DEFAULTS = dict(
     divergence_factor=1.5,
     min_drop_from_init=0.40,
     rising_tolerance=0.005,
-    min_coverage=0.5,
+    min_coverage=0.8,
     fact_ratio=2.0,
 )
 

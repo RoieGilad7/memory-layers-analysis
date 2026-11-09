@@ -14,7 +14,7 @@ training_check:
   divergence_factor: 1.5
   min_drop_from_init: 0.40
   rising_tolerance: 0.005
-  min_coverage: 0.5        # placeholder until the pilot (training prompt 5)
+  min_coverage: 0.8        # from the pilot: final 0.99995; see train5 report
   fact_ratio: 2.0
 readlog:
   tokens_per_subject: 1000000   # the readlog_tokens budget; the pilot sets it

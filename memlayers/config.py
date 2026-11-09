@@ -124,7 +124,7 @@ class TrainingCheckCfg:
     divergence_factor: float = 1.5
     min_drop_from_init: float = 0.40
     rising_tolerance: float = 0.005
-    min_coverage: float = 0.5  # set from the pilot in training prompt 5
+    min_coverage: float = 0.8  # from the pilot (reports/train5_gpu_pilot_report.md)
     fact_ratio: float = 2.0
 
 

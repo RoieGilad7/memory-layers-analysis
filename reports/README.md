@@ -19,6 +19,7 @@ current source, and the numbers in steps 2a–2e are superseded by it.
 | [`train2_evaluation_report.md`](train2_evaluation_report.md) | **T2** — training prompt 2: `memlayers/eval/` (registry, three built-in metrics, fixed eval sets, schedule, training check), `memlayers.evaluate`, the A18 regression | **current** for evaluation |
 | [`train3_logging_compare_report.md`](train3_logging_compare_report.md) | **T3** — training prompt 3: `memlayers/runlog/` (one run logger, optional W&B mirror), `memlayers.wandb_sync`, `memlayers.compare` (tables, plots, X2, the dense rule); smoke runs on the committed 1% sample | **current** for logging and compare |
 | [`train4_readlogs_report.md`](train4_readlogs_report.md) | **T4** — training prompt 4: the read-log pass and `ReadLog` reader, `readlog_tokens`, EvalContext helpers for the analysis metrics, `docs/metrics_interface.md`, the metric test kit | **current** for read logs and the metric interface |
+| [`train5_gpu_pilot_report.md`](train5_gpu_pilot_report.md) | **T5** — training prompt 5: CUDA/Colab runtimes and precision rules, the CI smoke job, the 1,500-step real-data pilot, the chosen thresholds, and the Phase 1 commands | **current** — read this before starting Phase 1 |
 
 The freeze and upload (part B of data step 6) and steps 3–5 (training runs,
 read-log analysis) have not started.
