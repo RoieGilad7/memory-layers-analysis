@@ -16,6 +16,7 @@ current source, and the numbers in steps 2a–2e are superseded by it.
 | [`data5_fix_report.md`](data5_fix_report.md) | **2e** — the answer-leak fix, the first template rewrite, re-validation, the three A18 runs, the cleanup and review pass | **historical for the final figures** — superseded by data step 6; its answer-leak fix (§2) and cleanup (§8) still stand |
 | [`data6_template_fix_report.md`](data6_template_fix_report.md) | **2f** — every template now states the fact it carries, the `{obj}`/`{subj}` grammar fix, the rebuild, A1–A18 and the freeze figures | **current — the source of truth for data v1** |
 | [`train1_run_layer_report.md`](train1_run_layer_report.md) | **T1** — training prompt 1: Hydra configs under `conf/`, `python -m memlayers.run`, the run dir lifecycle, safe re-runs and resume, FLOPs per token | **current** for the run layer (prompts 2–5 extend it) |
+| [`train2_evaluation_report.md`](train2_evaluation_report.md) | **T2** — training prompt 2: `memlayers/eval/` (registry, three built-in metrics, fixed eval sets, schedule, training check), `memlayers.evaluate`, the A18 regression | **current** for evaluation |
 
 The freeze and upload (part B of data step 6) and steps 3–5 (training runs,
 read-log analysis) have not started.
