@@ -1,0 +1,13 @@
+# @package _global_
+# The smoke twin (frozen random keys): as `smoke`, for ~50 steps on the committed 1% sample (data/v1_sample): every
+# file, every built-in metric, the training check, in well under a minute on
+# CPU. A health check of the run layer, not an experiment. smoke_randkey and
+# smoke_dense are its twin and dense counterparts, so compare can be tried on
+# the full pkm / twin / dense layout.
+defaults:
+  - override /model: smoke_pkm_randkey
+  - override /data: sample
+  - override /train: smoke
+  - override /eval: smoke
+
+name: smoke_randkey

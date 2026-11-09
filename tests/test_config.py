@@ -20,7 +20,15 @@ from memlayers.train import load_config
 ROOT = Path(__file__).resolve().parent.parent
 OLD = ROOT / "memlayers" / "configs"
 
-EXPERIMENTS = ["pkm", "pkm_randkey", "dense", "peer", "smoke"]
+EXPERIMENTS = [
+    "pkm",
+    "pkm_randkey",
+    "dense",
+    "peer",
+    "smoke",
+    "smoke_randkey",
+    "smoke_dense",
+]
 RUNTIMES = ["auto", "mac", "cpu", "cuda", "colab"]
 
 
@@ -31,7 +39,7 @@ def _groups(name):
 def test_the_tree_has_the_fixed_groups():
     assert _groups("experiment") == sorted(EXPERIMENTS)
     assert _groups("runtime") == sorted(RUNTIMES)
-    assert _groups("data") == ["fake", "v1"]
+    assert _groups("data") == ["fake", "sample", "v1"]
     assert _groups("train") == ["smoke", "tier1"]
     assert _groups("eval") == ["off", "smoke", "standard"]
     assert _groups("logging") == ["files", "wandb"]

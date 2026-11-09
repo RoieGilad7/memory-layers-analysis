@@ -53,7 +53,8 @@ def eval_sets_dir(dcfg) -> Path:
 
 
 def manifest_file(dcfg) -> Path:
-    return Path(dcfg.manifest_dir) / f"eval_sets_{dcfg.version}.json"
+    small = "_small" if getattr(dcfg, "small", False) else ""
+    return Path(dcfg.manifest_dir) / f"eval_sets_{dcfg.version}{small}.json"
 
 
 def _sha(path: Path) -> str:
@@ -197,7 +198,6 @@ def load_fact_sample(dcfg) -> List[str]:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    from data.common import load_config
 
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -207,8 +207,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--data-config", default=None, help="default configs/data/<version>.yaml"
     )
     ap.add_argument("--check", action="store_true", help="verify only")
+    ap.add_argument("--small", action="store_true", help="the 1%% build")
+    ap.add_argument(
+        "--root", default=None, help="with --small: re-root it, e.g. data/v1_sample"
+    )
     a = ap.parse_args(argv)
-    dcfg = load_config(a.data_config or f"configs/data/{a.version}.yaml")
+    from memlayers.train import load_bundle_config
+
+    dcfg = load_bundle_config(
+        {
+            "data_config": a.data_config or f"configs/data/{a.version}.yaml",
+            "small": a.small,
+            "root": a.root,
+        }
+    )
     if a.check:
         for k, v in verify(dcfg).items():
             print(f"{k}: OK {v}")

@@ -79,10 +79,9 @@ class EvalResources:
         source = data["source"] if isinstance(data, dict) else data.source
         if source != "real":
             return cls(None, source, run_dir)
-        from data.common import load_config as load_data_config
+        from memlayers.train import load_bundle_config
 
-        path = data["data_config"] if isinstance(data, dict) else data.data_config
-        return cls(load_data_config(path), source, run_dir)
+        return cls(load_bundle_config(data), source, run_dir)
 
     # -- availability --------------------------------------------------------
     def why_missing(self, what: str) -> Optional[str]:

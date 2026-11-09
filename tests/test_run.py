@@ -22,7 +22,16 @@ from memlayers.train import RunLayout, Trainer
 from test_train import real_bundle  # noqa: F401  (fixture)
 
 ROOT = Path(__file__).resolve().parent.parent
-SMOKE = ["experiment=smoke", "runtime=cpu", "train.steps=20", "train.ckpt_every=5"]
+# the smoke experiment on fake data and the vocab-257 tiny model: the run-layer
+# tests exercise files and states, not metrics, so they skip the 1% sample
+SMOKE = [
+    "experiment=smoke",
+    "data=fake",
+    "model=tiny_pkm",
+    "runtime=cpu",
+    "train.steps=20",
+    "train.ckpt_every=5",
+]
 
 
 def _cfg(tmp_path, *extra):

@@ -512,12 +512,11 @@ def check_eval_sets(cfg) -> Optional[Dict[str, str]]:
     committed manifest. Fake-data runs have none (None)."""
     if cfg.data.source != "real":
         return None
-    from data.common import load_config as load_data_config
-
     from .eval.eval_sets import EvalSetMismatch, verify
+    from .train import load_bundle_config
 
     try:
-        return verify(load_data_config(cfg.data.data_config))
+        return verify(load_bundle_config(cfg.data))
     except EvalSetMismatch as e:
         raise RunRefused(f"eval sets: {e}") from None
 

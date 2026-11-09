@@ -1,0 +1,19 @@
+# Smoke model on GPT-2 tokens: tiny PKM, frozen random keys (the smoke twin). d64, 3 layers, block 512 (the
+# packed bundle's sequence length), vocab 50257. CPU-fast.
+vocab_size: 50257
+block_size: 512
+n_layer: 3
+n_head: 4
+n_embd: 64
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: [1]
+memory_kind: pkm
+memory:
+  num_keys: 16
+  topk: 4
+  heads: 2
+  dim_head: 32
+  query_batchnorm: true
+  freeze_keys: true

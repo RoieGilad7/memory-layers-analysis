@@ -113,6 +113,39 @@ class DataCfg:
     data_config: str = "configs/data/v1.yaml"
     bin_path: Optional[str] = None  # None -> <root>/tokens/train.bin
     verify: bool = True  # check sha256s before step 0
+    # the 1% build (`--small`): verified against data/manifests/<v>_small.json.
+    # `root` re-roots it, e.g. at the committed data/v1_sample/.
+    small: bool = False
+    root: Optional[str] = None
+
+
+def load_bundle_config(data: Any):
+    """The data.common.DataConfig a run's `data` section points at.
+
+    `data` is a DataCfg, a dict or a DictConfig. With `small` the 1% build's
+    config is used (its own manifest); `root` moves that build's root, which
+    is how the committed data/v1_sample/ is read.
+    """
+    import yaml as _yaml
+
+    from data.common import DataConfig
+
+    get = (
+        (lambda k, d=None: data.get(k, d))
+        if hasattr(data, "get")
+        else (lambda k, d=None: getattr(data, k, d))
+    )
+    path = get("data_config")
+    raw = _yaml.safe_load(Path(path).read_text())
+    small = bool(get("small", False))
+    root = get("root", None)
+    if root:
+        if not small:
+            raise ValueError("data.root re-roots the 1% build; set data.small=true too")
+        raw["small"]["root"] = str(root)
+    cfg = DataConfig(raw=raw, small=small)
+    cfg.config_path = str(path)
+    return cfg
 
 
 @dataclass
@@ -372,12 +405,11 @@ class Trainer:
         would produce numbers nobody could reproduce, so it is a hard stop
         rather than a warning.
         """
-        from data.common import load_config as load_data_config
         from data.fetch import load_manifest, require_verified
         from data.manifest import data_sha256
         from data.loader import PackedDataset
 
-        dcfg = load_data_config(self.cfg.data.data_config)
+        dcfg = load_bundle_config(self.cfg.data)
         version = self.cfg.data.version
         if self.cfg.data.verify:
             result = require_verified(dcfg, version)

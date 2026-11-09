@@ -27,6 +27,8 @@ def run_overrides(data_config, out_root, steps=10, eval_steps="[0,5,10]"):
     return [
         "experiment=smoke",
         "data=v1",
+        "data.small=false",
+        "data.root=null",
         f"data.data_config={data_config}",
         "model=tiny_pkm",
         "model.vocab_size=50257",
