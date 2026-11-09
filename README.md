@@ -72,6 +72,7 @@ memlayers/              the package (reused unchanged for the real runs)
   runlog/               RunLogger: the run-dir files first, then optional sinks (W&B)
   wandb_sync.py         backfill W&B from finished run dirs (idempotent)
   compare.py            many run dirs -> runs/groups/curves/training_check/X2 tables + plots
+  readlog_pass.py       which slots the fixed readlog_tokens read, per checkpoint (memmap ReadLog)
   devices.py            cuda > mps > cpu selection, sync, peak memory, RNG state
   configs/              8 flat YAML configs, superseded by conf/; kept for memlayers.train and bench/
 
@@ -117,7 +118,7 @@ step0_access/           one re-runnable script per step-0 access check
   run_all.sh            runs them all (with a per-check watchdog)
 
 logs/*.json             committed: the evidence behind the step-0 report
-tests/                  342 pytest tests
+tests/                  359 pytest tests
 reports/                the seven step reports, indexed in reports/README.md
 ```
 
@@ -166,7 +167,7 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 
 ```bash
 # tests
-.venv/bin/python -m pytest tests/ -q                 # 342 tests, CPU, ~2 min
+.venv/bin/python -m pytest tests/ -q                 # 359 tests, CPU, ~2 min
 
 # a run: experiment + seed -> runs/<experiment>-s<seed>[-<tag>]/
 .venv/bin/python -m memlayers.run experiment=smoke runtime=cpu   # ~2 s health check
@@ -186,6 +187,8 @@ hf auth login      # NOT `huggingface-cli`, which no longer exists in huggingfac
 # and backfill runs done offline or with logging=files
 .venv/bin/python -m memlayers.run experiment=pkm seed=0 logging=wandb
 .venv/bin/python -m memlayers.wandb_sync runs/pkm-s0 runs/pkm-s1
+# read logs for the analysis metrics (docs/metrics_interface.md)
+.venv/bin/python -m memlayers.readlog_pass run_dir=runs/pkm-s0 step=[init,final]
 # compare many runs: tables + plots under --out
 .venv/bin/python -m memlayers.compare runs/ --out reports/compare/
 
