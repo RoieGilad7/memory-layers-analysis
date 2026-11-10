@@ -26,14 +26,7 @@ from typing import Any, Dict, List, Optional
 __all__ = ["sync_run", "main"]
 
 
-def _train_rows(run_dir: Path) -> List[Dict[str, Any]]:
-    p = run_dir / "train_log.csv"
-    if not p.exists():
-        p = run_dir / "log.csv"  # a pre-run-layer dir
-    if not p.exists():
-        return []
-    with open(p, newline="") as fh:
-        return list(csv.DictReader(fh))
+from .runlog.wandb_sink import _train_rows  # noqa: E402  (one reader for both)
 
 
 def sync_run(

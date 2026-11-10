@@ -369,3 +369,113 @@ def test_wandb_sync_after_a_crash_sends_what_the_server_lacks(tmp_path):
     again = sync_run(tmp_path, module=fw)
     assert again == {"train": 0, "eval_points": 0, "final": 0, "files": 0}
     assert sorted(fw.server_steps("crash01")) == list(range(1, 7))
+
+
+def test_a_failing_wandb_api_on_resume_never_stops_the_run(
+    tmp_path, monkeypatch, capsys
+):
+    """recover() asks the W&B API after an unclean exit; if that API fails, the
+    mirror goes off with a warning and the run carries on."""
+    fw = FakeWandb()
+    monkeypatch.setattr(wandb_sink, "WANDB_MODULE", fw)
+    over = [*FAKE_DATA, f"out_root={tmp_path}", "logging=wandb"]
+    run = launch(compose(over))
+    sync = json.loads((run / "wandb_sync.json").read_text())
+    sync["online"]["clean"] = False  # as if the session had died
+    (run / "wandb_sync.json").write_text(json.dumps(sync))
+    st = read_status(run)
+    st["state"] = "failed"
+    (run / "status.json").write_text(json.dumps(st))
+
+    def broken_api(timeout=None):
+        raise ConnectionError("W&B API unreachable")
+
+    monkeypatch.setattr(fw, "Api", broken_api)
+    launch(compose([*over, "train.steps=10"]))
+    assert read_status(run)["state"] == "done" and read_status(run)["step"] == 10
+    err = capsys.readouterr().err
+    assert "could not reconcile W&B" in err and "wandb_sync" in err
+    # still unclean, so a later wandb_sync reconciles with the server
+    assert not json.loads((run / "wandb_sync.json").read_text())["online"]["clean"]
+
+
+def test_an_api_error_is_not_read_as_an_empty_server(tmp_path):
+    from memlayers.runlog import WandbSink
+
+    fw = FakeWandb()
+
+    class FlakyApi:
+        default_entity = "e"
+
+        def run(self, path):
+            raise TimeoutError("read timed out")
+
+    fw.Api = lambda timeout=None: FlakyApi()
+    s = WandbSink(tmp_path, {"mode": "online"}, "x1", "r", "g", {}, [], module=fw)
+    with pytest.raises(TimeoutError):
+        s.server_history()
+    # a real "not found" is the one error that means "nothing uploaded"
+    fw2 = FakeWandb()
+    s2 = WandbSink(
+        tmp_path, {"mode": "online"}, "never-seen", "r", "g", {}, [], module=fw2
+    )
+    assert s2.server_history() == (set(), set())
+
+
+def test_eval_columns_that_came_back_empty_are_not_eval_points(tmp_path):
+    from memlayers.runlog import WandbSink
+
+    fw = FakeWandb()
+    run = fw.init(id="dense1")
+    run.logged = [
+        {
+            "step": 1,
+            "tokens_seen": 10,
+            "train/loss": 9.0,
+            "heldout_quality/loss/pile_avg": None,
+        },
+        {
+            "step": 2,
+            "tokens_seen": 20,
+            "heldout_quality/loss/pile_avg": 8.0,
+            "train/loss": None,
+        },
+    ]
+    run.finished = 0
+    s = WandbSink(tmp_path, {"mode": "online"}, "dense1", "r", "g", {}, [], module=fw)
+    steps, points = s.server_history()
+    assert steps == {1} and points == {(2, "during")}
+
+
+def test_a_posthoc_session_does_not_mark_a_crashed_run_clean(tmp_path):
+    from memlayers.runlog import WandbSink
+
+    fw = FakeWandb()
+    a = WandbSink(tmp_path, {"mode": "online"}, "c1", "r", "g", {}, [], module=fw)
+    a.start()  # a training session that then dies: clean=False
+    ev = WandbSink(
+        tmp_path, {"mode": "online"}, "c1", "r", "g", {}, [], job_type="eval", module=fw
+    )
+    ev.eval([dict(_eval_row(0), stage="posthoc")])
+    ev.finish("posthoc", 0)
+    assert not json.loads((tmp_path / "wandb_sync.json").read_text())["online"]["clean"]
+
+
+def test_sync_state_is_not_rewritten_on_every_train_row(tmp_path, monkeypatch):
+    from memlayers.runlog.wandb_sink import SyncState
+
+    fw = FakeWandb()
+    monkeypatch.setattr(wandb_sink, "WANDB_MODULE", fw)
+    n = {"saves": 0}
+    real = SyncState.save
+
+    def counting(self):
+        n["saves"] += 1
+        return real(self)
+
+    monkeypatch.setattr(SyncState, "save", counting)
+    run = launch(
+        compose([*FAKE_DATA, f"out_root={tmp_path}", "logging=wandb", "train.steps=20"])
+    )
+    rows = len((run / "train_log.csv").read_text().splitlines()) - 1
+    assert rows == 20 and n["saves"] < 10  # start, eval points, finish -- not 20+

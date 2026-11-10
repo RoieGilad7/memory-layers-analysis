@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -170,6 +171,7 @@ def build(
     per_tier: int = 300,
     readlog_tokens_per_subject: int = READLOG_TOKENS_PER_SUBJECT,
     readlog_bio_fraction: float = READLOG_BIO_FRACTION,
+    replace_manifest: bool = False,
 ) -> Dict[str, Any]:
     """`per_subject` / `per_tier` are for test fixtures only; v1 uses the
     defaults. The read-log budget is `eval.readlog.tokens_per_subject`: the
@@ -230,6 +232,19 @@ def build(
         mf = manifest_file(dcfg)
         mf.parent.mkdir(parents=True, exist_ok=True)
         old = json.loads(mf.read_text()) if mf.exists() else {}
+        changed = {
+            n: (old["sets"][n]["sha256"][:16], e["sha256"][:16])
+            for n, e in entries.items()
+            if n in old.get("sets", {}) and old["sets"][n]["sha256"] != e["sha256"]
+        }
+        if changed and not replace_manifest:
+            raise EvalSetMismatch(
+                f"the sets just built do not match the committed {mf}: "
+                + ", ".join(f"{n} {a} -> {b}" for n, (a, b) in changed.items())
+                + ". Every run is evaluated against the committed hashes, so a "
+                "mismatch means different data or code. If the change is intended "
+                "(e.g. a new read-log budget), pass --replace-manifest and commit it."
+            )
         # keep any set this build does not make
         merged = dict(old.get("sets", {}))
         merged.update(entries)
@@ -297,6 +312,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--data-config", default=None, help="default configs/data/<version>.yaml"
     )
     ap.add_argument("--check", action="store_true", help="verify only")
+    ap.add_argument(
+        "--replace-manifest",
+        action="store_true",
+        help="allow the build to change hashes in the committed manifest",
+    )
     ap.add_argument("--small", action="store_true", help="the 1%% build")
     ap.add_argument(
         "--data-root",
@@ -327,7 +347,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         for k, v in verify(dcfg, RUN_START_SETS + (READLOG_SET,)).items():
             print(f"{k}: OK {v}")
         return 0
-    man = build(dcfg, readlog_tokens_per_subject=a.readlog_tokens_per_subject)
+    try:
+        man = build(
+            dcfg,
+            readlog_tokens_per_subject=a.readlog_tokens_per_subject,
+            replace_manifest=a.replace_manifest,
+        )
+    except EvalSetMismatch as e:
+        print(f"[eval_sets] REFUSED: {e}", file=sys.stderr)
+        return 2
     for k, v in man["sets"].items():
         print(f"{k}: {v['n_items']:,} items, {v['bytes']:,} B, sha256 {v['sha256']}")
     print(f"-> {manifest_file(dcfg)}")

@@ -58,18 +58,25 @@ class FilesSink:
         self.run_dir = Path(run_dir)
         self.train_path = self.run_dir / train_log
         self.write_status_on_finish = write_status_on_finish
+        self._fields: Optional[List[str]] = None  # the header in the file
 
     # ---- train_log.csv -----------------------------------------------------
     def train(self, row: Dict[str, Any]) -> None:
         started = self.train_path.exists() and self.train_path.stat().st_size > 0
-        fields: Sequence[str] = TRAIN_FIELDS
-        if started:
-            # resuming a run whose log predates a column change: keep writing
-            # under the header already in the file, or values shift columns
-            with open(self.train_path, newline="") as fh:
-                existing = next(csv.reader(fh), None)
-            if existing and existing != TRAIN_FIELDS:
-                fields = existing
+        if not started:
+            self._fields = None
+        if self._fields is None:
+            fields: Sequence[str] = TRAIN_FIELDS
+            if started:
+                # resuming a run whose log predates a column change: keep
+                # writing under the header already in the file, or values
+                # shift columns. Read once, not on every row.
+                with open(self.train_path, newline="") as fh:
+                    existing = next(csv.reader(fh), None)
+                if existing and existing != TRAIN_FIELDS:
+                    fields = existing
+            self._fields = list(fields)
+        fields = self._fields
         with open(self.train_path, "a" if started else "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=list(fields), extrasaction="ignore")
             if not started:

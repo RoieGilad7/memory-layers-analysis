@@ -183,27 +183,39 @@ def readlog_pass(
             f"readlog_tokens on disk was built with {rl_set['tokens_per_subject']:,} tokens "
             f"per subject but this run says eval.readlog.tokens_per_subject={want:,}. "
             f"Rebuild with `python -m memlayers.eval.eval_sets --version {dcfg.version} "
-            f"--readlog-tokens-per-subject {want}` (this changes its hash, by design)."
+            f"--readlog-tokens-per-subject {want} --replace-manifest` (this changes "
+            "its hash, by design; commit the new manifest)."
         )
     meta_path = run_dir / "meta.json"
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {}
-    old_hash = (meta.get("eval_sets") or {}).get(READLOG_SET)
-    others = (
-        [p for p in (run_dir / "readlogs").glob("step_*")]
-        if (run_dir / "readlogs").exists()
-        else []
-    )
-    if old_hash and old_hash != rl_hash and others and not force:
-        raise ReadlogRefused(
-            f"{run_dir.name} already has read logs on readlog_tokens {old_hash[:16]}, and the "
-            f"set is now {rl_hash[:16]}. Read-log metrics must not mix the two: delete "
-            f"{run_dir / 'readlogs'} or pass force=true to rewrite every step you name."
-        )
-
     ckpts: List[Tuple[int, Path]] = []
     for s in steps:
         ckpts += find_checkpoints(run_dir, str(s))
     ckpts = sorted(dict(ckpts).items())
+
+    # every read log in one run dir is on ONE readlog_tokens set (meta.json
+    # records that one hash, compare relies on it). Each step's own manifest
+    # says which set it used; a step this pass does not rewrite that is on
+    # another set blocks the pass, even with force=true.
+    rewriting = {int(s) for s, _ in ckpts}
+    stale = []
+    for d in (
+        sorted((run_dir / "readlogs").glob("step_*"))
+        if (run_dir / "readlogs").exists()
+        else []
+    ):
+        mf = d / "manifest.json"
+        if not mf.exists() or int(d.name.split("_")[1]) in rewriting:
+            continue
+        h = (json.loads(mf.read_text()).get("eval_set") or {}).get("sha256")
+        if h != rl_hash:
+            stale.append(f"{d.name} ({str(h)[:16]})")
+    if stale:
+        raise ReadlogRefused(
+            f"{run_dir.name} has read logs on another readlog_tokens set than the current "
+            f"{rl_hash[:16]}: {', '.join(stale)}. One run dir must not mix two sets: "
+            "re-run those steps too (name them in step=[...] with force=true) or delete them."
+        )
     for s, _ in ckpts:
         if readlog_dir(run_dir, s).exists() and not force:
             raise ReadlogRefused(

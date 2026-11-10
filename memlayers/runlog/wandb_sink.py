@@ -24,7 +24,6 @@ does not even build one.
 from __future__ import annotations
 
 import json
-import math
 import os
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
@@ -92,7 +91,7 @@ def _num(v) -> Optional[float]:
         f = float(v)
     except (TypeError, ValueError):
         return None
-    return f if math.isfinite(f) else f  # NaN/inf are sent as such
+    return f  # NaN/inf are sent as such: W&B shows them, and they matter
 
 
 def eval_payloads(rows: List[Dict[str, Any]]) -> List[tuple]:
@@ -217,8 +216,11 @@ class WandbSink:
             config=self.config,
             dir=self.wandb_dir,
         )
-        self.state.m["clean"] = False
-        self.state.save()
+        if self.job_type == "train":
+            # only the training session's own mirror tracks crash state; a
+            # post-hoc eval session must not mark an unclean run clean
+            self.state.m["clean"] = False
+            self.state.save()
         self.run.define_metric("tokens_seen")
         self.run.define_metric("step")
         self.run.define_metric("*", step_metric="tokens_seen")
@@ -230,8 +232,9 @@ class WandbSink:
         if step <= self.state.m["train_step"] or step in self._server_train:
             return
         self.start().log(train_payload(row))
+        # saved at eval points and at finish, not per row: on a clean finish
+        # it is written then; after a crash recover() asks the server anyway
         self.state.m["train_step"] = step
-        self.state.save()
 
     def eval(self, rows: List[Dict[str, Any]]) -> None:
         done = {tuple(p) for p in self.state.m["eval_points"]}
@@ -272,7 +275,8 @@ class WandbSink:
         self.run.summary.update({"run_state": state, "run_step": int(step)})
         self.run.finish(exit_code=0 if state == "done" else 1)
         self.run = None
-        self.state.m["clean"] = True  # finish() returned: all of it is uploaded
+        if self.job_type == "train":
+            self.state.m["clean"] = True  # finish() returned: all of it is uploaded
         self.state.save()
 
     # ---- after an unclean exit ------------------------------------------------
@@ -281,13 +285,24 @@ class WandbSink:
         this run; empty sets if it has never seen the run."""
         wb = self._wb()
         api = wb.Api(timeout=60)
-        entity = self.settings.get("entity") or api.default_entity
+        # the entity wandb.init used: the config's, else WANDB_ENTITY, else
+        # the login's default
+        entity = (
+            self.settings.get("entity")
+            or os.environ.get("WANDB_ENTITY")
+            or api.default_entity
+        )
         project = self.settings.get("project") or "memlayers"
         try:
             run = api.run(f"{entity}/{project}/{self.wandb_id}")
             hist = list(run.scan_history())
-        except Exception:  # noqa: BLE001 - not found: nothing was uploaded
-            return set(), set()
+        except Exception as e:  # noqa: BLE001
+            if "not found" in str(e).lower():
+                return set(), set()  # the server never saw this run
+            # anything else (timeout, auth, rate limit) is NOT "empty": raise,
+            # so the caller switches the mirror off instead of re-sending rows
+            # the server may already hold
+            raise
         steps, points = set(), set()
         for h in hist:
             if h.get("step") is None:
@@ -295,7 +310,11 @@ class WandbSink:
             s = int(h["step"])
             if h.get("train/loss") is not None:
                 steps.add(s)
-            keys = [k for k in h if "/" in k and not k.startswith(("train/", "_"))]
+            keys = [
+                k
+                for k, v in h.items()
+                if v is not None and "/" in k and not k.startswith(("train/", "_"))
+            ]
             if keys:
                 stage = (
                     "final"
@@ -318,7 +337,11 @@ class WandbSink:
         unclean exit in online mode the server is asked what it really has:
         rows up to `upto` it lacks are re-sent from train_log.csv / evals.csv,
         and rows past `upto` it already has are not sent again when the resumed
-        run replays those steps.
+        run replays those steps. For those replayed steps the first upload
+        wins: W&B keeps the dead session's values, while train_log.csv holds
+        the replayed ones (identical on CPU, within rounding on a GPU; the
+        alternative is the same step twice in W&B). Raises on any W&B error
+        other than "run not found"; run.py then switches the mirror off.
         """
         sent = {"train": 0, "eval_points": 0}
         if self.state.m.get("clean", True) or self.mode != "online":

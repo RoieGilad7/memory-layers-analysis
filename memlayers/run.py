@@ -609,15 +609,27 @@ def _train(
         print("[run] no checkpoint yet; restarting from step 0", flush=True)
         if trainer.csv_path.exists():
             trainer.csv_path.unlink()
-            trainer._csv_started = False
         for name in ("evals.csv", "eval_timing.csv"):
             if (run_dir / name).exists():
                 (run_dir / name).unlink()
 
     if decision.action == "resume":
-        for s in trainer.logger.sinks:
-            if hasattr(s, "recover"):
+        for s in list(trainer.logger.sinks):
+            if not hasattr(s, "recover"):
+                continue
+            try:
                 s.recover(trainer.step)
+            except Exception as e:  # noqa: BLE001 - W&B must never stop a run
+                trainer.logger.sinks.remove(s)
+                trainer.logger.disabled[s.name] = f"recover: {type(e).__name__}: {e}"
+                print(
+                    f"[runlog] WARNING: could not reconcile W&B after the restart "
+                    f"({type(e).__name__}: {e}); the {s.name} mirror is off for this "
+                    "run. The run-dir files are complete; backfill later with "
+                    f"`python -m memlayers.wandb_sync {run_dir}`.",
+                    file=sys.stderr,
+                    flush=True,
+                )
     evaluator = Evaluator(
         cfg,
         run_dir,
@@ -655,7 +667,8 @@ def _train(
         if (trainer.step, stage) not in have:
             evaluator.at_point(trainer, stage)
     trainer.train()
-    trainer.save_checkpoint()
+    if trainer.last_saved_step != trainer.step:  # the final eval point saved it
+        trainer.save_checkpoint()
     _write_training_check(cfg, run_dir, trainer)
     trainer.logger.log_files(
         [
@@ -729,15 +742,13 @@ def _write_training_check(cfg, run_dir: Path, trainer) -> None:
     from .eval.training_check import training_check
     from .eval.writers import EvalsCSV, write_json
 
-    with open(trainer.csv_path, newline="") as fh:
-        train_rows = (
-            [
+    train_rows = []
+    if trainer.csv_path.exists():  # absent with train.log_every=0
+        with open(trainer.csv_path, newline="") as fh:
+            train_rows = [
                 {"step": int(r["step"]), "loss": float(r["loss"])}
                 for r in csv.DictReader(fh)
             ]
-            if trainer.csv_path.exists()
-            else []
-        )
     th = {k: v for k, v in cfg.eval.training_check.items() if k != "enabled"}
     res = training_check(
         train_rows,

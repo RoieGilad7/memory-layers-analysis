@@ -13,3 +13,6 @@ data:
   root: /content/drive/MyDrive/memlayers/data
 logging:
   mode: offline
+# a Colab reconnect is a new VM with a new hostname: the run it left behind
+# says "running on another host", which is exactly the case to resume
+resume_foreign: true

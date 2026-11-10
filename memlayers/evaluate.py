@@ -73,7 +73,8 @@ def _upgrade_saved_config(raw: dict) -> dict:
         root = data.get("root")
         if root is None:
             data.pop("root")
-        elif data.get("small") and (Path(root) / "manifest.json").exists():
+        elif data.get("small"):
+            # the old code only accepted root together with small=true
             data["bundle"] = data.pop("root")
     return raw
 
@@ -195,9 +196,32 @@ def evaluate_run(
     validate_metric_names(names, "posthoc")
     dev = pick_device(device or cfg.runtime.device)
     resources = EvalResources.from_config(cfg.data, run_dir)
+    ckpts = find_checkpoints(run_dir, str(step))
+    if update_final:
+        # checked before any evaluation runs, not after an expensive one
+        if len(ckpts) != 1:
+            raise ValueError(
+                f"update_final=true takes one checkpoint; step={step} names "
+                f"{len(ckpts)}. Run update_final on step=final only."
+            )
+        fm = run_dir / "final_metrics.json"
+        if fm.exists():
+            import json as _json
+
+            fstep = int(_json.loads(fm.read_text())["step"])
+            ck = int(
+                torch.load(ckpts[0][1], map_location="cpu", weights_only=False).get(
+                    "step", ckpts[0][0]
+                )
+            )
+            if ck != fstep:
+                raise ValueError(
+                    f"final_metrics.json is for step {fstep}, this checkpoint is step "
+                    f"{ck}: update_final=true would mix two checkpoints"
+                )
     logger = posthoc_logger(run_dir, cfg)
     out = []
-    for s, path in find_checkpoints(run_dir, str(step)):
+    for s, path in ckpts:
         model, ck_step, tokens = _model_for(cfg, path, dev)
         t0 = time.perf_counter()
         ctx = EvalContext(
@@ -220,7 +244,9 @@ def evaluate_run(
                 ck_step, tokens, "posthoc", name, get_metric(name).metric_id, vals
             )
         logger.log_eval(rows)  # replaces earlier posthoc rows for the same keys
-        seconds = {**{"heldout_pass": p.seconds for p in ctx._pass.values()}, **seconds}
+        passes = list(ctx._pass.values())
+        if passes:  # every held-out pass this point made, summed
+            seconds = {"heldout_pass": sum(p.seconds for p in passes), **seconds}
         seconds["total"] = time.perf_counter() - t0
         append_timing(run_dir, ck_step, "posthoc", seconds)
         if update_final:

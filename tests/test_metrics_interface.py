@@ -427,3 +427,24 @@ def test_fact_recall_with_masked_slots(metric_kit):
     masked = ctx.fact_recall_with_masked_slots(LAYER, ctx.used_slots(LAYER), fids)
     assert not np.allclose(masked.margin, base.margin)
     assert ctx.memory_layers[LAYER].slot_mask is None
+
+
+def test_a_step_on_another_token_set_blocks_the_pass_even_with_force(
+    metric_kit, tmp_path
+):
+    run = tmp_path / metric_kit.run_dir.name
+    shutil.copytree(metric_kit.run_dir, run)
+    mf = run / "readlogs" / "step_000000" / "manifest.json"
+    m = json.loads(mf.read_text())
+    m["eval_set"]["sha256"] = "f" * 64  # step 0 was logged on an older set
+    mf.write_text(json.dumps(m))
+    with pytest.raises(ReadlogRefused, match="step_000000 \\(ffffffffffffffff\\)"):
+        readlog_pass(run, ["final"], force=True)
+    # naming step 0 too rewrites both, and the pass goes through
+    readlog_pass(run, ["init", "final"], force=True, device="cpu")
+    h = json.loads(mf.read_text())["eval_set"]["sha256"]
+    assert (
+        h != "f" * 64
+        and json.loads((run / "meta.json").read_text())["eval_sets"]["readlog_tokens"]
+        == h
+    )

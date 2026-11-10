@@ -152,14 +152,19 @@ def merge_final_metrics(old: dict | None, new: dict) -> dict:
             f"{new['step']}: update_final=true would mix two checkpoints. Use the "
             "final step, or leave final_metrics.json alone (rows still go to evals.csv)."
         )
-    rerun = set(new["metric_ids"]) | {k.split("/", 1)[0] for k in new["metrics"]}
+    # only metrics that produced values this time replace their old keys; a
+    # metric skipped now (an input missing on this machine) keeps its old values
+    rerun = {k.split("/", 1)[0] for k in new["metrics"]}
     metrics = {
         k: v for k, v in old["metrics"].items() if k.split("/", 1)[0] not in rerun
     }
     metrics.update(new["metrics"])
+    had_values = {k.split("/", 1)[0] for k in metrics}
     ids = {**old.get("metric_ids", {}), **new["metric_ids"]}
     skipped = {k: v for k, v in old.get("skipped", {}).items() if k not in rerun}
-    skipped.update(new.get("skipped", {}))
+    skipped.update(
+        {k: v for k, v in new.get("skipped", {}).items() if k not in had_values}
+    )
     return {
         "metrics": dict(sorted(metrics.items())),
         "metric_ids": dict(sorted(ids.items())),

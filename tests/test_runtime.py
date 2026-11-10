@@ -273,3 +273,29 @@ def test_a_run_dir_saved_before_the_data_root_change_still_loads(tmp_path):
     (run / "config.yaml").write_text(yaml.safe_dump(cfg))
     loaded = load_run_config(run).data
     assert loaded.bundle == str(ROOT / "data" / "v1_sample") and loaded.root == "data"
+    # an old Colab path that does not exist on this machine still converts
+    cfg["data"].update(small=True, root="/content/drive/MyDrive/x/v1_sample")
+    (run / "config.yaml").write_text(yaml.safe_dump(cfg))
+    assert load_run_config(run).data.bundle == "/content/drive/MyDrive/x/v1_sample"
+
+
+def test_colab_resumes_across_hostnames():
+    """A Colab reconnect is a new VM: its run says 'running on another host'."""
+    assert compose(["experiment=pkm", "runtime=colab"]).resume_foreign is True
+    for rt in ("auto", "mac", "cpu", "cuda"):
+        assert compose(["experiment=pkm", f"runtime={rt}"]).resume_foreign is False
+
+
+def test_a_rewrite_of_meta_keeps_the_resume_records(tmp_path):
+    tc = to_train_config(compose([*FAKE, f"out_root={tmp_path}"]))
+    tr = Trainer(tc)
+    tr.write_meta()
+    p = tr.out_dir / "meta.json"
+    meta = json.loads(p.read_text())
+    meta["resumes"] = [{"at_step": 0, "host": "h"}]
+    meta["device_changes"] = [{"at_step": 0}]
+    p.write_text(json.dumps(meta))
+    tr.write_meta()  # e.g. a restart from step 0
+    again = json.loads(p.read_text())
+    assert again["resumes"] == [{"at_step": 0, "host": "h"}]
+    assert again["device_changes"] == [{"at_step": 0}]

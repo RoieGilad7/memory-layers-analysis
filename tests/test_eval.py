@@ -754,3 +754,94 @@ def test_a_kill_between_the_last_checkpoint_and_the_final_eval_is_resumed(
     assert (
         json.loads((run_dir / "training_check.json").read_text())["not_evaluated"] == []
     )
+
+
+def test_a_build_does_not_overwrite_a_committed_manifest_that_differs(tmp_path):
+    from memlayers.eval.eval_sets import EvalSetMismatch, manifest_file
+
+    _, dcfg = make_mini_bundle(tmp_path / "b")
+    mf = manifest_file(dcfg)
+    man = json.loads(mf.read_text())
+    man["sets"]["fact_sample"]["sha256"] = "0" * 64  # "committed" with other data
+    mf.write_text(json.dumps(man))
+    with pytest.raises(EvalSetMismatch, match="fact_sample 0000000000000000 ->"):
+        build_sets(
+            dcfg, per_subject=2, per_tier=2, readlog_tokens_per_subject=READLOG_BUDGET
+        )
+    assert json.loads(mf.read_text())["sets"]["fact_sample"]["sha256"] == "0" * 64
+    build_sets(
+        dcfg,
+        per_subject=2,
+        per_tier=2,
+        readlog_tokens_per_subject=READLOG_BUDGET,
+        replace_manifest=True,
+    )
+    assert json.loads(mf.read_text())["sets"]["fact_sample"]["sha256"] != "0" * 64
+
+
+def test_eval_timing_sums_every_heldout_pass(done_run):
+    """A metric that makes its own held-out pass adds to heldout_pass time."""
+    from memlayers.eval.testkit import temporary_metric
+
+    def second_pass(ctx):
+        """Runs a second, different held-out pass."""
+        p = ctx.heldout_pass(sample=True, subjects=["pile_cc"], capture_reads=False)
+        return {"tokens/pile_cc": p.sums["pile_cc"]["tokens"]}
+
+    with temporary_metric("example_second_pass", metric_id="EX9") as reg:
+        reg(second_pass)
+        evaluate_run(
+            done_run,
+            step="final",
+            metrics=["heldout_quality", "example_second_pass"],
+            device="cpu",
+        )
+    with open(done_run / "eval_timing.csv", newline="") as fh:
+        rows = [r for r in csv.DictReader(fh) if r["stage"] == "posthoc"]
+    last = {r["metric"]: float(r["seconds"]) for r in rows[-5:]}
+    assert last["heldout_pass"] >= 0.9 * (
+        last["heldout_quality"] + last["example_second_pass"]
+    )
+
+
+def test_a_metric_skipped_now_keeps_its_old_final_values():
+    from memlayers.eval.writers import merge_final_metrics
+
+    old = {
+        "metrics": {"fact_recall/top1/x": 0.4, "heldout_quality/loss/a": 5.0},
+        "metric_ids": {"fact_recall": "Q2", "heldout_quality": "Q1"},
+        "skipped": {},
+        "step": 10,
+        "tokens_seen": 1,
+    }
+    new = {
+        "metrics": {"heldout_quality/loss/a": 4.9},
+        "metric_ids": {"fact_recall": "Q2", "heldout_quality": "Q1"},
+        "skipped": {"fact_recall": "fact rows not found"},
+        "step": 10,
+        "tokens_seen": 1,
+    }
+    m = merge_final_metrics(old, new)
+    assert m["metrics"] == {"fact_recall/top1/x": 0.4, "heldout_quality/loss/a": 4.9}
+    assert m["skipped"] == {}  # it has values, so it is not "skipped"
+
+
+def test_update_final_on_several_checkpoints_is_refused_before_evaluating(done_run):
+    before = (done_run / "evals.csv").read_bytes()
+    with pytest.raises(ValueError, match="takes one checkpoint"):
+        evaluate_run(
+            done_run,
+            step="all",
+            metrics=["heldout_quality"],
+            update_final=True,
+            device="cpu",
+        )
+    with pytest.raises(ValueError, match="mix two checkpoints"):
+        evaluate_run(
+            done_run,
+            step="init",
+            metrics=["heldout_quality"],
+            update_final=True,
+            device="cpu",
+        )
+    assert (done_run / "evals.csv").read_bytes() == before  # nothing was evaluated

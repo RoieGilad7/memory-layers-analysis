@@ -429,3 +429,34 @@ def test_eval_off_means_no_eval_points_even_for_smoke(tmp_path):
         "step_000000.pt",  # the init snapshot, written by every run
     ]
     assert not (run / "evals.csv").exists()
+
+
+def test_a_run_with_log_every_0_reaches_done(tmp_path):
+    """No train_log.csv at all: the training check must cope, not crash."""
+    run = launch(compose([*SMOKE, "train.log_every=0", f"out_root={tmp_path}"]))
+    assert read_status(run)["state"] == "done"
+    assert not (run / "train_log.csv").exists()
+    assert (run / "training_check.json").exists()
+
+
+def test_checkpoints_are_written_once_per_step(tmp_path, monkeypatch):
+    from memlayers.train import Trainer
+
+    calls = {"last": [], "init": 0}
+    real_save, real_init = Trainer.save_checkpoint, Trainer.save_initial_weights
+
+    def save(self, path=None):
+        if path is None:
+            calls["last"].append(self.step)
+        return real_save(self, path)
+
+    def init(self):
+        calls["init"] += 1
+        return real_init(self)
+
+    monkeypatch.setattr(Trainer, "save_checkpoint", save)
+    monkeypatch.setattr(Trainer, "save_initial_weights", init)
+    launch(compose([*SMOKE, "train.ckpt_every=0", f"out_root={tmp_path}"]))
+    # eval points of the smoke experiment: 0, 10, 20 (of 20 steps)
+    assert calls["last"] == [0, 10, 20]  # the final one not saved twice
+    assert calls["init"] == 0  # the step-0 eval point already wrote it

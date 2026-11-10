@@ -333,6 +333,7 @@ class Trainer:
         self.on_checkpoint: Optional[Callable[["Trainer"], None]] = None
         # called after every training step (memlayers.run's eval schedule)
         self.on_step: Optional[Callable[["Trainer"], None]] = None
+        self.last_saved_step: Optional[int] = None  # step of the last last.pt
 
         torch.manual_seed(cfg.train.seed)
 
@@ -548,9 +549,22 @@ class Trainer:
             "ffn_types": self.gpt_config.ffn_types,
         }
 
+    # written by memlayers.run after a run started; a rewrite of meta.json
+    # (e.g. a restart from step 0) must not drop them
+    _META_HISTORY = ("resumes", "device_changes")
+
     def write_meta(self) -> Path:
         path = self.out_dir / "meta.json"
-        path.write_text(json.dumps(self.meta_dict(), indent=2, default=str))
+        meta = self.meta_dict()
+        if path.exists():
+            try:
+                old = json.loads(path.read_text())
+            except json.JSONDecodeError:
+                old = {}
+            for k in self._META_HISTORY:
+                if k in old and k not in meta:
+                    meta[k] = old[k]
+        path.write_text(json.dumps(meta, indent=2, default=str))
         return path
 
     def meta_dict(self) -> dict:
@@ -597,7 +611,10 @@ class Trainer:
 
     # ---- checkpointing ------------------------------------------------------
     def save_checkpoint(self, path: Optional[Path] = None) -> Path:
+        default = path is None
         path = Path(path or self.out_dir / self.layout.checkpoint)
+        if default:
+            self.last_saved_step = self.step
         atomic_torch_save(
             {
                 "step": self.step,
@@ -735,7 +752,8 @@ class Trainer:
         cfg = self.cfg.train
         target = self.step + (steps if steps is not None else cfg.steps - self.step)
         if self.step == 0:
-            self.save_initial_weights()
+            if not (self.out_dir / self.layout.init_weights).exists():
+                self.save_initial_weights()  # the step-0 eval point may have
             self.write_meta()
         reset_peak_memory(self.device)
 

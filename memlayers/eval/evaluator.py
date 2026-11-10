@@ -140,7 +140,9 @@ class Evaluator:
                 step, tokens, stage, name, get_metric(name).metric_id, vals
             )
         self.logger.log_eval(rows)
-        seconds = {**{"heldout_pass": p.seconds for p in ctx._pass.values()}, **seconds}
+        passes = list(ctx._pass.values())
+        if passes:  # every held-out pass this point made, summed
+            seconds = {"heldout_pass": sum(p.seconds for p in passes), **seconds}
         seconds["total"] = time.perf_counter() - t0
         append_timing(self.run_dir, step, stage, seconds)
         if self.after_rows:
