@@ -298,3 +298,74 @@ def test_the_id_falls_back_to_wandbs_own_generator_when_util_lacks_it():
     pytest.importorskip("wandb")
     wid = generate_wandb_id(SimpleNamespace(util=SimpleNamespace()))
     assert isinstance(wid, str) and len(wid) == 8
+
+
+# ------------------------------------------- recovery after an unclean exit
+def _crashed_session(run_dir, fw, upto_train=6, points=(0, 3)):
+    """A live session that logged rows and then died without finish()."""
+    from memlayers.runlog import WandbSink
+
+    a = WandbSink(
+        run_dir, {"mode": "online"}, "crash01", "r-s0", "r", {}, [], module=fw
+    )
+    log = RunLogger(FilesSink(run_dir), [a])
+    for s in range(1, upto_train + 1):
+        log.log_train({"step": s, "loss": 10.0 - s, "tokens_seen": 100 * s})
+        if s in points:
+            log.log_eval([dict(_eval_row(s), tokens_seen=100 * s)])
+    log.log_eval([dict(_eval_row(0), tokens_seen=0)])
+    return a  # never finished: a kill -9
+
+
+def _resume_files(run_dir, step):
+    """What run.py does to the files on a resume from `step`."""
+    from memlayers.eval.writers import EvalsCSV
+    from memlayers.run import _trim_train_log
+
+    _trim_train_log(run_dir / "train_log.csv", step)
+    EvalsCSV(run_dir / "evals.csv").drop_after(step)
+
+
+@pytest.mark.parametrize("lose", [True, False])
+def test_a_resume_after_a_crash_leaves_every_row_on_the_server_once(tmp_path, lose):
+    from memlayers.runlog import WandbSink
+
+    fw = FakeWandb(lose_unfinished=lose)
+    _crashed_session(tmp_path, fw)
+    assert not json.loads((tmp_path / "wandb_sync.json").read_text())["online"]["clean"]
+    _resume_files(tmp_path, 4)  # checkpoint at 4; steps 5-6 are replayed
+    b = WandbSink(
+        tmp_path, {"mode": "online"}, "crash01", "r-s0", "r", {}, [], module=fw
+    )
+    rec = b.recover(4)
+    assert rec["train"] == (4 if lose else 0)  # 1-4 back-filled only if lost
+    log = RunLogger(FilesSink(tmp_path), [b])
+    for s in range(5, 9):
+        log.log_train({"step": s, "loss": 10.0 - s, "tokens_seen": 100 * s})
+    log.finish("done", 8)
+    steps = fw.server_steps("crash01")
+    assert sorted(steps) == list(range(1, 9)) and len(steps) == 8  # each once
+    rows = fw.Api().run("x/y/crash01")._rows
+    eval_steps = sorted(h["step"] for h in rows if "m/k" in h)
+    assert eval_steps == [0, 3]  # each eval point once
+    assert json.loads((tmp_path / "wandb_sync.json").read_text())["online"]["clean"]
+
+
+def test_wandb_sync_after_a_crash_sends_what_the_server_lacks(tmp_path):
+    fw = FakeWandb(lose_unfinished=True)
+    _crashed_session(tmp_path, fw)
+    # a finished run dir as the run layer leaves it
+    (tmp_path / "meta.json").write_text(
+        json.dumps({"wandb_id": "crash01", "run_id": "r-s0"})
+    )
+    from memlayers.config import compose
+    from omegaconf import OmegaConf
+
+    cfg = compose([*FAKE_DATA, f"out_root={tmp_path}"])
+    (tmp_path / "config.yaml").write_text(OmegaConf.to_yaml(cfg, resolve=True))
+    sent = sync_run(tmp_path, module=fw)
+    assert sent["train"] == 6 and sent["eval_points"] == 2
+    assert sorted(fw.server_steps("crash01")) == list(range(1, 7))
+    again = sync_run(tmp_path, module=fw)
+    assert again == {"train": 0, "eval_points": 0, "final": 0, "files": 0}
+    assert sorted(fw.server_steps("crash01")) == list(range(1, 7))

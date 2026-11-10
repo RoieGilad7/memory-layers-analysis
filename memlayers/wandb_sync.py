@@ -81,6 +81,10 @@ def sync_run(
         module=wb,
     )
     sent = {"train": 0, "eval_points": 0, "final": 0, "files": 0}
+    # a run that died mid-upload: ask the server what it has, send the rest
+    rec = sink.recover(None)
+    sent["train"] += rec["train"]
+    sent["eval_points"] += rec["eval_points"]
 
     # interleave as a live run would: train row s, then the eval point at s
     train = sorted(_train_rows(run_dir), key=lambda r: int(r["step"]))

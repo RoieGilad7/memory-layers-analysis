@@ -254,3 +254,22 @@ def test_the_colab_notebook_is_valid_with_cleared_outputs():
     except ImportError:
         return
     nbformat.validate(nbformat.reads(json.dumps(nb), as_version=4))
+
+
+def test_a_run_dir_saved_before_the_data_root_change_still_loads(tmp_path):
+    """config.yaml files written before training prompt 5 carry data.root:
+    null (or the old sample re-root); post-hoc tools must still read them."""
+    import yaml
+
+    from memlayers.evaluate import load_run_config
+
+    run = launch(compose([*FAKE, "train.steps=1", f"out_root={tmp_path}"]))
+    cfg = yaml.safe_load((run / "config.yaml").read_text())
+    cfg["data"].pop("bundle")
+    cfg["data"]["root"] = None
+    (run / "config.yaml").write_text(yaml.safe_dump(cfg))
+    assert load_run_config(run).data.root == "data"
+    cfg["data"].update(small=True, root=str(ROOT / "data" / "v1_sample"))
+    (run / "config.yaml").write_text(yaml.safe_dump(cfg))
+    loaded = load_run_config(run).data
+    assert loaded.bundle == str(ROOT / "data" / "v1_sample") and loaded.root == "data"

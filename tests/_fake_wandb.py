@@ -29,11 +29,50 @@ class FakeRun:
         self.finished = exit_code
 
 
+class FakeServerRun:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def scan_history(self):
+        return iter(self._rows)
+
+
+class FakeApi:
+    """The public API: what the 'server' holds. With `lose_unfinished`, rows
+    of a session that never called finish() were never uploaded (a kill -9)."""
+
+    default_entity = "fake-entity"
+
+    def __init__(self, owner):
+        self.owner = owner
+
+    def run(self, path):
+        wid = path.rsplit("/", 1)[-1]
+        mine = [r for r in self.owner.runs if r.kw.get("id") == wid]
+        if not mine:
+            raise ValueError(f"run {path} not found")
+        rows = []
+        for r in mine:
+            if r.finished is None and self.owner.lose_unfinished:
+                continue
+            rows += r.logged
+        return FakeServerRun(rows)
+
+
 class FakeWandb:
-    def __init__(self, fail_on_log=False):
+    def __init__(self, fail_on_log=False, lose_unfinished=False):
         self.fail_on_log = fail_on_log
+        self.lose_unfinished = lose_unfinished
         self.runs, self.generated = [], []
         self.util = SimpleNamespace(generate_id=self._generate_id)
+
+    def Api(self, timeout=None):  # noqa: N802 - wandb's own name
+        return FakeApi(self)
+
+    def server_steps(self, wid):
+        """train steps on the 'server' for run id `wid`, with repeats."""
+        rows = self.Api().run(f"x/y/{wid}")._rows
+        return [int(h["step"]) for h in rows if "train/loss" in h]
 
     def _generate_id(self):
         wid = f"fakeid{len(self.generated):03d}"

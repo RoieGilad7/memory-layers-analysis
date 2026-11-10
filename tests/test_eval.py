@@ -725,3 +725,32 @@ def test_weight_checkpoints_store_the_tied_embedding_once(done_run):
     assert (
         n_bytes < 4 * params * 1.05
     )  # one fp32 copy of each parameter, not two of wte
+
+
+def test_a_kill_between_the_last_checkpoint_and_the_final_eval_is_resumed(
+    bundle, tmp_path
+):
+    """Killed right after the checkpoint at the final step, before its eval:
+    the resume must run the final eval, not finish "done" without it."""
+    over = [
+        *run_overrides(bundle[0], tmp_path, steps=10, eval_steps="[0,10]"),
+        "train.ckpt_every=5",
+    ]
+    cmd = [sys.executable, "-m", "memlayers.run", *map(str, over)]
+    env = {**os.environ, "MEMLAYERS_TEST_HALT": "10:exit"}
+    r = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True)
+    assert r.returncode == 137, r.stderr
+    run_dir = tmp_path / "smoke-s0"
+    assert {(x["step"], x["stage"]) for x in _evals(run_dir)} == {("0", "during")}
+    env.pop("MEMLAYERS_TEST_HALT")
+    r = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    points = Counter(
+        (x["step"], x["stage"], x["metric"], x["key"]) for x in _evals(run_dir)
+    )
+    assert max(points.values()) == 1
+    assert {(k[0], k[1]) for k in points} == {("0", "during"), ("10", "final")}
+    assert (run_dir / "final_metrics.json").exists()
+    assert (
+        json.loads((run_dir / "training_check.json").read_text())["not_evaluated"] == []
+    )

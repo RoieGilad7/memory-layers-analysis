@@ -81,7 +81,9 @@ def wandb_tags(meta: Dict[str, Any], config: Dict[str, Any]) -> List[str]:
         f"data:{data.get('version') or data.get('source') or 'unknown'}",
         f"git:{commit}",
         f"device:{meta.get('device', runtime.get('device', 'unknown'))}",
-        f"precision:{meta.get('precision') or runtime.get('precision', 'fp32')}",
+        # meta.json has the resolved precision; runs made before it was
+        # recorded were all fp32
+        f"precision:{meta.get('precision') or 'fp32'}",
     ]
 
 
@@ -107,6 +109,17 @@ def eval_payloads(rows: List[Dict[str, Any]]) -> List[tuple]:
     return sorted(groups.items(), key=lambda kv: (kv[0][0], order.get(kv[0][1], 9)))
 
 
+def _train_rows(run_dir) -> List[Dict[str, Any]]:
+    import csv
+
+    for name in ("train_log.csv", "log.csv"):
+        p = Path(run_dir) / name
+        if p.exists():
+            with open(p, newline="") as fh:
+                return list(csv.DictReader(fh))
+    return []
+
+
 def train_payload(row: Dict[str, Any]) -> Dict[str, Any]:
     out = {"tokens_seen": int(row["tokens_seen"]), "step": int(row["step"])}
     for k in TRAIN_KEYS:
@@ -128,6 +141,11 @@ class SyncState:
         m.setdefault("eval_points", [])
         m.setdefault("final", False)
         m.setdefault("files", [])
+        # True once run.finish() returned: everything logged in that session
+        # reached W&B. A run that died (kill -9, a closed lid, a Colab
+        # disconnect) leaves it False, and what it "sent" may never have been
+        # uploaded -- recover() then asks the server instead of trusting this.
+        m.setdefault("clean", True)
 
     @property
     def m(self) -> Dict[str, Any]:
@@ -172,6 +190,9 @@ class WandbSink:
         self._module = module
         self.run = None
         self.state = SyncState(self.run_dir, self.mode)
+        # steps / eval points the server already holds past a resume point
+        self._server_train: set = set()
+        self._server_points: set = set()
 
     # ---- the W&B run -------------------------------------------------------
     def _wb(self):
@@ -196,6 +217,8 @@ class WandbSink:
             config=self.config,
             dir=self.wandb_dir,
         )
+        self.state.m["clean"] = False
+        self.state.save()
         self.run.define_metric("tokens_seen")
         self.run.define_metric("step")
         self.run.define_metric("*", step_metric="tokens_seen")
@@ -204,7 +227,7 @@ class WandbSink:
     # ---- events ------------------------------------------------------------
     def train(self, row: Dict[str, Any]) -> None:
         step = int(row["step"])
-        if step <= self.state.m["train_step"]:
+        if step <= self.state.m["train_step"] or step in self._server_train:
             return
         self.start().log(train_payload(row))
         self.state.m["train_step"] = step
@@ -214,7 +237,7 @@ class WandbSink:
         done = {tuple(p) for p in self.state.m["eval_points"]}
         sent = False
         for key, payload in eval_payloads(rows):
-            if key in done and key[1] != "posthoc":
+            if key[1] != "posthoc" and (key in done or key in self._server_points):
                 continue
             self.start().log(payload)
             if key not in done:
@@ -249,3 +272,93 @@ class WandbSink:
         self.run.summary.update({"run_state": state, "run_step": int(step)})
         self.run.finish(exit_code=0 if state == "done" else 1)
         self.run = None
+        self.state.m["clean"] = True  # finish() returned: all of it is uploaded
+        self.state.save()
+
+    # ---- after an unclean exit ------------------------------------------------
+    def server_history(self):
+        """(train steps, {(step, stage)} eval points) the W&B server holds for
+        this run; empty sets if it has never seen the run."""
+        wb = self._wb()
+        api = wb.Api(timeout=60)
+        entity = self.settings.get("entity") or api.default_entity
+        project = self.settings.get("project") or "memlayers"
+        try:
+            run = api.run(f"{entity}/{project}/{self.wandb_id}")
+            hist = list(run.scan_history())
+        except Exception:  # noqa: BLE001 - not found: nothing was uploaded
+            return set(), set()
+        steps, points = set(), set()
+        for h in hist:
+            if h.get("step") is None:
+                continue
+            s = int(h["step"])
+            if h.get("train/loss") is not None:
+                steps.add(s)
+            keys = [k for k in h if "/" in k and not k.startswith(("train/", "_"))]
+            if keys:
+                stage = (
+                    "final"
+                    if any(k.startswith("final/") for k in keys)
+                    else (
+                        "posthoc"
+                        if any(k.startswith("posthoc/") for k in keys)
+                        else "during"
+                    )
+                )
+                points.add((s, stage))
+        return steps, points
+
+    def recover(self, upto: Optional[int] = None) -> Dict[str, int]:
+        """Bring W&B in line with the run-dir files before carrying on.
+
+        `upto`: the step a resume restarts from (None: everything, for
+        wandb_sync). After a clean finish (or in offline mode) the local record
+        is trusted and only the steps past `upto` are reopened. After an
+        unclean exit in online mode the server is asked what it really has:
+        rows up to `upto` it lacks are re-sent from train_log.csv / evals.csv,
+        and rows past `upto` it already has are not sent again when the resumed
+        run replays those steps.
+        """
+        sent = {"train": 0, "eval_points": 0}
+        if self.state.m.get("clean", True) or self.mode != "online":
+            if upto is not None:
+                self.state.reset_after(upto)
+            return sent
+        from memlayers.eval.writers import EvalsCSV
+
+        steps, points = self.server_history()
+        lim = float("inf") if upto is None else int(upto)
+        for row in sorted(_train_rows(self.run_dir), key=lambda r: int(r["step"])):
+            s = int(row["step"])
+            if s <= lim and s not in steps:
+                self.start().log(train_payload(row))
+                sent["train"] += 1
+        live = [
+            r
+            for r in EvalsCSV(self.run_dir / "evals.csv").read()
+            if r["stage"] != "posthoc"
+        ]
+        for key, payload in eval_payloads(live):
+            if key[0] <= lim and key not in points:
+                self.start().log(payload)
+                points.add(key)
+                sent["eval_points"] += 1
+        self._server_train = {s for s in steps if s > lim}
+        self._server_points = {p for p in points if p[0] > lim}
+        trains = [int(r["step"]) for r in _train_rows(self.run_dir)]
+        self.state.m["train_step"] = (
+            int(lim) if upto is not None else max(trains, default=0)
+        )
+        self.state.m["eval_points"] = sorted([list(p) for p in points if p[0] <= lim])
+        self.state.m["final"] = False  # the summary and files are re-sent: idempotent
+        self.state.m["files"] = []
+        if self.run is None and not any(sent.values()):
+            self.state.m["clean"] = True
+        self.state.save()
+        if any(sent.values()):
+            print(
+                f"[runlog] W&B recovered after an unclean exit: re-sent {sent}",
+                flush=True,
+            )
+        return sent

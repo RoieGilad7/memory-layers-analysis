@@ -62,6 +62,22 @@ def _list(v: Optional[str]) -> Optional[List[str]]:
     return [x.strip().strip("'\"") for x in v.split(",") if x.strip()]
 
 
+def _upgrade_saved_config(raw: dict) -> dict:
+    """A config.yaml saved before the data.root change (training prompt 5).
+
+    Then, `data.root` re-rooted one 1% bundle (null otherwise); now it is the
+    folder holding the bundles, and one bundle's own dir is `data.bundle`.
+    """
+    data = raw.get("data") or {}
+    if "root" in data and "bundle" not in data:
+        root = data.get("root")
+        if root is None:
+            data.pop("root")
+        elif data.get("small") and (Path(root) / "manifest.json").exists():
+            data["bundle"] = data.pop("root")
+    return raw
+
+
 def load_run_config(run_dir: Path):
     """The run's resolved config as a RunConfig-checked DictConfig."""
     from .config import RunConfig
@@ -69,7 +85,9 @@ def load_run_config(run_dir: Path):
     schema = OmegaConf.structured(RunConfig)
     path = run_dir / "config.yaml"
     if path.exists():
-        return OmegaConf.merge(schema, yaml.safe_load(path.read_text()))
+        return OmegaConf.merge(
+            schema, _upgrade_saved_config(yaml.safe_load(path.read_text()))
+        )
     # a pre-run-layer dir: the Trainer's config_dict lives in the checkpoint
     for name in ("ckpt.pt", "init_weights.pt"):
         if (run_dir / name).exists():

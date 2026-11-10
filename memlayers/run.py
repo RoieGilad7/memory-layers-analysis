@@ -616,8 +616,8 @@ def _train(
 
     if decision.action == "resume":
         for s in trainer.logger.sinks:
-            if hasattr(s, "state"):
-                s.state.reset_after(trainer.step)
+            if hasattr(s, "recover"):
+                s.recover(trainer.step)
     evaluator = Evaluator(
         cfg,
         run_dir,
@@ -643,8 +643,17 @@ def _train(
 
     trainer.on_checkpoint = on_ckpt
     trainer.on_step = on_step
-    if trainer.step == 0 and evaluator.due(0) is not None:
-        evaluator.at_point(trainer, evaluator.due(0))
+    # the eval point at the step we start from: step 0 on a fresh run, and on a
+    # resume any point whose evaluation never got written -- a run killed after
+    # the checkpoint at an eval step but before that eval (the final one, say)
+    # would otherwise finish "done" without it
+    stage = evaluator.due(trainer.step)
+    if stage is not None:
+        from .eval.writers import EvalsCSV
+
+        have = {(r["step"], r["stage"]) for r in EvalsCSV(run_dir / "evals.csv").read()}
+        if (trainer.step, stage) not in have:
+            evaluator.at_point(trainer, stage)
     trainer.train()
     trainer.save_checkpoint()
     _write_training_check(cfg, run_dir, trainer)
