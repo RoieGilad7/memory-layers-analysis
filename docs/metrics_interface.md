@@ -95,8 +95,9 @@ python -m memlayers.compare runs/ --out reports/compare/
 
 - `evals.csv` gets one row per key, `stage=posthoc`, with `metric` and
   `metric_id`.
-- `final_metrics.json` changes only with `update_final=true`, under
-  `<name>/<key>`.
+- `final_metrics.json` changes only with `update_final=true`. The new
+  metric is merged in under `<name>/<key>`: other metrics stay, and the step
+  must be the file's step.
 - `analysis/<name>/` holds whatever the metric wrote to `ctx.artifact_dir`.
 - W&B gets `posthoc/<name>/<key>` (job_type `eval`) if the run mirrors to W&B.
 - `memlayers.compare` puts it into `runs.csv` and `groups.csv` as

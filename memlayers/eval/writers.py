@@ -14,7 +14,14 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
-__all__ = ["EVALS_COLUMNS", "EvalsCSV", "write_final_metrics", "write_json", "rows_for"]
+__all__ = [
+    "EVALS_COLUMNS",
+    "EvalsCSV",
+    "write_final_metrics",
+    "merge_final_metrics",
+    "write_json",
+    "rows_for",
+]
 
 EVALS_COLUMNS = ["step", "tokens_seen", "stage", "metric", "metric_id", "key", "value"]
 
@@ -130,6 +137,35 @@ def final_metrics_obj(metrics, metric_ids, skipped, step, tokens_seen) -> dict:
         "skipped": dict(sorted(skipped.items())),
         "step": int(step),
         "tokens_seen": int(tokens_seen),
+    }
+
+
+def merge_final_metrics(old: dict | None, new: dict) -> dict:
+    """`new` folded into an existing final_metrics.json: every key of a metric
+    in `new` replaces that metric's old keys (a re-run metric never keeps a
+    stale key); other metrics stay. Refuses to mix two checkpoint steps."""
+    if not old:
+        return new
+    if int(old["step"]) != int(new["step"]):
+        raise ValueError(
+            f"final_metrics.json is for step {old['step']}, this evaluation is step "
+            f"{new['step']}: update_final=true would mix two checkpoints. Use the "
+            "final step, or leave final_metrics.json alone (rows still go to evals.csv)."
+        )
+    rerun = set(new["metric_ids"]) | {k.split("/", 1)[0] for k in new["metrics"]}
+    metrics = {
+        k: v for k, v in old["metrics"].items() if k.split("/", 1)[0] not in rerun
+    }
+    metrics.update(new["metrics"])
+    ids = {**old.get("metric_ids", {}), **new["metric_ids"]}
+    skipped = {k: v for k, v in old.get("skipped", {}).items() if k not in rerun}
+    skipped.update(new.get("skipped", {}))
+    return {
+        "metrics": dict(sorted(metrics.items())),
+        "metric_ids": dict(sorted(ids.items())),
+        "skipped": dict(sorted(skipped.items())),
+        "step": int(new["step"]),
+        "tokens_seen": int(new["tokens_seen"]),
     }
 
 

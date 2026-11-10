@@ -10,7 +10,9 @@ integer, or `all` (every checkpoints/step_*.pt). Runs the run's `eval.posthoc`
 list, or `metrics=[...]`, on the FULL sets (`sample=true` for the fixed
 samples, which reproduces a `during` number exactly). Rows go to evals.csv
 with stage `posthoc`, replacing earlier posthoc rows for the same step, metric
-and key. final_metrics.json is left alone unless `update_final=true`.
+and key. final_metrics.json is left alone unless `update_final=true`, which
+merges the new metrics in (other metrics stay; a re-run metric's old keys are
+replaced) and refuses to mix two checkpoint steps.
 
 Also reads a pre-run-layer dir (e.g. runs/learnability_t1_pkm/: ckpt.pt with
 the Trainer's own config dict, no config.yaml).
@@ -167,7 +169,7 @@ def evaluate_run(
     from .eval.context import EvalContext, EvalResources
     from .eval.evaluator import append_timing, run_metrics
     from .eval.registry import validate_metric_names
-    from .eval.writers import final_metrics_obj, rows_for
+    from .eval.writers import final_metrics_obj, merge_final_metrics, rows_for
 
     run_dir = Path(run_dir)
     cfg = load_run_config(run_dir)
@@ -204,13 +206,22 @@ def evaluate_run(
         seconds["total"] = time.perf_counter() - t0
         append_timing(run_dir, ck_step, "posthoc", seconds)
         if update_final:
+            # merged, not replaced: the built-in metrics (and any metric not
+            # re-run here) stay in final_metrics.json, so compare keeps them
+            import json as _json
+
+            fm_path = run_dir / "final_metrics.json"
+            old = _json.loads(fm_path.read_text()) if fm_path.exists() else None
             logger.log_final(
-                final_metrics_obj(
-                    results,
-                    {n: get_metric(n).metric_id for n in names},
-                    skipped,
-                    ck_step,
-                    tokens,
+                merge_final_metrics(
+                    old,
+                    final_metrics_obj(
+                        results,
+                        {n: get_metric(n).metric_id for n in names},
+                        skipped,
+                        ck_step,
+                        tokens,
+                    ),
                 )
             )
         print(

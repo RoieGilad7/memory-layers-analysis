@@ -446,11 +446,58 @@ def test_posthoc_rows_replace_and_leave_final_metrics_alone(done_run):
     assert keys and max(keys.values()) == 1
     assert {k[1] for k in keys} == {"heldout_quality"}
     assert (done_run / "final_metrics.json").read_bytes() == before
+    old = json.loads((done_run / "final_metrics.json").read_text())
     evaluate_run(
         done_run, step="final", metrics=["slot_usage"], update_final=True, device="cpu"
     )
     fm = json.loads((done_run / "final_metrics.json").read_text())
-    assert set(fm["metric_ids"]) == {"slot_usage"}
+    # merged, not replaced: the metrics not re-run are still there, unchanged
+    assert set(fm["metric_ids"]) == {"heldout_quality", "fact_recall", "slot_usage"}
+    for k, v in old["metrics"].items():
+        if not k.startswith("slot_usage/"):
+            assert fm["metrics"][k] == v, k
+    assert any(k.startswith("slot_usage/") for k in fm["metrics"])
+    # and a different step is refused instead of mixing two checkpoints
+    with pytest.raises(ValueError, match="mix two checkpoints"):
+        evaluate_run(
+            done_run,
+            step="init",
+            metrics=["slot_usage"],
+            update_final=True,
+            device="cpu",
+        )
+    assert json.loads((done_run / "final_metrics.json").read_text()) == fm
+
+
+def test_merge_final_metrics_on_hand_made_dicts():
+    from memlayers.eval.writers import merge_final_metrics
+
+    old = {
+        "metrics": {"a/x": 1.0, "a/y": 2.0, "b/x": 3.0},
+        "metric_ids": {"a": "Q1", "b": "Q2"},
+        "skipped": {"c": "no read log"},
+        "step": 10,
+        "tokens_seen": 100,
+    }
+    new = {
+        "metrics": {"b/z": 9.0, "c/x": 4.0},
+        "metric_ids": {"b": "Q2", "c": "U4"},
+        "skipped": {},
+        "step": 10,
+        "tokens_seen": 100,
+    }
+    m = merge_final_metrics(old, new)
+    assert m["metrics"] == {
+        "a/x": 1.0,
+        "a/y": 2.0,
+        "b/z": 9.0,
+        "c/x": 4.0,
+    }  # b/x dropped
+    assert m["metric_ids"] == {"a": "Q1", "b": "Q2", "c": "U4"}
+    assert m["skipped"] == {}  # c ran now
+    assert merge_final_metrics(None, new) == new
+    with pytest.raises(ValueError, match="step 10"):
+        merge_final_metrics(old, {**new, "step": 0})
 
 
 def test_the_cli_rejects_an_unknown_metric(done_run):
