@@ -41,19 +41,11 @@ def test_the_tree_has_the_fixed_groups():
     assert _groups("runtime") == sorted(RUNTIMES)
     assert _groups("data") == ["fake", "sample", "v1"]
     assert _groups("train") == ["smoke", "tier1"]
-    assert _groups("eval") == ["off", "smoke", "standard"]
+    assert _groups("eval") == ["off", "standard"]
     assert _groups("logging") == ["files", "wandb"]
-    assert {
-        "pkm",
-        "pkm_randkey",
-        "dense",
-        "peer",
-        "tiny_pkm",
-        "tiny_dense",
-        "pkm_t2",
-        "peer_t2",
-        "dense_t2",
-    } <= set(_groups("model"))
+    assert _groups("model") == sorted(
+        ["pkm", "dense", "peer", "smoke_pkm", "smoke_dense", "tiny_pkm", "tiny_dense"]
+    )
 
 
 @pytest.mark.parametrize("runtime", RUNTIMES)
@@ -156,11 +148,7 @@ def test_the_lrs_and_warmup_are_t1_pkm_yamls():
     "group, old",
     [
         ("pkm", "t1_pkm"),
-        ("pkm_randkey", "t1_pkm_frozen"),
         ("peer", "t1_peer"),
-        ("pkm_t2", "t2_pkm"),
-        ("peer_t2", "t2_peer"),
-        ("pkm262k_t2", "t2_pkm_262k"),
     ],
 )
 def test_memory_models_are_ported_unchanged(group, old):
@@ -168,9 +156,12 @@ def test_memory_models_are_ported_unchanged(group, old):
     assert new == GPTConfig(**load_config(OLD / f"{old}.yaml").model)
 
 
-@pytest.mark.parametrize(
-    "group, old, layer", [("dense", "t1_dense", 3), ("dense_t2", "t2_dense", 4)]
-)
+def test_the_pkm_randkey_experiment_is_the_old_frozen_config():
+    new = GPTConfig(**to_train_config(compose(["experiment=pkm_randkey"])).model)
+    assert new == GPTConfig(**load_config(OLD / "t1_pkm_frozen.yaml").model)
+
+
+@pytest.mark.parametrize("group, old, layer", [("dense", "t1_dense", 3)])
 def test_dense_models_differ_from_the_old_ones_only_in_the_matched_layer(
     group, old, layer
 ):
@@ -180,12 +171,21 @@ def test_dense_models_differ_from_the_old_ones_only_in_the_matched_layer(
     assert GPTConfig(**new) == GPTConfig(**load_config(OLD / f"{old}.yaml").model)
 
 
-def test_pkm_randkey_is_pkm_with_frozen_keys():
-    a = model_kwargs(load_model_group("pkm"))
-    b = model_kwargs(load_model_group("pkm_randkey"))
+@pytest.mark.parametrize(
+    "pkm, twin", [("pkm", "pkm_randkey"), ("smoke", "smoke_randkey")]
+)
+def test_each_twin_is_its_pkm_with_frozen_keys(pkm, twin):
+    """The twin's experiment reuses the pkm model file and sets one key."""
+    a = to_train_config(compose([f"experiment={pkm}"])).model
+    b = to_train_config(compose([f"experiment={twin}"])).model
     assert b["memory"].pop("freeze_keys") is True
     assert a["memory"].pop("freeze_keys") is False
     assert a == b
+
+
+def test_smoke_experiments_evaluate_at_three_points():
+    for e in ("smoke", "smoke_randkey", "smoke_dense"):
+        assert list(compose([f"experiment={e}"]).eval.points) == [0, 0.5, 1.0]
 
 
 # ------------------------------------------------------------------ seed, id

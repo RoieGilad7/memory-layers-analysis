@@ -1,5 +1,7 @@
 """FLOPs per token: hand-computed values, and the dense layer's compute match."""
 
+from pathlib import Path
+
 import pytest
 
 from memlayers.config import load_model_group, model_kwargs
@@ -62,12 +64,25 @@ def test_t1_numbers():
 
 @pytest.mark.parametrize(
     "dense, memory, layer",
-    [("dense", "pkm", 3), ("dense", "peer", 3), ("dense_t2", "pkm_t2", 4)],
+    [("dense", "pkm", 3), ("dense", "peer", 3)],
 )
 def test_the_dense_layer_is_within_10pct_of_the_memory_layer(dense, memory, layer):
     a = _f(dense)["per_layer"][layer]["ffn"]
     b = _f(memory)["per_layer"][layer]["ffn"]
     assert abs(a / b - 1) <= 0.10, f"{dense} {a:,} vs {memory} {b:,}"
+
+
+def test_the_rule_on_an_inline_t2_config():
+    """T2 (d512, L8, PKM at layer 4) is not in conf/ any more; the matching
+    rule still gives it h = 832, within 10% of the PKM layer."""
+    from memlayers.train import load_config
+
+    old = Path(__file__).resolve().parent.parent / "memlayers" / "configs"
+    pkm = estimate_flops_per_token(load_config(old / "t2_pkm.yaml").model)
+    target = pkm["per_layer"][4]["ffn"]
+    assert target == 1_708_032
+    h = matched_dense_hidden(512, target)
+    assert h == 832 and abs(dense_ffn_flops(512, h) / target - 1) <= 0.10
 
 
 def test_the_standard_4x_ffn_was_not_within_10pct():

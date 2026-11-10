@@ -93,6 +93,11 @@ would upload the same rows twice.
 
 ## 2. Compare on the smoke runs
 
+> **Later change (cleanup, after prompt 5):** `reports/compare_smoke/` is no
+> longer committed; the CI smoke job regenerates this output on every push.
+> Also, `model/smoke_pkm_randkey` was folded into `experiment/smoke_randkey`
+> (`model.memory.freeze_keys: true`).
+
 Five runs on the Mac (CPU), `logging=wandb logging.mode=offline`:
 `-m experiment=smoke seed=0,1,2` and `-m experiment=smoke_randkey,smoke_dense
 seed=0`, all `done`, about 35 s each. The command was

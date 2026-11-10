@@ -1,9 +1,13 @@
 # @package _global_
-# Random-key twin: pkm with model.memory.freeze_keys=true. Same init weights and
-# the same batches as pkm at the same seed.
+# Random-key twin: exactly the pkm model with its keys frozen at their random
+# init (values still train). Same init weights and the same batches as pkm at
+# the same seed: freezing only flips requires_grad.
 defaults:
-  - override /model: pkm_randkey
+  - override /model: pkm
   - override /data: v1
   - override /train: tier1
 
 name: pkm_randkey
+model:
+  memory:
+    freeze_keys: true

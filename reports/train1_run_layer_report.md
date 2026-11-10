@@ -22,6 +22,14 @@ to empty, so every existing model and its init are unchanged).
 
 ## 1. The `conf/` tree
 
+> **Later change (config cleanup, after prompt 5):**
+> - `model/pkm_randkey` is gone: `experiment/pkm_randkey` now sets
+>   `model.memory.freeze_keys: true` on the `pkm` model, and the resolved
+>   config is identical.
+> - The four unused T2 model files are gone. The flat
+>   `memlayers/configs/t2_*.yaml` stay for `memlayers.train`.
+> - `eval/smoke` was folded into the smoke experiments (`eval.points`).
+
 ```
 conf/
   config.yaml          defaults list; seed, tag, run_id, out_root, force, resume, resume_foreign

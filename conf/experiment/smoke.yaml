@@ -8,6 +8,7 @@ defaults:
   - override /model: smoke_pkm
   - override /data: sample
   - override /train: smoke
-  - override /eval: smoke
 
 name: smoke
+eval:
+  points: [0, 0.5, 1.0]   # three points for a short run (eval=off still means none)

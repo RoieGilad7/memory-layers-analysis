@@ -1,13 +1,11 @@
 # @package _global_
-# The smoke dense model: as `smoke`, for ~50 steps on the committed 1% sample (data/v1_sample): every
-# file, every built-in metric, the training check, in well under a minute on
-# CPU. A health check of the run layer, not an experiment. smoke_randkey and
-# smoke_dense are its twin and dense counterparts, so compare can be tried on
-# the full pkm / twin / dense layout.
+# The smoke dense model: as `smoke` (~50 steps on data/v1_sample, CPU, under a
+# minute), with the tiny dense twin.
 defaults:
   - override /model: smoke_dense
   - override /data: sample
   - override /train: smoke
-  - override /eval: smoke
 
 name: smoke_dense
+eval:
+  points: [0, 0.5, 1.0]

@@ -418,3 +418,14 @@ def test_a_crash_mid_write_leaves_the_previous_last_pt_loadable(tmp_path, monkey
         "last.pt",
         "step_000000.pt",
     ]
+
+
+def test_eval_off_means_no_eval_points_even_for_smoke(tmp_path):
+    """experiment=smoke sets eval.points itself; eval=off (no metrics) must
+    still mean no eval points and no eval checkpoints."""
+    run = launch(compose([*SMOKE, "eval=off", f"out_root={tmp_path}"]))
+    assert sorted(p.name for p in (run / "checkpoints").iterdir()) == [
+        "last.pt",
+        "step_000000.pt",  # the init snapshot, written by every run
+    ]
+    assert not (run / "evals.csv").exists()

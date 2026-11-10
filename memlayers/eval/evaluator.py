@@ -99,7 +99,13 @@ class Evaluator:
         self.after_rows = after_rows
 
     def due(self, step: int) -> Optional[str]:
-        return self.points.get(int(step))
+        """The stage evaluated at `step`, or None. A point whose stage has no
+        metrics is not a point at all, so eval=off (empty during/final lists)
+        means no eval points even where an experiment sets eval.points."""
+        stage = self.points.get(int(step))
+        if stage is None or not self.names(stage):
+            return None
+        return stage
 
     def names(self, stage: str) -> List[str]:
         return list(self.ev.get(stage) or [])
