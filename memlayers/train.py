@@ -518,7 +518,7 @@ class Trainer:
         return self.save_weights(self.out_dir / self.layout.init_weights)
 
     def save_weights(self, path: str | Path) -> Path:
-        """Weights only, fp32 on the CPU, with the step, tokens seen and config.
+        """Save fp32 CPU weights with the step, token count, config and data provenance.
 
         Tied tensors (the token embedding and the output head) stay one tensor
         in the file: copying each state-dict entry separately would store the

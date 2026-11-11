@@ -15,6 +15,8 @@ import torch
 
 from _eval_fixtures import READLOG_BUDGET, make_mini_bundle, run_overrides
 from conftest import make_model
+from data.fetch import load_manifest
+from data.manifest import sha256_file
 from memlayers.config import compose, to_train_config
 from memlayers.eval import RESERVED, get_metric, register_metric, registered
 from memlayers.eval.context import (
@@ -360,7 +362,7 @@ def test_the_schedule_deduplicates_and_absolute_steps_win():
 
 
 # -------------------------------------------------------------- in training
-def test_a_run_writes_rows_checkpoints_and_final_metrics(done_run):
+def test_a_run_writes_rows_checkpoints_and_final_metrics(done_run, bundle):
     rows = _evals(done_run)
     assert list(rows[0]) == [
         "step",
@@ -377,10 +379,18 @@ def test_a_run_writes_rows_checkpoints_and_final_metrics(done_run):
         ("10", "final"),
     }
     ck = done_run / "checkpoints"
+    _, data_cfg = bundle
+    bundle_hash = load_manifest(data_cfg, "v1")["data_sha256"]
+    token_hash = sha256_file(data_cfg.tokens_dir / "train.bin")
     for s in (0, 5, 10):
-        blob = torch.load(ck / f"step_{s:06d}.pt", weights_only=False)
+        blob = torch.load(ck / f"step_{s:06d}.pt", weights_only=True)
+        assert set(blob) == {"step", "tokens_seen", "model", "config", "data"}
         assert blob["step"] == s and blob["tokens_seen"] == s * 2 * 128
-        assert set(blob) == {"step", "tokens_seen", "model", "config"}  # weights only
+        data = blob["data"]
+        assert data["source"] == "real" and data["version"] == "v1"
+        assert data["verified"] is True
+        assert data["data_sha256"] == bundle_hash
+        assert data["train_bin_sha256"] == token_hash
         assert all(
             v.dtype == torch.float32
             for v in blob["model"].values()
