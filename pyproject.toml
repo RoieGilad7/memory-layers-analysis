@@ -15,7 +15,7 @@ line-length = 88
 target-version = ["py312"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "metrics"]
 addopts = "-q"
 # tests/conftest.py puts the repo root on sys.path, so `memlayers` imports without install
 pythonpath = ["."]
