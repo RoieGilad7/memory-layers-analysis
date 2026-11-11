@@ -36,6 +36,10 @@ class GPTConfig:
     memory_layers: tuple = ()
     memory_kind: str = "pkm"
     memory: Dict[str, Any] = field(default_factory=dict)
+    # hidden width of individual dense FFNs, {layer_idx: width}; any dense layer
+    # not listed keeps nanoGPT's 4 * n_embd. Used to compute-match a dense layer
+    # to the memory layer it replaces (see memlayers/flops.py).
+    ffn_hidden: Dict[int, int] = field(default_factory=dict)
 
     def __post_init__(self):
         if self.ffn_types is None:
@@ -52,6 +56,17 @@ class GPTConfig:
         bad = set(self.ffn_types) - {"dense", "pkm", "peer"}
         if bad:
             raise ValueError(f"unknown ffn types {sorted(bad)}")
+        self.ffn_hidden = {int(k): int(v) for k, v in (self.ffn_hidden or {}).items()}
+        for i, w in self.ffn_hidden.items():
+            if not 0 <= i < self.n_layer or self.ffn_types[i] != "dense":
+                raise ValueError(
+                    f"ffn_hidden names layer {i}, which is not a dense layer"
+                )
+            if w <= 0:
+                raise ValueError(f"ffn_hidden[{i}] = {w} must be positive")
+
+    def dense_hidden(self, layer_idx: int) -> int:
+        return self.ffn_hidden.get(layer_idx, 4 * self.n_embd)
 
 
 class CausalSelfAttention(nn.Module):
@@ -78,13 +93,14 @@ class CausalSelfAttention(nn.Module):
 
 
 class MLP(nn.Module):
-    """nanoGPT's dense FFN: 4x expansion, GELU."""
+    """nanoGPT's dense FFN: 4x expansion by default, GELU."""
 
-    def __init__(self, cfg: GPTConfig):
+    def __init__(self, cfg: GPTConfig, hidden: Optional[int] = None):
         super().__init__()
-        self.c_fc = nn.Linear(cfg.n_embd, 4 * cfg.n_embd, bias=cfg.bias)
+        hidden = hidden or 4 * cfg.n_embd
+        self.c_fc = nn.Linear(cfg.n_embd, hidden, bias=cfg.bias)
         self.gelu = nn.GELU()
-        self.c_proj = nn.Linear(4 * cfg.n_embd, cfg.n_embd, bias=cfg.bias)
+        self.c_proj = nn.Linear(hidden, cfg.n_embd, bias=cfg.bias)
         self.dropout = nn.Dropout(cfg.dropout)
 
     def forward(self, x):
@@ -100,7 +116,7 @@ class Block(nn.Module):
         self.attn = CausalSelfAttention(cfg)
         self.ln_2 = nn.LayerNorm(cfg.n_embd, bias=cfg.bias)
         if self.ffn_type == "dense":
-            self.mlp = MLP(cfg)
+            self.mlp = MLP(cfg, cfg.dense_hidden(layer_idx))
         else:
             # PKM and PEER both normalize their own input, but keeping ln_2 makes the
             # dense and memory variants differ in exactly one component.

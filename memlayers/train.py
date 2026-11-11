@@ -24,7 +24,7 @@ import os
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import torch
 import yaml
@@ -42,23 +42,17 @@ from .devices import (
 from .model import GPT, GPTConfig
 from .readlog import ReadLogWriter, SlotUsageCounter, bytes_per_token
 
-__all__ = ["TrainConfig", "Trainer", "load_config", "build_optimizer", "main"]
-
-CSV_FIELDS = [
-    "step",
-    "loss",
-    "lr",
-    "lr_memory",
-    "step_time_s",
-    "tokens_per_s",
-    "tokens_seen",
-    "peak_mem_bytes",
-    "grad_norm",
-    # constant for a run, but a log line has to be self-describing:
-    # a loss curve is meaningless without knowing which data made it
-    "data_version",
-    "data_sha256",
+__all__ = [
+    "TrainConfig",
+    "Trainer",
+    "RunLayout",
+    "load_config",
+    "build_optimizer",
+    "atomic_torch_save",
+    "main",
 ]
+
+from .runlog.files import TRAIN_FIELDS as CSV_FIELDS  # noqa: E402
 
 
 # ----------------------------------------------------------------------------- config
@@ -105,13 +99,65 @@ class DataCfg:
     data_config: str = "configs/data/v1.yaml"
     bin_path: Optional[str] = None  # None -> <root>/tokens/train.bin
     verify: bool = True  # check sha256s before step 0
+    # where the bundles live (configs/data/v1.yaml says data/v1): on Colab a
+    # Google Drive folder. The committed manifests stay in the repo.
+    root: str = "data"
+    # the 1% build (`--small`): verified against data/manifests/<v>_small.json.
+    small: bool = False
+    # one bundle's own directory, overriding root: the committed data/v1_sample/
+    bundle: Optional[str] = None
+
+
+def load_bundle_config(data: Any):
+    """The data.common.DataConfig a run's `data` section points at.
+
+    `data` is a DataCfg, a dict or a DictConfig. `root` moves every bundle
+    path from data/ to that folder; `small` selects the 1% build (its own
+    manifest); `bundle` points at one bundle's own directory (how the
+    committed data/v1_sample/ is read).
+    """
+    import yaml as _yaml
+
+    from data.common import DataConfig
+
+    get = (
+        (lambda k, d=None: data.get(k, d))
+        if hasattr(data, "get")
+        else (lambda k, d=None: getattr(data, k, d))
+    )
+    path = get("data_config")
+    from data.common import reroot_paths
+
+    raw = _yaml.safe_load(Path(path).read_text())
+    small = bool(get("small", False))
+    root = get("root", None) or "data"
+    if str(root).rstrip("/") != "data":
+        raw = reroot_paths(raw, root)
+    bundle = get("bundle", None)
+    if bundle:
+        if small:
+            raw["small"]["root"] = str(bundle)
+        else:
+            old = Path(raw["paths"]["root"])
+            raw["paths"] = {
+                k: str(Path(bundle) / Path(v).relative_to(old))
+                for k, v in raw["paths"].items()
+            }
+    cfg = DataConfig(raw=raw, small=small)
+    cfg.config_path = str(path)
+    return cfg
 
 
 @dataclass
 class RuntimeCfg:
     device: str = "auto"
     out_dir: str = "runs/default"
-    compile: bool = False
+    compile: bool = False  # torch.compile the training forward (CUDA)
+    # auto: bf16 autocast on CUDA 8.0+, fp16 + GradScaler on older CUDA, fp32
+    # on MPS/CPU. Master weights, optimizer state and checkpoints stay fp32.
+    precision: str = "auto"
+    # memlayers.run: also write the resumable last.pt this often (minutes)
+    ckpt_minutes: float = 20.0
 
 
 @dataclass
@@ -126,6 +172,52 @@ class TrainConfig:
     def tokens_per_step(self) -> int:
         block = self.model.get("block_size", 512)
         return self.train.micro_batch_size * self.train.grad_accum_steps * block
+
+
+@dataclass(frozen=True)
+class RunLayout:
+    """Where the Trainer writes inside its out_dir.
+
+    `legacy` is what `python -m memlayers.train` has always written; `run` is
+    the run-dir layout of `python -m memlayers.run`.
+    """
+
+    init_weights: str = "init_weights.pt"
+    checkpoint: str = "ckpt.pt"
+    train_log: str = "log.csv"
+
+    @classmethod
+    def legacy(cls) -> "RunLayout":
+        return cls()
+
+    @classmethod
+    def run(cls) -> "RunLayout":
+        return cls(
+            init_weights="checkpoints/step_000000.pt",
+            checkpoint="checkpoints/last.pt",
+            train_log="train_log.csv",
+        )
+
+
+def atomic_torch_save(obj: Any, path: str | Path) -> Path:
+    """torch.save to a temporary file in the same dir, fsync, then rename.
+
+    A write cut off half way (a crash, a full disk, a closed laptop) leaves the
+    previous file intact: the rename is the only step that touches `path`.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    try:
+        with open(tmp, "wb") as fh:
+            torch.save(obj, fh)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+    return path
 
 
 def _coerce(value: str) -> Any:
@@ -225,18 +317,42 @@ def cosine_warmup(step: int, warmup: int, total: int, min_ratio: float) -> float
 # ----------------------------------------------------------------------------- trainer
 class Trainer:
     def __init__(
-        self, cfg: TrainConfig, device: Optional[torch.device] = None, *, dataset=None
+        self,
+        cfg: TrainConfig,
+        device: Optional[torch.device] = None,
+        layout: Optional[RunLayout] = None,
+        *,
+        dataset=None,
     ):
         self.cfg = cfg
         self.device = device or pick_device(cfg.runtime.device)
         self.out_dir = Path(cfg.runtime.out_dir)
         self.out_dir.mkdir(parents=True, exist_ok=True)
+        self.layout = layout or RunLayout.legacy()
+        # run.py hooks: extra keys merged into meta.json, and a callback run
+        # after every periodic checkpoint (it updates status.json)
+        self.extra_meta: Dict[str, Any] = {}
+        self.on_checkpoint: Optional[Callable[["Trainer"], None]] = None
+        # called after every training step (memlayers.run's eval schedule)
+        self.on_step: Optional[Callable[["Trainer"], None]] = None
+        self.last_saved_step: Optional[int] = None  # step of the last last.pt
 
         torch.manual_seed(cfg.train.seed)
 
         model_kw = dict(cfg.model)
         self.gpt_config = GPTConfig(**model_kw)
         self.model = GPT(self.gpt_config).to(self.device)
+        from .devices import autocast_device_type, device_info, resolve_precision
+
+        self.prec = resolve_precision(self.device, cfg.runtime.precision)
+        self.device_info = device_info(self.device)
+        self._ac_type = autocast_device_type(self.device)
+        self.scaler = (
+            torch.amp.GradScaler(self._ac_type) if self.prec["scaler"] else None
+        )
+        self.forward_model = (
+            torch.compile(self.model) if cfg.runtime.compile else self.model
+        )
         self.optimizer = build_optimizer(self.model, cfg.train)
         self.scheduler = torch.optim.lr_scheduler.LambdaLR(
             self.optimizer,
@@ -298,8 +414,14 @@ class Trainer:
             and (bool(cfg.train.read_logging) or bool(cfg.train.track_slot_usage))
         )
 
-        self.csv_path = self.out_dir / "log.csv"
-        self._csv_started = self.csv_path.exists()
+        self.csv_path = self.out_dir / self.layout.train_log
+        # every log row goes through the run logger: the run-dir file first,
+        # then any sink memlayers.run adds (W&B)
+        from .runlog import FilesSink, RunLogger
+
+        self.logger = RunLogger(
+            FilesSink(self.out_dir, self.layout.train_log, write_status_on_finish=False)
+        )
 
     # ---- real data ----------------------------------------------------------
     def _build_real_dataset(self):
@@ -310,12 +432,11 @@ class Trainer:
         would produce numbers nobody could reproduce, so it is a hard stop
         rather than a warning.
         """
-        from data.common import load_config as load_data_config
         from data.fetch import load_manifest, require_verified
         from data.manifest import data_sha256
         from data.loader import PackedDataset
 
-        dcfg = load_data_config(self.cfg.data.data_config)
+        dcfg = load_bundle_config(self.cfg.data)
         version = self.cfg.data.version
         if self.cfg.data.verify:
             result = require_verified(dcfg, version)
@@ -394,19 +515,33 @@ class Trainer:
     # ---- bookkeeping --------------------------------------------------------
     def save_initial_weights(self) -> Path:
         """Step-0 snapshot, so later analysis can tell learned structure from init."""
-        path = self.out_dir / "init_weights.pt"
-        torch.save(
+        return self.save_weights(self.out_dir / self.layout.init_weights)
+
+    def save_weights(self, path: str | Path) -> Path:
+        """Save fp32 CPU weights with the step, token count, config and data provenance.
+
+        Tied tensors (the token embedding and the output head) stay one tensor
+        in the file: copying each state-dict entry separately would store the
+        50257 x d matrix twice.
+        """
+        copies: Dict[int, torch.Tensor] = {}
+        weights = {}
+        for k, v in self.model.state_dict().items():
+            key = id(v) if v.untyped_storage().nbytes() == 0 else v.data_ptr()
+            if key not in copies:
+                t = v.detach().cpu()
+                copies[key] = (t.float() if t.is_floating_point() else t).clone()
+            weights[k] = copies[key]
+        return atomic_torch_save(
             {
-                "step": 0,
-                "model": {
-                    k: v.detach().cpu().clone()
-                    for k, v in self.model.state_dict().items()
-                },
+                "step": self.step,
+                "tokens_seen": self.tokens_seen,
+                "model": weights,
                 "config": self.config_dict(),
+                "data": self.data_provenance,
             },
             path,
         )
-        return path
 
     def config_dict(self) -> dict:
         return {
@@ -418,11 +553,33 @@ class Trainer:
             "ffn_types": self.gpt_config.ffn_types,
         }
 
+    # written by memlayers.run after a run started; a rewrite of meta.json
+    # (e.g. a restart from step 0) must not drop them
+    _META_HISTORY = ("resumes", "device_changes")
+
     def write_meta(self) -> Path:
+        path = self.out_dir / "meta.json"
+        meta = self.meta_dict()
+        if path.exists():
+            try:
+                old = json.loads(path.read_text())
+            except json.JSONDecodeError:
+                old = {}
+            for k in self._META_HISTORY:
+                if k in old and k not in meta:
+                    meta[k] = old[k]
+        path.write_text(json.dumps(meta, indent=2, default=str))
+        return path
+
+    def meta_dict(self) -> dict:
         mem = self.model.memory_layers
         meta = {
             "config": self.config_dict(),
             "device": str(self.device),
+            "precision": self.prec["precision"],
+            "gpu_name": self.device_info["gpu_name"],
+            "gpu_capability": self.device_info["capability"],
+            "compile": bool(self.cfg.runtime.compile),
             "param_counts": self.model.param_counts(),
             "tokens_per_step": self.cfg.tokens_per_step,
             "data": self.data_provenance,
@@ -450,32 +607,19 @@ class Trainer:
                 for i, m in mem.items()
             },
         }
-        path = self.out_dir / "meta.json"
-        path.write_text(json.dumps(meta, indent=2, default=str))
-        return path
+        meta.update(self.extra_meta)
+        return meta
 
     def _log_csv(self, row: dict) -> None:
-        mode = "a" if self._csv_started else "w"
-        fields = CSV_FIELDS
-        if self._csv_started:
-            # Resuming a run whose log.csv predates a CSV_FIELDS change: append
-            # under the header already in the file, or the extra values would
-            # land in columns the header does not name and shift every field.
-            with open(self.csv_path, newline="") as fh:
-                existing = next(csv.reader(fh), None)
-            if existing and existing != CSV_FIELDS:
-                fields = existing
-        with open(self.csv_path, mode, newline="") as fh:
-            w = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
-            if not self._csv_started:
-                w.writeheader()
-                self._csv_started = True
-            w.writerow({k: row.get(k, "") for k in fields})
+        self.logger.log_train(row)
 
     # ---- checkpointing ------------------------------------------------------
     def save_checkpoint(self, path: Optional[Path] = None) -> Path:
-        path = Path(path or self.out_dir / "ckpt.pt")
-        torch.save(
+        default = path is None
+        path = Path(path or self.out_dir / self.layout.checkpoint)
+        if default:
+            self.last_saved_step = self.step
+        atomic_torch_save(
             {
                 "step": self.step,
                 "tokens_seen": self.tokens_seen,
@@ -483,6 +627,8 @@ class Trainer:
                 "model": self.model.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
                 "scheduler": self.scheduler.state_dict(),
+                "scaler": self.scaler.state_dict() if self.scaler is not None else None,
+                "precision": self.prec["precision"],
                 "rng": get_rng_states(self.device),
                 "config": self.config_dict(),
                 "data": self.data_provenance,
@@ -501,6 +647,8 @@ class Trainer:
         self.model.load_state_dict(ck["model"])
         self.optimizer.load_state_dict(ck["optimizer"])
         self.scheduler.load_state_dict(ck["scheduler"])
+        if self.scaler is not None and ck.get("scaler"):
+            self.scaler.load_state_dict(ck["scaler"])
         set_rng_states(ck["rng"], self.device)
         self.step = int(ck["step"])
         self.tokens_seen = int(ck.get("tokens_seen", 0))
@@ -529,6 +677,13 @@ class Trainer:
             )
 
     # ---- the loop -----------------------------------------------------------
+    def _autocast(self):
+        import contextlib
+
+        if self.prec["precision"] == "fp32":
+            return contextlib.nullcontext()
+        return torch.autocast(self._ac_type, dtype=self.prec["dtype"])
+
     def train_step(self) -> dict:
         cfg = self.cfg.train
         self.model.train()
@@ -547,9 +702,13 @@ class Trainer:
                 self.step, cfg.micro_batch_size, micro, self.device
             )
             tokens += x.numel()
-            _, loss = self.model(x, y)
+            with self._autocast():
+                _, loss = self.forward_model(x, y)
             total_loss += loss.item()
-            (loss / cfg.grad_accum_steps).backward()
+            scaled = loss.float() / cfg.grad_accum_steps
+            if self.scaler is not None:
+                scaled = self.scaler.scale(scaled)
+            scaled.backward()
             if want_reads:
                 reads = self.model.read_logs()
                 if reads:
@@ -559,11 +718,17 @@ class Trainer:
                         self.read_writer.append(self.step, reads)
 
         gnorm = float("nan")
+        if self.scaler is not None:
+            self.scaler.unscale_(self.optimizer)  # clip the true gradients
         if cfg.grad_clip > 0:
             gnorm = float(
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), cfg.grad_clip)
             )
-        self.optimizer.step()
+        if self.scaler is not None:
+            self.scaler.step(self.optimizer)  # skips the step on inf/NaN grads
+            self.scaler.update()
+        else:
+            self.optimizer.step()
         self.scheduler.step()
 
         synchronize(self.device)
@@ -592,7 +757,8 @@ class Trainer:
         cfg = self.cfg.train
         target = self.step + (steps if steps is not None else cfg.steps - self.step)
         if self.step == 0:
-            self.save_initial_weights()
+            if not (self.out_dir / self.layout.init_weights).exists():
+                self.save_initial_weights()  # the step-0 eval point may have
             self.write_meta()
         reset_peak_memory(self.device)
 
@@ -613,6 +779,10 @@ class Trainer:
                     )
             if cfg.ckpt_every and self.step % cfg.ckpt_every == 0:
                 self.save_checkpoint()
+                if self.on_checkpoint is not None:
+                    self.on_checkpoint(self)
+            if self.on_step is not None:
+                self.on_step(self)
 
         if self.read_writer is not None:
             self.read_writer.close()

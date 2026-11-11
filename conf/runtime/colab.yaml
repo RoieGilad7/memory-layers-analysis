@@ -1,0 +1,18 @@
+# @package _global_
+# Google Colab: as runtime=cuda, plus the run dirs and the data bundle on
+# Google Drive (mounted at /content/drive by notebooks/colab_run.ipynb), a
+# shorter last.pt timer for disconnects, and W&B offline unless asked
+# (logging=wandb logging.mode=online after a login from Colab's secrets).
+runtime:
+  device: cuda
+  precision: auto
+  compile: false
+  ckpt_minutes: 15
+out_root: /content/drive/MyDrive/memlayers/runs
+data:
+  root: /content/drive/MyDrive/memlayers/data
+logging:
+  mode: offline
+# a Colab reconnect is a new VM with a new hostname: the run it left behind
+# says "running on another host", which is exactly the case to resume
+resume_foreign: true

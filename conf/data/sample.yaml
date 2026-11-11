@@ -1,0 +1,13 @@
+# The committed 1% build, data/v1_sample/: real Pile text and biographies, 1.5M
+# training tokens, verified against data/manifests/v1_small.json, with its own
+# eval sets (data/manifests/eval_sets_v1_small.json). For smoke runs: the whole
+# chain -- verification, training, every built-in metric -- in seconds on CPU.
+# Not a training set.
+source: real
+version: v1
+data_config: configs/data/v1.yaml
+small: true
+bundle: data/v1_sample
+bin_path: null
+verify: true
+seed: ${seed}

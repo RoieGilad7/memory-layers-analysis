@@ -1,0 +1,7 @@
+# The frozen, published v1 bundle: packed tokens, sha256-verified before step 0.
+source: real
+version: v1
+data_config: configs/data/v1.yaml
+bin_path: null
+verify: true
+seed: ${seed}        # the loader permutation

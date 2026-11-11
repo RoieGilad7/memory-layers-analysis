@@ -1,0 +1,11 @@
+# @package _global_
+# The smoke dense model: as `smoke` (~50 steps on data/v1_sample, CPU, under a
+# minute), with the tiny dense twin.
+defaults:
+  - override /model: smoke_dense
+  - override /data: sample
+  - override /train: smoke
+
+name: smoke_dense
+eval:
+  points: [0, 0.5, 1.0]

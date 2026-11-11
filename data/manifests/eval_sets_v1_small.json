@@ -1,0 +1,24 @@
+{
+ "data_seed": 20261102,
+ "sets": {
+  "fact_sample": {
+   "bytes": 21677,
+   "n_items": 840,
+   "path": "eval_sets/fact_sample.json",
+   "sha256": "54db8a55e1abd6b0692e86d3869d4f671c3e2760a0a14ce1084f2cdfdf94e27b"
+  },
+  "heldout_sample": {
+   "bytes": 4594,
+   "n_items": 168,
+   "path": "eval_sets/heldout_sample.json",
+   "sha256": "f947fe601f2a8635298eee1437da64ed482123778c828fe677832d90a4ec2877"
+  },
+  "readlog_tokens": {
+   "bytes": 8554,
+   "n_items": 321,
+   "path": "eval_sets/readlog_tokens.json",
+   "sha256": "1b25abf5a58bc28fac80ad2b884444b1b3dba2723b532d59626407764561acda"
+  }
+ },
+ "version": "v1"
+}

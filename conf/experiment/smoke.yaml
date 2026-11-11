@@ -1,0 +1,14 @@
+# @package _global_
+# A tiny PKM for ~50 steps on the committed 1% sample (data/v1_sample): every
+# file, every built-in metric, the training check, in well under a minute on
+# CPU. A health check of the run layer, not an experiment. smoke_randkey and
+# smoke_dense are its twin and dense counterparts, so compare can be tried on
+# the full pkm / twin / dense layout.
+defaults:
+  - override /model: smoke_pkm
+  - override /data: sample
+  - override /train: smoke
+
+name: smoke
+eval:
+  points: [0, 0.5, 1.0]   # three points for a short run (eval=off still means none)

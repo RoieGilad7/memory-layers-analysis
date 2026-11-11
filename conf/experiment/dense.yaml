@@ -1,0 +1,9 @@
+# @package _global_
+# Dense baseline: the PKM layer replaced by a FLOP-matched dense FFN. Reads the
+# same batches as pkm at the same seed (init differs: see the report).
+defaults:
+  - override /model: dense
+  - override /data: v1
+  - override /train: tier1
+
+name: dense

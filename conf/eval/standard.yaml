@@ -1,0 +1,21 @@
+# Evaluation during training (fixed samples), at the end (full sets) and the
+# default post-hoc list. Points are fractions of the run: for Tier 1 (9,156
+# steps) steps 0, 247, 504, 998, 1996, 3498, 4999, 7004 and 9156 (final).
+points: [0, 0.027, 0.055, 0.109, 0.218, 0.382, 0.546, 0.765, 1.0]
+steps: null              # an absolute list, e.g. [0,150,300], overrides points
+during: [heldout_quality, fact_recall, slot_usage]
+final: [heldout_quality, fact_recall, slot_usage]
+posthoc: [heldout_quality, fact_recall, slot_usage]
+seed: 0
+heldout_batch: 8
+fact_batch_tokens: 16384
+training_check:
+  enabled: true
+  divergence_factor: 1.5
+  min_drop_from_init: 0.40
+  rising_tolerance: 0.005
+  min_coverage: 0.8        # from the pilot: final 0.99995; see train5 report
+  fact_ratio: 2.0
+readlog:
+  tokens_per_subject: 1000000   # the readlog_tokens budget; the pilot sets it
+  heldout_batch: 8

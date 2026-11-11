@@ -1,3 +1,5 @@
+# T2: not in conf/ (no experiment uses T2; removed from conf/model). Kept for
+# `python -m memlayers.train --config` and the bench scripts.
 # T2-pkm-262k: d512 L8 H8, layer 4 = PKM 512x512 = 262,144 slots
 # Generated for step 1 (training demo on fake data). See reports/step1_demo_report.md.
 

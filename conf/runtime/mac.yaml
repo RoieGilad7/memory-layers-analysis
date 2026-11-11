@@ -1,0 +1,5 @@
+# Apple Silicon: MPS, fp32 -- as every run so far.
+device: mps
+precision: fp32
+compile: false
+ckpt_minutes: 20

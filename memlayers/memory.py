@@ -104,6 +104,15 @@ class QueryBatchNorm(nn.Module):
         return out
 
 
+def fp32_region(x: torch.Tensor):
+    """Autocast off for the whole memory layer (its input is cast to fp32 by
+    the caller): the query projection, the sub-key scores, the top-k, the
+    softmax and the value sum all run in fp32, so mixed precision can never
+    change which slots a token reads. A no-op in an fp32 run."""
+    t = x.device.type if x.device.type in ("cuda", "cpu", "mps", "xpu") else "cpu"
+    return torch.autocast(t, enabled=False)
+
+
 class MemoryLayer(nn.Module):
     """Common interface for the memory FFN replacements."""
 
@@ -315,7 +324,8 @@ class PKMMemory(MemoryLayer):
         self._b = x.shape[0]  # the hook needs it to unflatten (b t)
         if not self._capture_needed():
             self._last = None
-        return self.pkm(x)
+        with fp32_region(x):
+            return self.pkm(x.float())
 
     def key_parameters(self):
         yield self.pkm.keys
@@ -425,7 +435,8 @@ class PEERMemory(MemoryLayer):
         if not self._capture_needed():
             self._last = None
         self._pending_indices = None
-        return self.peer(x)
+        with fp32_region(x):
+            return self.peer(x.float())
 
     def key_parameters(self):
         yield self.peer.keys

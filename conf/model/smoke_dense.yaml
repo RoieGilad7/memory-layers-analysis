@@ -1,0 +1,11 @@
+# Smoke model on GPT-2 tokens: tiny dense twin, standard 4x FFNs (not FLOP-matched: a smoke model). d64, 3 layers, block 512 (the
+# packed bundle's sequence length), vocab 50257. CPU-fast.
+vocab_size: 50257
+block_size: 512
+n_layer: 3
+n_head: 4
+n_embd: 64
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: []

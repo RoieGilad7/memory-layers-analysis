@@ -1,0 +1,6 @@
+# Whatever this machine has: CUDA > MPS > CPU, with that device's default
+# precision (bf16 on CUDA 8.0+, fp16 + GradScaler on older CUDA, fp32 on MPS/CPU).
+device: auto
+precision: auto
+compile: false
+ckpt_minutes: 20        # also write last.pt this often

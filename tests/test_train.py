@@ -377,6 +377,10 @@ def test_real_data_runs_and_records_its_provenance(tmp_path, real_bundle):
 
     loaded = torch.load(ck, map_location="cpu", weights_only=False)
     assert loaded["data"]["data_sha256"] == prov["data_sha256"]
+    numbered = t.save_weights(t.out_dir / "step_000002.pt")
+    snapshot = torch.load(numbered, map_location="cpu", weights_only=True)
+    assert snapshot["step"] == 2 and snapshot["data"] == loaded["data"]
+    assert len(snapshot["data"]["train_bin_sha256"]) == 64
     assert loaded["data_state"]["position"] == 4  # 2 steps x batch 2
     rows = list(csv.DictReader(open(t.out_dir / "log.csv")))
     assert rows[0]["data_version"] == "v1"

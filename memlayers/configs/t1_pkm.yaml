@@ -1,3 +1,5 @@
+# SUPERSEDED by conf/model/pkm.yaml (python -m memlayers.run). Kept for
+# `python -m memlayers.train --config` and the bench scripts.
 # T1-pkm: d384 L6 H6, layer 3 = PKM 256x256 = 65,536 slots, top-k 32, 4 heads
 # Generated for step 1 (training demo on fake data). See reports/step1_demo_report.md.
 

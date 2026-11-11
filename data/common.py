@@ -316,9 +316,33 @@ class DataConfig:
         return f"{self.slug(subject)}-{self.source_tag(filename)}-{line}"
 
 
-def load_config(path: str | Path, small: bool = False) -> DataConfig:
+def reroot_paths(raw: Dict[str, Any], data_root: str | Path) -> Dict[str, Any]:
+    """Move every bundle path from `data/...` to `<data_root>/...`.
+
+    The committed manifests (distribution.manifest_dir) stay in the repo; only
+    the bundle itself moves -- e.g. to Google Drive on Colab.
+    """
+
+    def sub(v):
+        p = Path(str(v))
+        if p.is_absolute() or not p.parts or p.parts[0] != "data":
+            return v
+        return str(Path(data_root).joinpath(*p.parts[1:]))
+
+    raw = dict(raw)
+    raw["paths"] = {k: sub(v) for k, v in raw["paths"].items()}
+    raw["small"] = {**raw["small"], "root": sub(raw["small"]["root"])}
+    return raw
+
+
+def load_config(
+    path: str | Path, small: bool = False, data_root: str | Path | None = None
+) -> DataConfig:
+    """`data_root` moves the bundle (default `data/`, the repo's)."""
     with open(path, "r", encoding="utf-8") as fh:
         raw = yaml.safe_load(fh)
+    if data_root is not None and str(data_root).rstrip("/") != "data":
+        raw = reroot_paths(raw, data_root)
     cfg = DataConfig(raw=raw, small=small)
     # remembered so a stage can re-invoke the build with the same config
     cfg.config_path = str(path)

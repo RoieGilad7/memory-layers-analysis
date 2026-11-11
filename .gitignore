@@ -71,3 +71,13 @@ checkpoints/
 # ------------------------------------------------------------------------- os
 .DS_Store
 Thumbs.db
+
+# CI smoke job outputs
+ci_runs/
+ci_compare/
+
+# memlayers.compare outputs are regenerable (CI makes one on every push);
+# keep only the pilot example and the Phase 1 tables in git
+reports/compare_*/
+!reports/compare_pilot/
+!reports/compare_phase1/

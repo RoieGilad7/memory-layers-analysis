@@ -1,0 +1,14 @@
+# @package _global_
+# The smoke twin: smoke_pkm with its keys frozen at their random init, as
+# `smoke` otherwise (~50 steps on data/v1_sample, CPU, under a minute).
+defaults:
+  - override /model: smoke_pkm
+  - override /data: sample
+  - override /train: smoke
+
+name: smoke_randkey
+model:
+  memory:
+    freeze_keys: true
+eval:
+  points: [0, 0.5, 1.0]

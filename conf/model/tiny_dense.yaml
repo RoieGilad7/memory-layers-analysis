@@ -1,0 +1,11 @@
+# Tiny dense twin of tiny_pkm, standard 4x FFNs everywhere (no compute match:
+# it exists for tests and the smoke run, not for comparisons).
+vocab_size: 257
+block_size: 64
+n_layer: 3
+n_head: 4
+n_embd: 64
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: []

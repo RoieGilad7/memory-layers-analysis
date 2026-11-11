@@ -1,0 +1,14 @@
+# No evaluation inside the run. Post hoc still works on the saved checkpoints
+# (python -m memlayers.evaluate). The training check runs on the training loss
+# alone and reports the held-out rules as not evaluated.
+points: []
+steps: null
+during: []
+final: []
+posthoc: [heldout_quality, fact_recall, slot_usage]
+seed: 0
+training_check:
+  enabled: true
+readlog:
+  tokens_per_subject: 1000000   # the readlog_tokens budget; the pilot sets it
+  heldout_batch: 8

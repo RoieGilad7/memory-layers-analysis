@@ -1,0 +1,5 @@
+# CPU, fp32: tests and CI only.
+device: cpu
+precision: fp32
+compile: false
+ckpt_minutes: 20

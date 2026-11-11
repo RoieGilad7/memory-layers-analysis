@@ -1,0 +1,27 @@
+{
+  "command": "python -m memlayers.compare runs/pkm-s0-pilot --out reports/compare_pilot",
+  "inputs": [
+    "runs/pkm-s0-pilot"
+  ],
+  "stage": "final",
+  "roles": {
+    "pkm": "pkm",
+    "twin": "pkm_randkey",
+    "dense": "dense"
+  },
+  "runs": [
+    "runs/pkm-s0-pilot"
+  ],
+  "skipped": [],
+  "warnings": [],
+  "files": {
+    "runs": "runs.csv",
+    "groups": "groups.csv",
+    "curves": "curves.csv",
+    "training_check": "training_check.csv",
+    "learned_vs_random_keys": "learned_vs_random_keys.csv",
+    "heldout_loss": "plot_heldout_loss.png",
+    "fact_recall": "plot_fact_recall.png",
+    "slot_coverage": "plot_slot_coverage.png"
+  }
+}

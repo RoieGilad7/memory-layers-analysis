@@ -1,0 +1,8 @@
+# @package _global_
+# The main run: T1 PKM on v1, tier-1 training.
+defaults:
+  - override /model: pkm
+  - override /data: v1
+  - override /train: tier1
+
+name: pkm

@@ -1,3 +1,5 @@
+# T2: not in conf/ (no experiment uses T2; removed from conf/model). Kept for
+# `python -m memlayers.train --config` and the bench scripts.
 # T2-dense: d512 L8 H8, all dense MLPs (free-GPU tier)
 # Generated for step 1 (training demo on fake data). See reports/step1_demo_report.md.
 

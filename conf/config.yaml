@@ -1,0 +1,50 @@
+# Root config for `python -m memlayers.run`.
+#
+#   python -m memlayers.run experiment=pkm seed=0
+#   python -m memlayers.run experiment=pkm seed=0 train.steps=200 tag=pilot
+#   python -m memlayers.run -m experiment=pkm seed=0,1,2
+#
+# Every key is checked against memlayers/config.py:RunConfig, so an unknown or
+# misspelled key fails at compose time. The run dir is <out_root>/<run_id>/;
+# memlayers/run.py owns it (see reports/train1_run_layer_report.md).
+# _self_ comes before the groups, so a group may set a top-level key
+# (runtime=colab moves out_root to Google Drive); the command line wins over all.
+defaults:
+  - run_schema
+  - _self_
+  - model: pkm
+  - data: v1
+  - train: tier1
+  - eval: standard
+  - logging: files
+  - runtime: auto
+  - experiment: ???      # required: pkm | pkm_randkey | dense | peer | smoke[_randkey|_dense]
+
+# The one seed: model init, data order (the loader permutation) and dropout.
+# data.seed and train.seed are ${seed}; override them only in tests.
+seed: 0
+# Appended to the run id when set: pkm-s0-pilot.
+tag: ""
+run_id: ${make_run_id:${name},${seed},${tag}}
+out_root: runs
+# Re-running a run id. done -> refused unless force=true (the old dir is moved
+# to <run_dir>.old-<n>, never deleted). running/failed -> resumed from
+# checkpoints/last.pt when resume=true, else refused.
+force: false
+resume: true
+# A `running` status written by another host (a synced drive) is refused
+# unless this is set.
+resume_foreign: false
+
+runtime:
+  out_dir: ${out_root}/${run_id}
+
+hydra:
+  job:
+    chdir: false             # relative paths keep meaning the repo root
+  output_subdir: null        # Hydra writes no .hydra/ anywhere
+  run:
+    dir: ${out_root}/.hydra_tmp
+  sweep:
+    dir: ${out_root}/.hydra_tmp/multirun
+    subdir: ${hydra.job.num}

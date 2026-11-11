@@ -1,0 +1,21 @@
+# T1 dense: d384 L6 H6, all dense FFNs; the FFN at layer 3 (the PKM's layer) is
+# FLOP-matched to the PKM layer. Port of memlayers/configs/t1_dense.yaml, which
+# had a 4x FFN there.
+#
+# FLOPs per token, forward (memlayers/flops.py):
+#   PKM layer-3 FFN            1,413,120
+#   dense 4x FFN (h = 1536)    2,359,296   = 1.67x the PKM, outside 10%
+#   dense h = 896              1,376,256   = 0.974x the PKM (and 0.911x PEER's
+#                                            1,511,424), inside 10%
+# The other five FFNs keep the standard 4x width.
+vocab_size: 50257
+block_size: 512
+n_layer: 6
+n_head: 6
+n_embd: 384
+dropout: 0.0
+bias: true
+tie_embeddings: true
+memory_layers: []
+ffn_hidden: {3: 896}
+compute_match: pkm
