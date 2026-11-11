@@ -50,7 +50,7 @@ import time
 import traceback
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional
 
 import yaml
 from omegaconf import DictConfig, OmegaConf
@@ -424,8 +424,17 @@ def _halt_hook(step: int, where: str = "ckpt") -> None:
 
 
 # ---------------------------------------------------------------------- launch
-def launch(cfg: DictConfig, overrides: Optional[List[str]] = None) -> Path:
+def launch(
+    cfg: DictConfig,
+    overrides: Optional[List[str]] = None,
+    *,
+    after_eval_checkpoint: Optional[Callable[[Path], None]] = None,
+) -> Path:
     """Run (or resume) `cfg` in its run dir. Returns the run dir.
+
+    after_eval_checkpoint receives the path to each saved evaluation snapshot.
+    A resume can call it again for the starting step, so callbacks that save
+    results should handle an existing result for that checkpoint.
 
     Raises RunRefused, having written nothing, when the run dir's state does
     not allow it.
@@ -482,7 +491,15 @@ def launch(cfg: DictConfig, overrides: Optional[List[str]] = None) -> Path:
             hold: Dict[str, Any] = {}
             try:
                 trainer = _train(
-                    cfg, tc, run_dir, decision, overrides, moved, eval_set_hashes, hold
+                    cfg,
+                    tc,
+                    run_dir,
+                    decision,
+                    overrides,
+                    moved,
+                    eval_set_hashes,
+                    hold,
+                    after_eval_checkpoint,
                 )
             except BaseException as e:
                 tr = hold.get("trainer")
@@ -525,6 +542,7 @@ def _train(
     moved,
     eval_set_hashes=None,
     hold=None,
+    after_eval_checkpoint=None,
 ):
     from .eval.evaluator import Evaluator
     from .train import RunLayout, Trainer
@@ -649,6 +667,8 @@ def _train(
         if stage is not None:
             evaluator.at_point(t, stage)  # also writes last.pt
             on_ckpt(t)
+            if after_eval_checkpoint:
+                after_eval_checkpoint(run_dir / "checkpoints" / f"step_{t.step:06d}.pt")
         elif period > 0 and time.monotonic() - timer["last"] >= period:
             t.save_checkpoint()
             on_ckpt(t)
@@ -663,9 +683,18 @@ def _train(
     if stage is not None:
         from .eval.writers import EvalsCSV
 
-        have = {(r["step"], r["stage"]) for r in EvalsCSV(run_dir / "evals.csv").read()}
-        if (trainer.step, stage) not in have:
+        csv_file = EvalsCSV(run_dir / "evals.csv")
+        have = {(r["step"], r["stage"]) for r in csv_file.read()}
+        snapshot = run_dir / "checkpoints" / f"step_{trainer.step:06d}.pt"
+        if (
+            (trainer.step, stage) not in have
+            or not snapshot.is_file()
+            or (stage == "final" and not (run_dir / "final_metrics.json").is_file())
+        ):
+            csv_file.drop_after(trainer.step - 1)
             evaluator.at_point(trainer, stage)
+        if after_eval_checkpoint:
+            after_eval_checkpoint(snapshot)
     trainer.train()
     if trainer.last_saved_step != trainer.step:  # the final eval point saved it
         trainer.save_checkpoint()

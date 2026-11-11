@@ -756,6 +756,36 @@ def test_a_kill_between_the_last_checkpoint_and_the_final_eval_is_resumed(
     )
 
 
+@pytest.mark.parametrize(
+    "missing", ["checkpoints/step_000002.pt", "final_metrics.json"]
+)
+def test_resume_restores_missing_eval_output_before_callback(bundle, tmp_path, missing):
+    cfg = compose(run_overrides(bundle[0], tmp_path, steps=2, eval_steps="[0,2]"))
+    run_dir = tmp_path / "smoke-s0"
+    seen = []
+
+    def inspect(snapshot):
+        saved = torch.load(snapshot, map_location="cpu", weights_only=True)
+        seen.append(saved["step"])
+        assert snapshot.name == f"step_{saved['step']:06d}.pt"
+        assert len(saved["data"]["train_bin_sha256"]) == 64
+
+    def interrupt(snapshot):
+        inspect(snapshot)
+        if seen[-1] == 2:
+            raise RuntimeError("simulated interruption")
+
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        launch(cfg, after_eval_checkpoint=interrupt)
+    expected_rows = _evals(run_dir)
+    assert seen == [0, 2]
+    (run_dir / missing).unlink()
+    launch(cfg, after_eval_checkpoint=inspect)
+    assert seen == [0, 2, 2]
+    assert (run_dir / missing).is_file()
+    assert _evals(run_dir) == expected_rows
+
+
 def test_a_build_does_not_overwrite_a_committed_manifest_that_differs(tmp_path):
     from memlayers.eval.eval_sets import EvalSetMismatch, manifest_file
 

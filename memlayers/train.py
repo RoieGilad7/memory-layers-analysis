@@ -538,6 +538,7 @@ class Trainer:
                 "tokens_seen": self.tokens_seen,
                 "model": weights,
                 "config": self.config_dict(),
+                "data": self.data_provenance,
             },
             path,
         )
