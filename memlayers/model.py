@@ -246,7 +246,8 @@ class GPT(nn.Module):
             "total": total,
         }
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx, targets=None, *, all_logits=False):
+        """Return last-position inference logits or all positions for scoring."""
         B, T = idx.shape
         if T > self.config.block_size:
             raise ValueError(
@@ -258,8 +259,10 @@ class GPT(nn.Module):
             x = block(x)
         x = self.transformer.ln_f(x)
 
-        if targets is None:
+        if targets is None and not all_logits:
             return self.lm_head(x[:, [-1], :]), None
         logits = self.lm_head(x)
+        if targets is None:
+            return logits, None
         loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
         return logits, loss

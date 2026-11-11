@@ -321,6 +321,8 @@ class Trainer:
         cfg: TrainConfig,
         device: Optional[torch.device] = None,
         layout: Optional[RunLayout] = None,
+        *,
+        dataset=None,
     ):
         self.cfg = cfg
         self.device = device or pick_device(cfg.runtime.device)
@@ -358,8 +360,12 @@ class Trainer:
                 s, cfg.train.warmup_steps, cfg.train.steps, cfg.train.min_lr_ratio
             ),
         )
-        self.data_provenance: Dict[str, Any] = {"source": cfg.data.source}
-        if cfg.data.source == "real":
+        self.data_provenance: Dict[str, Any] = {
+            "source": "injected" if dataset is not None else cfg.data.source
+        }
+        if dataset is not None:
+            self.data = dataset
+        elif cfg.data.source == "real":
             self.data = self._build_real_dataset()
         elif cfg.data.source == "fake":
             self.data = build_dataset(
@@ -473,22 +479,19 @@ class Trainer:
         # "/tmp/data/v1_elsewhere/tokens/train.bin" while not being a parent of
         # it, and the substring form let that through into a relative_to()
         # ValueError instead of the intended fallback.
-        rel = str(resolved.relative_to(root)) if resolved.is_relative_to(root) else None
+        rel = (
+            resolved.relative_to(root).as_posix()
+            if resolved.is_relative_to(root)
+            else None
+        )
         train_sha = next(
-            (
-                f["sha256"]
-                for f in man["files"]
-                if f["path"] == (rel or "tokens/train.bin")
-            ),
+            (f["sha256"] for f in man["files"] if f["path"] == rel),
             None,
         )
         if train_sha is None:
-            # Without this hash the resume guard below has nothing to compare,
-            # so it would silently pass. Say so rather than let it lapse quietly.
-            print(
-                f"[train] WARNING: {path} has no entry in the {version} "
-                "manifest, so a resume cannot confirm it is the same tokens"
-            )
+            from data.manifest import sha256_file
+
+            train_sha = sha256_file(resolved)
         self.data_provenance = {
             "source": "real",
             "version": version,
@@ -639,7 +642,7 @@ class Trainer:
         return path
 
     def load_checkpoint(self, path: str | Path) -> None:
-        ck = torch.load(path, map_location=self.device, weights_only=False)
+        ck = torch.load(path, map_location=self.device, weights_only=True)
         self.model.load_state_dict(ck["model"])
         self.optimizer.load_state_dict(ck["optimizer"])
         self.scheduler.load_state_dict(ck["scheduler"])
@@ -687,6 +690,7 @@ class Trainer:
         self.optimizer.zero_grad(set_to_none=True)
 
         total_loss = 0.0
+        tokens = 0
         want_reads = self.read_writer is not None or self.usage is not None
         log_this = self.read_writer is not None and (
             cfg.read_log_steps == 0 or self.step < cfg.read_log_steps
@@ -696,6 +700,7 @@ class Trainer:
             x, y = self.data.get_batch(
                 self.step, cfg.micro_batch_size, micro, self.device
             )
+            tokens += x.numel()
             with self._autocast():
                 _, loss = self.forward_model(x, y)
             total_loss += loss.item()
@@ -727,7 +732,6 @@ class Trainer:
 
         synchronize(self.device)
         dt = time.perf_counter() - t0
-        tokens = self.cfg.tokens_per_step
         self.tokens_seen += tokens
         self.step += 1
         mem_now = peak_memory_bytes(self.device)
