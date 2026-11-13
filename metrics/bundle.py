@@ -99,7 +99,15 @@ def _sample(ids, count, seed, *parts):
     return sorted(random.Random(key_seed).sample(ids, count))
 
 
-def _heldout_docs(root, docs_per_subject, doc_tokens, seed):
+def trained_subjects(root):
+    """Held-out subjects that also occur in the training token stream."""
+    import pyarrow.parquet as pq
+
+    index = pq.read_table(root / "tokens/train.idx.parquet", columns=["subject"])
+    return sorted({s for s in index.column("subject").to_pylist() if s and s != "bio"})
+
+
+def _heldout_docs(root, docs_per_subject, doc_tokens, seed, subjects=None):
     import pyarrow.parquet as pq
 
     docs = {}
@@ -116,6 +124,8 @@ def _heldout_docs(root, docs_per_subject, doc_tokens, seed):
         tokens = np.memmap(stem.with_suffix(".bin"), dtype="<u2", mode="r")
         group = []
         for subject, ids in sorted(by_subject.items()):
+            if subjects is not None and subject not in subjects:
+                continue
             for identifier in _sample(
                 ids, docs_per_subject, seed, "documents", half, subject
             ):
@@ -217,15 +227,35 @@ def _facts(root, chosen_ids, people, values, enc):
     return facts
 
 
+def _person_of(fact_id):
+    # Attribute names use underscores only, so the last hyphen splits person and attribute.
+    return fact_id.rsplit("-", 1)[0]
+
+
 def load_v1_slice(
-    root, *, seed=17, people_per_tier=1, docs_per_subject=1, doc_tokens=64
+    root,
+    *,
+    seed=17,
+    people_per_tier=1,
+    docs_per_subject=1,
+    doc_tokens=64,
+    tier_people=None,
+    include_people=(),
+    include_untrained_subjects=False,
 ):
-    """Read selected docs and facts only; fingerprint identifies the entire verified release."""
+    """Read selected docs and facts only; fingerprint identifies the entire verified release.
+
+    tier_people overrides people_per_tier for named tiers (e.g. more frequent-tier
+    people for E2). include_people adds named people (e.g. a fixed E2 fact cohort)
+    on top of the sample. Held-out subjects absent from training (the phase-2
+    subject) are left out unless include_untrained_subjects is true.
+    """
     import tiktoken
 
+    tier_people = dict(tier_people or {})
     if any(
         type(v) is not int or v < 1
-        for v in (people_per_tier, docs_per_subject, doc_tokens)
+        for v in (people_per_tier, docs_per_subject, doc_tokens, *tier_people.values())
     ):
         raise ValueError(
             "people_per_tier, docs_per_subject and doc_tokens must be positive integers"
@@ -244,17 +274,34 @@ def load_v1_slice(
     by_tier = defaultdict(list)
     for pid, p in people.items():
         by_tier[p["tier"]].append(pid)
+    unknown = set(tier_people) - set(by_tier)
+    if unknown:
+        raise ValueError(f"Unknown tiers {sorted(unknown)}; have {sorted(by_tier)}")
     chosen = {
-        tier: _sample(ids, people_per_tier, seed, "q2_eval", tier)
+        tier: _sample(
+            ids,
+            min(tier_people.get(tier, people_per_tier), len(ids)),
+            seed,
+            "q2_eval",
+            tier,
+        )
         for tier, ids in sorted(by_tier.items())
     }
+    extra = sorted(set(include_people) - {p for ids in chosen.values() for p in ids})
+    missing = [p for p in extra if p not in people]
+    if missing:
+        raise ValueError(f"Unknown people requested: {missing[:5]}")
+    for pid in extra:
+        chosen[people[pid]["tier"]] = sorted(chosen[people[pid]["tier"]] + [pid])
     values = json.loads(
         (root / "bios/attribute_values.json").read_text(encoding="utf-8")
     )["values"]
     facts = _facts(
         root, {pid for ids in chosen.values() for pid in ids}, people, values, enc
     )
-    docs = _heldout_docs(root, docs_per_subject, doc_tokens, seed)
+    subjects = None if include_untrained_subjects else trained_subjects(root)
+    docs = _heldout_docs(root, docs_per_subject, doc_tokens, seed, subjects)
+    present = {d["subject"] for group in docs.values() for d in group}
     context = max(
         max(len(d["tokens"]) - 1 for group in docs.values() for d in group),
         max(len(f["prompt"]) + len(f["candidates"][0]) - 1 for f in facts),
@@ -264,7 +311,11 @@ def load_v1_slice(
         hf_revision=HF_REVISION,
         seed=seed,
         people_per_tier=people_per_tier,
+        tier_people=tier_people,
+        included_people=extra,
         docs_per_subject=docs_per_subject,
+        subjects=sorted(present),
+        untrained_subjects_included=include_untrained_subjects,
         max_document_targets=doc_tokens,
         people_by_tier=chosen,
         document_windows={

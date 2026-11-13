@@ -34,12 +34,17 @@ class Context:
     evaluator: object
     seed: int
     permutations: int
-    lesion_size: int
     controls: int
     max_prefix: int
     discovery_reads: list
     eval_reads: list
     dense_matrix: object = None
+    e1_fractions: tuple = (0.1, 0.25, 0.5)
+    e1_max_slots: int = 1024
+    e2_facts: tuple = ()
+    collateral_rows: int = 200
+    v2_stride: int = 1
+    rank_rows: int = 512
 
 
 MEMORY_METRICS = {
@@ -55,19 +60,21 @@ MEMORY_METRICS = {
 
 
 def _read_traces(ctx):
-    _, discovery = ctx.evaluator.documents("discovery", collect=True)
-    for read in discovery:
-        values = read.pop("vectors")
-        read["weighted_norms"] = [
-            float(w * n)
-            for w, n in zip(read["weights"], values.norm(dim=-1).tolist(), strict=True)
-        ]
-    ctx.discovery_reads = discovery
-    _, ctx.eval_reads = ctx.evaluator.documents("eval", collect=True)
-    for fact in ctx.corpus.facts:
-        if fact["split"] == "eval":
-            _, sites = ctx.scorer.score(fact, collect=True)
-            ctx.eval_reads.extend(sites)
+    _, ctx.discovery_reads = ctx.evaluator.documents(
+        "discovery", collect=True, keep_vectors=lambda doc, pos: False
+    )
+    # V2 needs value vectors; keeping them for every position of a large slice
+    # costs heads*topk*d floats per token. Keep every v2_stride-th position.
+    stride = getattr(ctx, "v2_stride", 1)
+    _, ctx.eval_reads = ctx.evaluator.documents(
+        "eval", collect=True, keep_vectors=lambda doc, pos: pos % stride == 0
+    )
+    evaluated = [f for f in ctx.corpus.facts if f["split"] == "eval"]
+    for i, fact in enumerate(evaluated):
+        _, sites = ctx.scorer.score(fact, collect=True)
+        if i % stride:
+            sites = [ctx.evaluator.compact(site) for site in sites]
+        ctx.eval_reads.extend(sites)
 
 
 def _dense_reference(ctx, path):
@@ -101,6 +108,34 @@ def _dense_reference(ctx, path):
     )
 
 
+def training_gate(checkpoint, override=None):
+    """The run's own training check (run_dir/training_check.json), if present.
+
+    Native layout: run_dir/checkpoints/step_NNNNNN.pt next to run_dir/training_check.json.
+    A downloaded checkpoint can name the file explicitly with --training-check.
+    """
+    import json
+
+    candidates = (
+        [Path(override)]
+        if override
+        else [parent / "training_check.json" for parent in list(checkpoint.parents)[:3]]
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            data = json.loads(candidate.read_text(encoding="utf-8"))
+            verdict = data.get("verdict")
+            return dict(
+                passed={"pass": True, "fail": False}.get(verdict),
+                verdict=verdict,
+                failed=data.get("failed", []),
+                path=str(candidate),
+            )
+    if override:
+        raise FileNotFoundError(f"No training check at {override}")
+    return dict(passed=None, verdict=None, failed=[], path=None)
+
+
 def evaluate(checkpoint, corpus, args):
     path = Path(checkpoint).expanduser().resolve()
     if not path.is_file():
@@ -121,11 +156,16 @@ def evaluate(checkpoint, corpus, args):
         scorer.evaluator,
         args.seed,
         args.permutations,
-        args.lesion_size,
         args.controls,
         args.max_prefix,
         [],
         [],
+        e1_fractions=tuple(args.e1_fractions),
+        e1_max_slots=args.e1_max_slots,
+        e2_facts=tuple(args.e2_facts or ()),
+        collateral_rows=args.collateral_rows,
+        v2_stride=args.v2_stride,
+        rank_rows=args.rank_rows,
     )
     config = meta["config"]
     tokens = (
@@ -155,11 +195,19 @@ def evaluate(checkpoint, corpus, args):
             docs_per_subject=args.docs_per_subject,
             doc_tokens=args.doc_tokens,
             permutations=args.permutations,
-            lesion_size=args.lesion_size,
+            e1_fractions=list(args.e1_fractions),
+            e1_max_slots=args.e1_max_slots,
+            e2_facts=list(args.e2_facts or ()),
+            collateral_rows=args.collateral_rows,
+            v2_stride=args.v2_stride,
+            rank_rows=args.rank_rows,
+            frequent_people=args.frequent_people,
+            include_untrained_subjects=args.include_untrained_subjects,
             controls=args.controls,
             max_prefix=args.max_prefix,
         ),
         parity=dict(passed=baseline["passed"], **baseline["parity"]),
+        training_check=training_gate(path, getattr(args, "training_check", None)),
         metrics={},
     )
     metrics = report["metrics"]

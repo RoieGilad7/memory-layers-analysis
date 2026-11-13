@@ -18,6 +18,8 @@ SCALARS = {
     "U4.excess_bits": "higher",
     "E1.mean_specificity_excess_nll": "higher",
     "E2.mean_matched_core_fraction": "lower",
+    "E2.mean_core_size": "lower",
+    "E2.mean_core_discovery_mass_share": "lower",
     "V2.text.top1_share": "higher",
     "V2.text.top2_share": "higher",
     "V2.text.cosine_excess": "two_sided",
@@ -93,7 +95,18 @@ def calibrate(reports: list[dict]) -> dict:
     reasons = []
     if signature["fixture"]:
         reasons.append("fixture data")
-    failed = [s for s, r in zip(seeds, reports) if not r["training_gate"]["passed"]]
+    missing = [
+        s
+        for s, r in zip(seeds, reports)
+        if not r["training_gate"].get("recorded", True)
+    ]
+    if missing:
+        reasons.append(f"no training check recorded for learned seeds {missing}")
+    failed = [
+        s
+        for s, r in zip(seeds, reports)
+        if r["training_gate"].get("recorded", True) and not r["training_gate"]["passed"]
+    ]
     if failed:
         reasons.append(f"learned training gate failed for seeds {failed}")
 
@@ -136,7 +149,9 @@ def compare(manifest: dict, twin_report: dict) -> dict:
         raise ValueError("Unrecognized X2 calibration manifest")
     _require_same(manifest["signature"], _signature(twin_report, frozen=True))
     limitations = list(manifest["limitations"])
-    if not twin_report["training_gate"]["passed"]:
+    if not twin_report["training_gate"].get("recorded", True):
+        limitations.append("no training check recorded for the twin")
+    elif not twin_report["training_gate"]["passed"]:
         limitations.append("twin training gate failed")
     twin_seed = twin_report["settings"]["seed"]
     if twin_seed not in manifest["learned_seeds"]:

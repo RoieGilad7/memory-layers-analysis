@@ -56,3 +56,29 @@ class SubjectAblationTest(unittest.TestCase):
         self.assertEqual(
             matched_masks([0, 1], profile, profile, 1, random.Random(1)), []
         )
+
+
+class LesionDose(unittest.TestCase):
+    def test_prefix_covers_excess_share_and_respects_cap(self):
+        from . import lesion_prefix
+
+        ranked = [(9, 4.0), (3, 3.0), (5, 2.0), (1, 1.0)]  # total 10
+        self.assertEqual(lesion_prefix(ranked, 0.1, 10), (9,))
+        self.assertEqual(lesion_prefix(ranked, 0.5, 10), (3, 9))
+        self.assertEqual(lesion_prefix(ranked, 0.9, 10), (3, 5, 9))
+        self.assertEqual(lesion_prefix(ranked, 1.0, 10), (1, 3, 5, 9))
+        self.assertEqual(lesion_prefix(ranked, 0.9, 2), (3, 9))
+        self.assertEqual(lesion_prefix([], 0.5, 10), ())
+
+    def test_exposure_counts_reads_and_gate_mass_per_subject(self):
+        from . import exposure
+
+        reads = [
+            dict(subject="a", ids=[1, 2], weights=[0.75, 0.25], cohort="text"),
+            dict(subject="b", ids=[2, 3], weights=[0.5, 0.5], cohort="text"),
+            dict(subject="bio", ids=[1], weights=[1.0], cohort="fact"),
+        ]
+        out = exposure(reads, [1])
+        self.assertEqual(out["a"], dict(read_share=0.5, gate_share=0.75))
+        self.assertEqual(out["b"], dict(read_share=0.0, gate_share=0.0))
+        self.assertNotIn("bio", out)

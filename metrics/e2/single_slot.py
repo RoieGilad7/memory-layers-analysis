@@ -86,6 +86,7 @@ def _select(keys, masses, profiles, controls, rng):
                 slot=slot,
                 rank_by_gate_mass=rank,
                 gate_mass=weights[slot],
+                gate_mass_share=weights[slot] / sum(weights[o] for o in order),
                 active_discovery_slots=len(order),
             )
             if masks:

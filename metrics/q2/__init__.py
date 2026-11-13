@@ -3,6 +3,7 @@
 from collections import defaultdict
 from statistics import fmean
 from ..matching import top1_credit, gold_margin
+from ..stats import cluster_bootstrap
 
 
 def fact_metrics(scores, answer):
@@ -31,10 +32,17 @@ def _fact_summary(groups):
         "gold_logp",
         "native_top1_convention",
     )
-    return {
-        label: {"n": len(rows), **{k: fmean(row[k] for row in rows) for k in fields}}
-        for label, rows in groups.items()
-    }
+    summary = {}
+    for label, rows in groups.items():
+        # People are the sampled units, so the interval resamples people.
+        ci = cluster_bootstrap([r["top1"] for r in rows], [r["person"] for r in rows])
+        summary[label] = {
+            "n": len(rows),
+            "people": ci["clusters"],
+            **{k: fmean(row[k] for row in rows) for k in fields},
+            "top1_ci": [ci["lo"], ci["hi"]],
+        }
+    return summary
 
 
 def check_facts(scorer, parity, atol, rtol):
@@ -91,11 +99,22 @@ def check_facts(scorer, parity, atol, rtol):
 
 def run(ctx):
     facts = ctx.baseline["facts"]
-    columns = ["Exposure / wording", "Prompts", "Top-1", "Mean rank", "Margin (nats)"]
-    rows = [
-        [g, r["n"], r["top1"], r["rank"], r["margin"]]
-        for g, r in sorted(facts["by_tier_role"].items())
+    columns = [
+        "Exposure / wording",
+        "People",
+        "Prompts",
+        "Top-1",
+        "Top-1 95% CI",
+        "Mean rank",
+        "Margin (nats)",
     ]
+
+    def row(g, r):
+        ci = r.get("top1_ci") or [None, None]
+        interval = None if ci[0] is None else f"{ci[0]:.3f} to {ci[1]:.3f}"
+        return [g, r.get("people"), r["n"], r["top1"], interval, r["rank"], r["margin"]]
+
+    rows = [row(g, r) for g, r in sorted(facts["by_tier_role"].items())]
     for g, r in sorted(facts["paraphrases_by_tier_context"].items()):
-        rows.append([g, r["n"], r["top1"], r["rank"], r["margin"]])
+        rows.append(row(g, r))
     return dict(title="Fact recall", columns=columns, rows=rows, result=facts)
