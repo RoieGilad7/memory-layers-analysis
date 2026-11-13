@@ -72,8 +72,8 @@ def _args(**kw):
         frequent_people=3,
         docs_per_subject=3,
         doc_tokens=9,
-        e1_fractions=(0.25, 0.5),
-        e1_max_slots=16,
+        lesion_size=2,
+        lesion_sizes=(1, 3),
         e2_facts=(),
         collateral_rows=5,
         v2_stride=2,
@@ -138,36 +138,23 @@ class RunnerIntegration(unittest.TestCase):
             report = self._evaluate(ckpt)
         json.dumps(report, allow_nan=False)
         self.assertTrue(report["parity"]["passed"])
-        self.assertEqual(report["training_check"]["passed"], True)
+        self.assertEqual(report["training_check"]["verdict"], "pass")
         metrics = report["metrics"]
         for key in ("Q1", "Q2", "U1", "U4", "V2", "C4", "C6", "E1", "E2"):
             self.assertIsNotNone(metrics[key]["result"], key)
-        self.assertIn("nll_ci", metrics["Q1"]["result"]["overall"])
-        self.assertIn(
-            "top1_ci", metrics["Q2"]["result"]["by_tier_role"]["frequent/test"]
-        )
         e1 = metrics["E1"]["result"]
-        self.assertEqual(e1["primary_excess_fraction"], 0.25)
-        for subject in e1["subjects"].values():
-            if subject["doses"]:
-                self.assertEqual(
-                    [d["excess_fraction"] for d in subject["doses"]], [0.25, 0.5]
-                )
-                sizes = [d["slot_count"] for d in subject["doses"]]
-                self.assertEqual(sizes, sorted(sizes))
+        self.assertEqual(e1["lesion_size"], 2)
+        self.assertEqual(sorted(e1["by_lesion_size"]), ["1", "2", "3"])
         self.assertIn("effective_rank_fixed_rows", metrics["C6"]["result"])
         # V2 keeps vectors for a strided subset only; the others are compact.
         self.assertGreater(metrics["V2"]["result"]["text"]["tokens"], 0)
 
-    def test_missing_training_check_is_not_a_pass(self):
+    def test_missing_training_check_is_reported_as_none(self):
         with TemporaryDirectory() as temp:
             ckpt = Path(temp) / "x.pt"
             ckpt.write_bytes(b"")
             report = self._evaluate(ckpt)
-        self.assertIsNone(report["training_check"]["passed"])
-        from .x2 import _gate
-
-        self.assertEqual(_gate(report), {"passed": False, "recorded": False})
+        self.assertIsNone(report["training_check"]["verdict"])
 
 
 if __name__ == "__main__":

@@ -3,8 +3,6 @@
 import math
 from collections import defaultdict
 
-from ..stats import ratio_bootstrap
-
 
 def check_documents(scorer, parity, atol, rtol):
     documents = {}
@@ -56,14 +54,6 @@ def check_documents(scorer, parity, atol, rtol):
             s: {"tokens": n, "nll": v / n, "ppl": math.exp(v / n), "accuracy": h / n}
             for s, (n, v, h) in totals.items()
         }
-        # Documents are the independent units; the CI resamples them.
-        for key, q in quality.items():
-            rows = [r for r in per_doc if key in ("overall", r["subject"])]
-            ci = ratio_bootstrap(
-                [r["nll"] * r["tokens"] for r in rows], [r["tokens"] for r in rows]
-            )
-            q["nll_ci"] = [ci["lo"], ci["hi"]]
-            q["documents"] = len(rows)
         documents[split] = {
             "overall": quality.pop("overall", None),
             "by_subject": quality,
@@ -73,37 +63,15 @@ def check_documents(scorer, parity, atol, rtol):
     return documents
 
 
-def _interval(ci):
-    if not ci or ci[0] is None:
-        return None
-    return f"{ci[0]:.3f} to {ci[1]:.3f}"
-
-
 def run(ctx):
     quality = ctx.baseline["documents"]["eval"]
     rows = [
-        [
-            name,
-            r.get("documents"),
-            r["tokens"],
-            r["nll"],
-            _interval(r.get("nll_ci")),
-            r["ppl"],
-            r["accuracy"],
-        ]
+        [name, r["tokens"], r["nll"], r["ppl"], r["accuracy"]]
         for name, r in [("All", quality["overall"]), *quality["by_subject"].items()]
     ]
     return dict(
         title="Next-token prediction",
-        columns=[
-            "Subject",
-            "Documents",
-            "Tokens",
-            "NLL (nats)",
-            "NLL 95% CI",
-            "Perplexity",
-            "Accuracy",
-        ],
+        columns=["Subject", "Tokens", "NLL (nats)", "Perplexity", "Accuracy"],
         rows=rows,
         result=quality,
     )

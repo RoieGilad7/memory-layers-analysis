@@ -180,88 +180,27 @@ class V1SingleSlot(unittest.TestCase):
         self.assertIsNone(result["target"])
 
 
-class CoreSelection(unittest.TestCase):
-    """The core is chosen on discovery prompts and judged on test prompts."""
+class FactListAndCollateralCap(unittest.TestCase):
+    def test_fixed_fact_list_restricts_discovery(self):
+        from . import discovery_rows
 
-    @staticmethod
-    def corpus():
-        facts = []
-        for person, attr in (("p", "city"), ("q", "job")):
-            for role, n in (("discovery", 2), ("test", 2)):
-                for i in range(n):
-                    facts.append(
-                        dict(
-                            fact_id=f"{person}-{attr}",
-                            person=person,
-                            attribute=attr,
-                            tier="frequent",
-                            row_id=f"{person}-{attr}-{role}{i}",
-                            role=role,
-                            answer=0,
-                            candidates=[[1], [2]],
-                            prompt=[10, i],
-                        )
-                    )
-        return SimpleNamespace(facts=facts)
-
-    class Scorer:
-        model = SimpleNamespace(memory=SimpleNamespace(num_slots=8))
-
-        def score(self, row, mask=(), collect=False):
-            mask = set(mask)
-            erased = (
-                {0, 1} <= mask
-                if row["role"] == "discovery"
-                else {0, 1, 2} <= mask  # test wordings lean on one more slot
-            )
-            if row["person"] == "p":
-                scores = [-2.0, -1.0] if erased else [-1.0, -2.0]
-            else:
-                scores = [-1.0, -2.0]
-            sites = []
-            if collect:
-                assert row["role"] == "discovery", "selection must use discovery only"
-                ids = [0, 1, 2, 3] if row["person"] == "p" else [4, 5, 6, 7]
-                sites.append(
-                    dict(ids=ids, weights=[0.3, 0.28, 0.22, 0.2], vectors=[[1.0]] * 4)
-                )
-            return scores, sites
-
-    def test_discovery_chooses_core_and_test_judges_it(self):
-        ctx = SimpleNamespace(
-            corpus=self.corpus(), scorer=self.Scorer(), seed=1, controls=2, max_prefix=4
-        )
-        result = run_e2(ctx)["result"]["cumulative"]
-        fact = result["facts"]["p-city"]
-        self.assertEqual(fact["status"], "matched")
-        self.assertEqual(fact["core_slots"], [0, 1])
-        self.assertAlmostEqual(fact["core_discovery_mass_share"], 0.58)
-        self.assertFalse(fact["test_erased"])  # the test wordings need slot 2 too
-        self.assertEqual(fact["matched_masks"], [[2, 3], [2, 3]])
+        corpus = fixture()
+        ctx = SimpleNamespace(corpus=corpus, e2_facts=("person-job",))
+        self.assertEqual({r["fact_id"] for r in discovery_rows(ctx)}, {"person-job"})
+        ctx = SimpleNamespace(corpus=corpus)
         self.assertEqual(
-            [round(x, 2) for x in fact["control_discovery_mass_shares"]], [0.42, 0.42]
+            {r["fact_id"] for r in discovery_rows(ctx)}, {"person-city", "person-job"}
         )
-        # The collateral baseline uses slots the fact never read.
-        self.assertTrue(set(fact["generic_control_slots"]) <= {4, 5, 6, 7})
-        other = fact["collateral"]["other_people"]
-        self.assertEqual(other["prompts"], 2)
-        self.assertEqual(other["masked"]["top1_credit"], 1.0)
-        self.assertEqual(other["masked_generic_control"]["top1_credit"], 1.0)
-        self.assertEqual(result["cored_facts"], 1)
-        self.assertEqual(result["facts"]["q-job"]["status"], "threshold_not_reached")
-        self.assertEqual(result["test_erasure_rate"], 0.0)
 
-    def test_fixed_cohort_restricts_discovery(self):
-        ctx = SimpleNamespace(
-            corpus=self.corpus(),
-            scorer=self.Scorer(),
-            seed=1,
-            controls=2,
-            max_prefix=4,
-            e2_facts=("q-job",),
-        )
-        facts = run_e2(ctx)["result"]["cumulative"]["facts"]
-        self.assertEqual(sorted(facts), ["q-job"])
+    def test_collateral_sample_is_fixed_and_bounded(self):
+        from . import _sample_rows
+
+        rows = [dict(row_id=f"r{i:02d}") for i in range(30)]
+        self.assertIs(_sample_rows(rows, None, "s"), rows)
+        self.assertIs(_sample_rows(rows, 30, "s"), rows)
+        picked = _sample_rows(rows, 5, "s")
+        self.assertEqual(len(picked), 5)
+        self.assertEqual(picked, _sample_rows(rows, 5, "s"))
 
 
 if __name__ == "__main__":

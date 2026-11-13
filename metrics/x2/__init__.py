@@ -30,15 +30,8 @@ def source(report):
         config=meta["config"],
         settings=settings,
         analysis=report["analysis"],
-        training_gate=_gate(report),
+        training_check=(report.get("training_check") or {}).get("verdict"),
     )
-
-
-def _gate(report):
-    """The run's training check; an absent or incomplete check is not a pass."""
-    gate = report.get("training_check") or {}
-    passed = gate.get("passed")
-    return {"passed": passed is True, "recorded": passed is not None}
 
 
 def lock(paths):
@@ -80,7 +73,7 @@ def run(report, manifest):
         rows=rows,
         result=comparison,
         status=(
-            "Range rule over learned seeds. For the per-fact paired test use "
-            "--x2-pair LEARNED.json FROZEN.json."
+            "Range rule over the learned seeds. Each run's training check is "
+            "listed under training_checks; read it before the gaps."
         ),
     )

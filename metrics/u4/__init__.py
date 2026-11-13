@@ -84,20 +84,6 @@ def rank_subject_slots(reads):
     }
 
 
-def subject_slot_excess(reads):
-    """Positive subject-specific slots in rank order, with their excess reads."""
-    text_reads = (r for r in reads if r.get("cohort", "text") == "text")
-    _, rows, _ = _association(*_document_counts(text_reads), profiles=True)
-    return {
-        subject: [
-            (r["slot"], r["observed"] - r["expected"])
-            for r in profile
-            if r["observed"] - r["expected"] > 1e-10
-        ]
-        for subject, profile in rows.items()
-    }
-
-
 def _specificity(reads, seed, permutations):
     counts, subjects = _document_counts(reads)
     observed, rows, shared = _association(counts, subjects, profiles=True)

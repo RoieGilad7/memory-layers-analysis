@@ -34,13 +34,13 @@ class Context:
     evaluator: object
     seed: int
     permutations: int
+    lesion_size: int
     controls: int
     max_prefix: int
     discovery_reads: list
     eval_reads: list
     dense_matrix: object = None
-    e1_fractions: tuple = (0.1, 0.25, 0.5)
-    e1_max_slots: int = 1024
+    lesion_sizes: tuple = ()
     e2_facts: tuple = ()
     collateral_rows: int = 200
     v2_stride: int = 1
@@ -108,8 +108,11 @@ def _dense_reference(ctx, path):
     )
 
 
-def training_gate(checkpoint, override=None):
+def training_check(checkpoint, override=None):
     """The run's own training check (run_dir/training_check.json), if present.
+
+    Reported like any other result, and read first in the analysis. Nothing is
+    blocked on it. A missing file gives verdict None, not a failure.
 
     Native layout: run_dir/checkpoints/step_NNNNNN.pt next to run_dir/training_check.json.
     A downloaded checkpoint can name the file explicitly with --training-check.
@@ -126,14 +129,13 @@ def training_gate(checkpoint, override=None):
             data = json.loads(candidate.read_text(encoding="utf-8"))
             verdict = data.get("verdict")
             return dict(
-                passed={"pass": True, "fail": False}.get(verdict),
                 verdict=verdict,
                 failed=data.get("failed", []),
                 path=str(candidate),
             )
     if override:
         raise FileNotFoundError(f"No training check at {override}")
-    return dict(passed=None, verdict=None, failed=[], path=None)
+    return dict(verdict=None, failed=[], path=None)
 
 
 def evaluate(checkpoint, corpus, args):
@@ -156,12 +158,12 @@ def evaluate(checkpoint, corpus, args):
         scorer.evaluator,
         args.seed,
         args.permutations,
+        args.lesion_size,
         args.controls,
         args.max_prefix,
         [],
         [],
-        e1_fractions=tuple(args.e1_fractions),
-        e1_max_slots=args.e1_max_slots,
+        lesion_sizes=tuple(args.lesion_sizes),
         e2_facts=tuple(args.e2_facts or ()),
         collateral_rows=args.collateral_rows,
         v2_stride=args.v2_stride,
@@ -195,8 +197,8 @@ def evaluate(checkpoint, corpus, args):
             docs_per_subject=args.docs_per_subject,
             doc_tokens=args.doc_tokens,
             permutations=args.permutations,
-            e1_fractions=list(args.e1_fractions),
-            e1_max_slots=args.e1_max_slots,
+            lesion_size=args.lesion_size,
+            lesion_sizes=list(args.lesion_sizes),
             e2_facts=list(args.e2_facts or ()),
             collateral_rows=args.collateral_rows,
             v2_stride=args.v2_stride,
@@ -207,7 +209,7 @@ def evaluate(checkpoint, corpus, args):
             max_prefix=args.max_prefix,
         ),
         parity=dict(passed=baseline["passed"], **baseline["parity"]),
-        training_check=training_gate(path, getattr(args, "training_check", None)),
+        training_check=training_check(path, getattr(args, "training_check", None)),
         metrics={},
     )
     metrics = report["metrics"]

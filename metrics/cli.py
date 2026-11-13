@@ -11,7 +11,6 @@ from .bundle import load_v1_slice
 from .display import render, serve
 from .runner import evaluate
 from .x2 import lock
-from .x2.paired import paired, summary_rows
 
 
 def positive(value):
@@ -21,10 +20,10 @@ def positive(value):
     return n
 
 
-def fractions(value):
-    out = tuple(sorted({float(x) for x in value.split(",") if x.strip()}))
-    if not out or any(not 0 < f <= 1 for f in out):
-        raise argparse.ArgumentTypeError("expected comma-separated fractions in (0, 1]")
+def sizes(value):
+    out = tuple(sorted({int(x) for x in value.split(",") if x.strip()}))
+    if any(n < 1 for n in out):
+        raise argparse.ArgumentTypeError("expected comma-separated positive integers")
     return out
 
 
@@ -35,6 +34,15 @@ def fact_cohort(path):
     if not ids or not all(isinstance(i, str) and "-" in i for i in ids):
         raise argparse.ArgumentTypeError("expected a non-empty list of fact ids")
     return tuple(sorted(set(ids)))
+
+
+# E2 statuses of a fact the checkpoint recalls on discovery and test prompts.
+KNOWN = {
+    "matched",
+    "no_matched_controls",
+    "prefix_limit_reached",
+    "threshold_not_reached",
+}
 
 
 def default_bundle():
@@ -104,13 +112,16 @@ def main(argv=None):
         help="also score held-out subjects absent from training (phase 2)",
     )
     p.add_argument("--controls", type=positive, default=3)
+    # E1 switches off each subject's top-m slots (plan). The plan does not fix
+    # m; 2 of 65,536 slots barely moves the output. The headline m and the
+    # extra sizes are provisional until the sample-size pilot picks them.
+    p.add_argument("--lesion-size", type=positive, default=64)
     p.add_argument(
-        "--e1-fractions",
-        type=fractions,
-        default=(0.1, 0.25, 0.5),
-        help="E1 lesion doses: shares of each subject's excess reads to cover",
+        "--lesion-sizes",
+        type=sizes,
+        default=(16, 256),
+        help="extra E1 sizes m reported next to the headline, e.g. 16,256",
     )
-    p.add_argument("--e1-max-slots", type=positive, default=1024)
     p.add_argument("--max-prefix", type=positive, default=16)
     p.add_argument(
         "--e2-facts",
@@ -118,7 +129,7 @@ def main(argv=None):
         help="JSON list of fact ids: a fixed E2 cohort, rediscovered per checkpoint",
     )
     p.add_argument("--collateral-rows", type=positive, default=200)
-    p.add_argument("--permutations", type=positive, default=199)
+    p.add_argument("--permutations", type=positive, default=99)  # plan: about 100
     p.add_argument(
         "--v2-stride",
         type=positive,
@@ -145,23 +156,38 @@ def main(argv=None):
         help="lock X2 margins from learned seed reports",
     )
     p.add_argument(
-        "--x2-pair",
-        nargs=2,
-        metavar=("LEARNED_REPORT", "FROZEN_REPORT"),
-        help="paired per-item comparison of a learned run and its frozen-key twin",
+        "--make-e2-cohort",
+        nargs="+",
+        metavar="REPORT",
+        help="write the facts every given report recalls, for --e2-facts",
     )
     args = p.parse_args(argv)
-    if args.x2_pair:
-        learned, twin = (
-            json.loads(Path(x).read_text(encoding="utf-8")) for x in args.x2_pair
+    if args.make_e2_cohort:
+        reports = [
+            json.loads(Path(x).read_text(encoding="utf-8")) for x in args.make_e2_cohort
+        ]
+        known = [
+            {
+                k
+                for k, v in r["metrics"]["E2"]["result"]["cumulative"]["facts"].items()
+                if v["status"] in KNOWN
+            }
+            for r in reports
+        ]
+        cohort = sorted(set.intersection(*known))
+        dest = args.output_dir / "e2-cohort.json"
+        save(
+            dest,
+            json.dumps(
+                dict(
+                    fact_ids=cohort,
+                    rule="facts every listed checkpoint recalls on discovery and test",
+                    reports=[str(x) for x in args.make_e2_cohort],
+                ),
+                indent=2,
+            ),
         )
-        result = paired(learned, twin, seed=args.seed)
-        dest = args.output_dir / (
-            f"x2-paired-{Path(args.x2_pair[0]).stem}-{Path(args.x2_pair[1]).stem}.json"
-        )
-        save(dest, json.dumps(result, indent=2, allow_nan=False))
-        for row in summary_rows(result):
-            print("\t".join("" if v is None else str(v) for v in row))
+        print(f"{len(cohort)} facts known by all {len(reports)} reports")
         print(dest)
         return 0
     if args.output_dir.resolve().is_relative_to(args.bundle.resolve()):
