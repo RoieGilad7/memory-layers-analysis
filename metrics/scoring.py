@@ -106,6 +106,26 @@ class V1Scorer:
         return (first[[c[0] for c in keys]] + second).tolist()
 
     @torch.inference_mode()
+    def float64_agrees(self, fact, atol, rtol):
+        """Re-score one fact through both paths with the model in float64.
+
+        A memory layer's top-k is discontinuous. When two slots tie for the k-th
+        place within float32 resolution, forwards of different lengths can
+        choose differently and move later scores by ~1e-4. In float64 both
+        paths choose the same slot, so agreement there shows the adapter is
+        exact and the float32 gap came from rounding."""
+        self.model.double()
+        try:
+            scores, _ = self.score(fact)
+            reference = self._native_scores(fact)
+        finally:
+            self.model.float()
+        return all(
+            abs(v - r) <= atol + rtol * abs(r)
+            for v, r in zip(scores, reference, strict=True)
+        )
+
+    @torch.inference_mode()
     def check_baselines(self):
         """Compare every selected candidate score and document loss on identical inputs."""
         self._intact.clear()
@@ -115,6 +135,8 @@ class V1Scorer:
             "candidate_scores_checked": 0,
             "max_candidate_abs_error": 0.0,
             "candidate_score_failures": 0,
+            "float64_rechecked_facts": 0,
+            "float64_rechecked_candidates": 0,
             "native_rank_mismatches": 0,
             "documents_checked": 0,
             "max_doc_nll_abs_error": 0.0,

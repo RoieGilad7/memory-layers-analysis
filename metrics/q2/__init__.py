@@ -51,6 +51,11 @@ def check_facts(scorer, parity, atol, rtol):
         errors = [abs(v - r) for v, r in zip(scores, reference, strict=True)]
         largest = max(errors)
         failures = sum(e > atol + rtol * abs(r) for e, r in zip(errors, reference))
+        if failures and scorer.float64_agrees(f, atol, rtol):
+            # A float32 top-k tie, not an adapter error: the paths agree in float64.
+            parity["float64_rechecked_facts"] += 1
+            parity["float64_rechecked_candidates"] += failures
+            failures = 0
         parity["candidate_scores_checked"] += len(scores)
         parity["max_candidate_abs_error"] = max(
             parity["max_candidate_abs_error"], largest

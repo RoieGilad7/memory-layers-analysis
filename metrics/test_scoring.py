@@ -112,6 +112,56 @@ class V1ScorerTests(unittest.TestCase):
         self.assertGreater(bad["parity"]["candidate_score_failures"], 0)
         self.assertTrue(self.scorer.check_baselines()["passed"])
 
+    def _perturb_adapter_scores(self, only_float32):
+        """Shift the adapter's date scores, optionally only while the model is float32."""
+        original = self.scorer.score
+
+        def shifted(fact, *args, **kwargs):
+            scores, reads = original(fact, *args, **kwargs)
+            dtype = next(self.model.parameters()).dtype
+            if fact is self.date and (dtype == torch.float32 or not only_float32):
+                scores = [s + 1e-3 for s in scores]
+            return scores, reads
+
+        return patch.object(self.scorer, "score", shifted)
+
+    def test_float32_only_gap_is_accepted_after_float64_recheck(self):
+        # A float32 top-k tie: the paths disagree in float32 but agree in float64.
+        with self._perturb_adapter_scores(only_float32=True):
+            result = self.scorer.check_baselines()
+        parity = result["parity"]
+        self.assertTrue(result["passed"], parity)
+        self.assertEqual(parity["candidate_score_failures"], 0)
+        self.assertEqual(parity["float64_rechecked_facts"], 1)
+        self.assertEqual(
+            parity["float64_rechecked_candidates"], len(self.date["candidates"])
+        )
+        self.assertGreater(parity["max_candidate_abs_error"], 5e-4)
+        self.assertEqual(next(self.model.parameters()).dtype, torch.float32)
+
+    def test_mismatch_that_survives_float64_still_fails(self):
+        with self._perturb_adapter_scores(only_float32=False):
+            result = self.scorer.check_baselines()
+        parity = result["parity"]
+        self.assertFalse(result["passed"])
+        self.assertEqual(
+            parity["candidate_score_failures"], len(self.date["candidates"])
+        )
+        self.assertEqual(parity["float64_rechecked_facts"], 0)
+        self.assertEqual(parity["float64_rechecked_candidates"], 0)
+
+    def test_float64_recheck_runs_the_memory_layer_and_restores_float32(self):
+        before = {k: v.clone() for k, v in self.model.state_dict().items()}
+        self.assertTrue(self.scorer.float64_agrees(self.date, 5e-5, 2e-5))
+        after = self.model.state_dict()
+        self.assertEqual(set(before), set(after))
+        for key, value in before.items():
+            self.assertEqual(after[key].dtype, value.dtype, key)
+            self.assertTrue(torch.equal(after[key], value), key)
+        baseline = self.scorer.check_baselines()
+        self.assertTrue(baseline["passed"], baseline["parity"])
+        self.assertEqual(baseline["parity"]["float64_rechecked_facts"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
