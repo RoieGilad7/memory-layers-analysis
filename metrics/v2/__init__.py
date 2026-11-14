@@ -95,7 +95,11 @@ def run(ctx):
     result = {}
     rows = []
     for cohort, label in (("text", "Subject text"), ("fact", "Fact probes")):
-        reads = [r for r in ctx.eval_reads if r.get("cohort", "text") == cohort]
+        reads = [
+            r
+            for r in ctx.eval_reads
+            if r.get("cohort", "text") == cohort and "vectors" in r
+        ]
         data = composition(reads, ctx.seed)
         result[cohort] = data
         rows.append(

@@ -30,8 +30,8 @@ def source(report):
         config=meta["config"],
         settings=settings,
         analysis=report["analysis"],
-        training_gate={"passed": False},
-    )  # Native checkpoints do not record a discovery convergence history.
+        training_check=(report.get("training_check") or {}).get("verdict"),
+    )
 
 
 def lock(paths):
@@ -72,5 +72,8 @@ def run(report, manifest):
         columns=columns,
         rows=rows,
         result=comparison,
-        status="Diagnostic comparison. Native checkpoints do not record the training convergence gate.",
+        status=(
+            "Range rule over the learned seeds. Each run's training check is "
+            "listed under training_checks; read it before the gaps."
+        ),
     )

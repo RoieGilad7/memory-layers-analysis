@@ -1,4 +1,9 @@
-"""E1. Selectivity of a subject-directed memory lesion on held-out text."""
+"""E1. Selectivity of a subject-directed memory lesion on held-out text.
+
+Switch off subject D's top-m slots from U4's TF-IDF ranking and compare with m
+matched random slots. The headline uses `lesion_size`; `lesion_sizes` reruns
+the same test at other m so the sample-size pilot can choose m.
+"""
 
 from functools import lru_cache
 import random
@@ -67,14 +72,36 @@ def run(ctx):
         )
         return {s: q["nll"] for s, q in quality["by_subject"].items() if s != "bio"}
 
+    profiles = slot_profiles(discovery)
     result = subject_report(
         discovery,
         score_docs,
-        slot_profiles(discovery),
+        profiles,
         ctx.lesion_size,
         ctx.controls,
         random.Random(ctx.seed),
     )
+    result["lesion_size"] = ctx.lesion_size
+    # Same test at other m; each size gets its own control draw from the seed.
+    by_size = {}
+    for m in sorted(set(getattr(ctx, "lesion_sizes", ())) | {ctx.lesion_size}):
+        other = (
+            result
+            if m == ctx.lesion_size
+            else subject_report(
+                discovery,
+                score_docs,
+                profiles,
+                m,
+                ctx.controls,
+                random.Random(ctx.seed),
+            )
+        )
+        by_size[str(m)] = {
+            "matched_subjects": other["matched_subjects"],
+            "mean_specificity_excess_nll": other["mean_specificity_excess_nll"],
+        }
+    result["by_lesion_size"] = by_size
     rows = [
         [
             s,

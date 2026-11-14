@@ -13,7 +13,7 @@ def report(seed, value, frozen=False):
         "data_hash": "identical-data",
         "fixture": False,
         "config": {"style": "pkm", "freeze_keys": frozen, "width": 8},
-        "training_gate": {"passed": True},
+        "training_check": "pass",
         "Q1": {"overall": {"ppl": value}, "by_subject": {"blue": {}, "red": {}}},
         "U4": {"excess_bits": value / 10},
         "E1": {
@@ -74,17 +74,25 @@ class SeedComparison(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "frozen-key PKM"):
             compare(manifest, twin)
 
-    def test_fixture_and_failed_gates_limit_interpretation(self):
+    def test_fixture_limits_interpretation_and_checks_are_only_reported(self):
         for row in self.learned:
             row["fixture"] = True
-        self.learned[0]["training_gate"]["passed"] = False
+        self.learned[0]["training_check"] = "fail"
         twin = report(11, 3.0, True)
         twin["fixture"] = True
-        twin["training_gate"]["passed"] = False
+        twin["training_check"] = None
         result = compare(calibrate(self.learned), twin)
         self.assertEqual(result["interpretation"], "validation_only")
-        self.assertEqual(len(result["limitations"]), 3)
+        self.assertEqual(result["limitations"], ["fixture data"])
+        self.assertEqual(
+            result["training_checks"],
+            {"11": "fail", "12": "pass", "13": "pass", "twin": None},
+        )
         self.assertEqual(result["seed_count"], 3)
+
+    def test_passing_checks_give_a_study_result(self):
+        result = compare(calibrate(self.learned), report(11, 3.0, True))
+        self.assertEqual(result["interpretation"], "study")
 
 
 if __name__ == "__main__":

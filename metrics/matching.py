@@ -3,6 +3,7 @@
 from collections import Counter
 import math
 
+import numpy as np
 import torch
 
 
@@ -36,13 +37,13 @@ def matched_masks(target, pool, profiles, controls, rng):
     pool = sorted(set(pool).intersection(profiles).difference(target))
     if len(pool) < len(target) or any(i not in profiles for i in target):
         return []
+    # Vectorized caliper test; same rule as max(x, y) <= 2 * min(x, y) per covariate.
+    pool_arr = np.asarray([profiles[j] for j in pool], dtype=np.float64)
     choices = {}
     for i in target:
-        choices[i] = [
-            j
-            for j in pool
-            if all(max(x, y) <= 2 * min(x, y) for x, y in zip(profiles[i], profiles[j]))
-        ]
+        x = np.asarray(profiles[i], dtype=np.float64)
+        ok = np.all(np.maximum(pool_arr, x) <= 2 * np.minimum(pool_arr, x), axis=1)
+        choices[i] = [pool[k] for k in np.flatnonzero(ok)]
         if not choices[i]:
             return []
     masks = []

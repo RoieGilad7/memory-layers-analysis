@@ -33,6 +33,10 @@ def run(ctx):
     )
     return dict(
         title="Slot utilization",
+        status=(
+            "Coverage depends on the number of slice tokens. Compare it with the "
+            "training read log (readlog/), not with the training-check threshold."
+        ),
         result=data,
         columns=[
             "Active slots",

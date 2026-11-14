@@ -134,3 +134,43 @@ class TestPublishedSlice(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSubjectsAndPeople(unittest.TestCase):
+    def test_untrained_subject_is_left_out_by_default(self):
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "tokens").mkdir()
+            pq.write_table(
+                pa.table({"subject": ["bio", "Pile-CC", "Github"]}),
+                root / "tokens/train.idx.parquet",
+            )
+            self.assertEqual(v1.trained_subjects(root), ["Github", "Pile-CC"])
+            (root / "heldout").mkdir()
+            for half in ("label", "test"):
+                subjects = ["Pile-CC", "USPTO Backgrounds", "Github"]
+                np.arange(30, dtype="<u2").tofile(root / f"heldout/{half}.bin")
+                pq.write_table(
+                    pa.table(
+                        {
+                            "doc_id": [f"{half}{i}" for i in range(3)],
+                            "subject": subjects,
+                            "start": [0, 10, 20],
+                            "length": [10, 10, 10],
+                            "doc_offset": [0, 0, 0],
+                        }
+                    ),
+                    root / f"heldout/{half}.idx.parquet",
+                )
+            kept = v1._heldout_docs(root, 1, 4, 0, v1.trained_subjects(root))
+            self.assertEqual(
+                sorted(d["subject"] for d in kept["eval"]), ["Github", "Pile-CC"]
+            )
+            everything = v1._heldout_docs(root, 1, 4, 0)
+            self.assertEqual(len(everything["eval"]), 3)
+
+    def test_fact_id_splits_on_last_hyphen(self):
+        self.assertEqual(v1._person_of("p-0012-birth_date"), "p-0012")

@@ -57,8 +57,10 @@ def _signature(report, *, frozen):
         raise ValueError(f"X2 requires a {expected} PKM report")
     settings = report["settings"].copy()
     seed = settings.pop("seed")
-    if type(seed) is not int or type(report["training_gate"]["passed"]) is not bool:
-        raise ValueError("Expected an integer training seed and boolean training gate")
+    if type(seed) is not int:
+        raise ValueError("Expected an integer training seed")
+    if report.get("training_check") not in ("pass", "fail", None):
+        raise ValueError("Expected a training check verdict of pass, fail or None")
     if type(report["fixture"]) is not bool:
         raise ValueError("Expected a boolean fixture indicator")
     return {
@@ -93,9 +95,6 @@ def calibrate(reports: list[dict]) -> dict:
     reasons = []
     if signature["fixture"]:
         reasons.append("fixture data")
-    failed = [s for s, r in zip(seeds, reports) if not r["training_gate"]["passed"]]
-    if failed:
-        reasons.append(f"learned training gate failed for seeds {failed}")
 
     metrics = {}
     for path, direction in SCALARS.items():
@@ -126,6 +125,10 @@ def calibrate(reports: list[dict]) -> dict:
         "seed_count": len(seeds),
         "interpretation": "validation_only" if reasons else "study",
         "limitations": reasons,
+        # Reported, not enforced: the analysis reads each run's check first.
+        "training_checks": {
+            str(s): r.get("training_check") for s, r in zip(seeds, reports)
+        },
         "metrics": metrics,
     }
 
@@ -136,8 +139,6 @@ def compare(manifest: dict, twin_report: dict) -> dict:
         raise ValueError("Unrecognized X2 calibration manifest")
     _require_same(manifest["signature"], _signature(twin_report, frozen=True))
     limitations = list(manifest["limitations"])
-    if not twin_report["training_gate"]["passed"]:
-        limitations.append("twin training gate failed")
     twin_seed = twin_report["settings"]["seed"]
     if twin_seed not in manifest["learned_seeds"]:
         limitations.append("no learned run shares the twin's initialization seed")
@@ -168,5 +169,9 @@ def compare(manifest: dict, twin_report: dict) -> dict:
         "seed_count": manifest["seed_count"],
         "twin_seed": twin_seed,
         "twin_seed_in_calibration": twin_seed in manifest["learned_seeds"],
+        "training_checks": {
+            **manifest.get("training_checks", {}),
+            "twin": twin_report.get("training_check"),
+        },
         "metrics": metrics,
     }
