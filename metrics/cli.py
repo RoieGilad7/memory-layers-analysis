@@ -97,15 +97,17 @@ def main(argv=None):
     p.add_argument("--seed", type=int, default=17)
     # Slice sizes. People are the sampled unit for Q2 and E2, documents for
     # Q1, U4 and E1; one person per tier cannot separate effects from noise.
+    # The frequent-tier, document and token sizes were chosen by the
+    # sample-size pilot (reports/sample_size_pilot_report.md).
     p.add_argument("--people-per-tier", type=positive, default=10)
     p.add_argument(
         "--frequent-people",
         type=positive,
-        default=40,
+        default=80,
         help="frequent-tier people (the E2 cohort); overrides --people-per-tier",
     )
-    p.add_argument("--docs-per-subject", type=positive, default=16)
-    p.add_argument("--doc-tokens", type=positive, default=128)
+    p.add_argument("--docs-per-subject", type=positive, default=64)
+    p.add_argument("--doc-tokens", type=positive, default=256)
     p.add_argument(
         "--include-untrained-subjects",
         action="store_true",
@@ -113,8 +115,8 @@ def main(argv=None):
     )
     p.add_argument("--controls", type=positive, default=3)
     # E1 switches off each subject's top-m slots. 2 of 65,536 slots barely
-    # moves the output. The headline m and the extra sizes are provisional
-    # until the sample-size pilot picks them.
+    # moves the output. The pilot kept m=64 as the headline, with 16 and 256
+    # reported next to it.
     p.add_argument("--lesion-size", type=positive, default=64)
     p.add_argument(
         "--lesion-sizes",

@@ -118,7 +118,7 @@ class V1ScorerTests(unittest.TestCase):
 
         def shifted(fact, *args, **kwargs):
             scores, reads = original(fact, *args, **kwargs)
-            dtype = next(self.model.parameters()).dtype
+            dtype = next(self.scorer.model.parameters()).dtype
             if fact is self.date and (dtype == torch.float32 or not only_float32):
                 scores = [s + 1e-3 for s in scores]
             return scores, reads
@@ -149,6 +149,21 @@ class V1ScorerTests(unittest.TestCase):
         )
         self.assertEqual(parity["float64_rechecked_facts"], 0)
         self.assertEqual(parity["float64_rechecked_candidates"], 0)
+
+    @unittest.skipUnless(torch.backends.mps.is_available(), "needs MPS")
+    def test_float64_recheck_on_mps_uses_a_cpu_copy(self):
+        self.model.to("mps")
+        self.scorer.device = torch.device("mps")
+        before = {k: v.cpu().clone() for k, v in self.model.state_dict().items()}
+        self.assertTrue(self.scorer.float64_agrees(self.date, 5e-5, 2e-5))
+        self.assertEqual(self.scorer.device.type, "mps")
+        for key, value in self.model.state_dict().items():
+            self.assertEqual(value.device.type, "mps", key)
+            self.assertTrue(torch.equal(value.cpu(), before[key]), key)
+        with self._perturb_adapter_scores(only_float32=True):
+            result = self.scorer.check_baselines()
+        self.assertTrue(result["passed"], result["parity"])
+        self.assertEqual(result["parity"]["float64_rechecked_facts"], 1)
 
     def test_float64_recheck_runs_the_memory_layer_and_restores_float32(self):
         before = {k: v.clone() for k, v in self.model.state_dict().items()}

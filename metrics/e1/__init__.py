@@ -2,7 +2,7 @@
 
 Switch off subject D's top-m slots from U4's TF-IDF ranking and compare with m
 matched random slots. The headline uses `lesion_size`; `lesion_sizes` reruns
-the same test at other m so the sample-size pilot can choose m.
+the same test at other m (16 and 256 by default) next to the headline.
 """
 
 from functools import lru_cache

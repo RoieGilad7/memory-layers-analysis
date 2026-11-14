@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from collections import defaultdict
 
 import torch
@@ -113,13 +114,18 @@ class V1Scorer:
         place within float32 resolution, forwards of different lengths can
         choose differently and move later scores by ~1e-4. In float64 both
         paths choose the same slot, so agreement there shows the adapter is
-        exact and the float32 gap came from rounding."""
+        exact and the float32 gap came from rounding. MPS has no float64, so
+        there the recheck runs on a CPU copy of the model."""
+        model, device = self.model, self.device
+        if device.type == "mps":
+            self.model, self.device = copy.deepcopy(model).cpu(), torch.device("cpu")
         self.model.double()
         try:
             scores, _ = self.score(fact)
             reference = self._native_scores(fact)
         finally:
             self.model.float()
+            self.model, self.device = model, device
         return all(
             abs(v - r) <= atol + rtol * abs(r)
             for v, r in zip(scores, reference, strict=True)
