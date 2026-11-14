@@ -28,7 +28,7 @@ from memlayers.eval.context import (
 )
 from memlayers.eval.eval_sets import build as build_sets
 from memlayers.eval.evaluator import run_metrics
-from memlayers.eval.metrics.fact_recall import keys_from_score
+from metrics.q2.training import keys_from_summary, score_rows, summarize
 from memlayers.eval.metrics.slot_usage import usage_keys
 from memlayers.eval.registry import UnknownMetric, validate_metric_names
 from memlayers.eval.schedule import eval_schedule
@@ -206,7 +206,7 @@ def test_the_pass_leaves_the_model_as_it_found_it():
 
 
 # --------------------------------------------------------------- fact_recall
-def test_fact_recall_equals_probeset_score(bundle):
+def test_fact_recall_uses_the_checkpoint_suite_scoring(bundle):
     data_config, dcfg = bundle
     model = make_model("pkm", vocab_size=50257, block_size=128).eval()
     res = EvalResources.from_config({"source": "real", "data_config": str(data_config)})
@@ -214,8 +214,20 @@ def test_fact_recall_equals_probeset_score(bundle):
         ctx = EvalContext(model, {}, None, 0, 0, "final", res, sample=sample)
         got, skipped, _ = run_metrics(["fact_recall"], ctx)
         probe = res.fact_probe(sample)
-        direct = keys_from_score(probe.score(model, "cpu", block_size=128))
+        scored = probe.score(model, "cpu", block_size=128, collect_scores=True)
+        direct = keys_from_summary(
+            summarize(probe, score_rows(probe, scored["_scores"]))
+        )
         assert got["fact_recall"] == direct
+        # Same numbers as the old probe ranking when no candidate scores tie.
+        for tr, agg in scored["by_tier_role"].items():
+            if agg.get("n"):
+                assert got["fact_recall"][f"top1/{tr}"] == pytest.approx(
+                    agg["top1"], abs=1e-6
+                )
+                assert got["fact_recall"][f"rank/{tr}"] == pytest.approx(
+                    agg["mean_rank"], abs=1e-3
+                )
     assert len(res.fact_probe(True)) < len(res.fact_probe(False)) == 840
     keys = set(got["fact_recall"])
     for tier in ("frequent", "normal", "rare", "control"):

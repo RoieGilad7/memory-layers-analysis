@@ -55,8 +55,20 @@ class Evaluator:
             ),
         )
 
+    @staticmethod
+    def compact(read):
+        """Keep per-slot weighted norms and drop the value vectors (memory bound)."""
+        values = read.pop("vectors")
+        read["weighted_norms"] = [
+            float(w * n)
+            for w, n in zip(read["weights"], values.norm(dim=-1).tolist(), strict=True)
+        ]
+        return read
+
     @torch.no_grad()
-    def documents(self, split, mask=(), collect=False):
+    def documents(self, split, mask=(), collect=False, keep_vectors=None):
+        """keep_vectors(doc, position) -> bool limits which reads retain their
+        value vectors; the others keep only weighted norms. None keeps all."""
         self.model.eval()
         docs = self.corpus.docs[split]
         reads, sums, correct, counts = [], Counter(), Counter(), Counter()
@@ -75,9 +87,11 @@ class Evaluator:
                 sums[subject] += nll[i, :count].double().sum().item()
                 correct[subject] += int(hits[i, :count].sum())
                 if trace is not None:
-                    reads.extend(
-                        self.record(doc, p, seq, trace, "text", i) for p in range(count)
-                    )
+                    for p in range(count):
+                        read = self.record(doc, p, seq, trace, "text", i)
+                        if keep_vectors is not None and not keep_vectors(doc, p):
+                            self.compact(read)
+                        reads.append(read)
 
         def quality(total, nll, hits):
             mean = nll / total

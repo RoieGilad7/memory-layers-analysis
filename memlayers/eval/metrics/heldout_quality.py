@@ -1,6 +1,6 @@
 """Q1 -- held-out next-token loss, perplexity and top-1 accuracy per subject.
 
-Interim implementation (see fact_recall.py): when the metrics owner's
+Interim implementation: when the metrics owner's
 perplexity code lands it replaces this under the same name and keys.
 
 Per document: a window never mixes two documents. The fixed 200-document

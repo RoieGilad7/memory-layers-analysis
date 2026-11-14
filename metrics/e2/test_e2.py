@@ -180,5 +180,28 @@ class V1SingleSlot(unittest.TestCase):
         self.assertIsNone(result["target"])
 
 
+class FactListAndCollateralCap(unittest.TestCase):
+    def test_fixed_fact_list_restricts_discovery(self):
+        from . import discovery_rows
+
+        corpus = fixture()
+        ctx = SimpleNamespace(corpus=corpus, e2_facts=("person-job",))
+        self.assertEqual({r["fact_id"] for r in discovery_rows(ctx)}, {"person-job"})
+        ctx = SimpleNamespace(corpus=corpus)
+        self.assertEqual(
+            {r["fact_id"] for r in discovery_rows(ctx)}, {"person-city", "person-job"}
+        )
+
+    def test_collateral_sample_is_fixed_and_bounded(self):
+        from . import _sample_rows
+
+        rows = [dict(row_id=f"r{i:02d}") for i in range(30)]
+        self.assertIs(_sample_rows(rows, None, "s"), rows)
+        self.assertIs(_sample_rows(rows, 30, "s"), rows)
+        picked = _sample_rows(rows, 5, "s")
+        self.assertEqual(len(picked), 5)
+        self.assertEqual(picked, _sample_rows(rows, 5, "s"))
+
+
 if __name__ == "__main__":
     unittest.main()

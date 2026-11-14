@@ -8,6 +8,17 @@ from ..matching import matched_masks, match_audit
 from .single_slot import _discovery, _mean_outcome, _single_slot
 
 
+def _sample_rows(rows, cap, seed):
+    """At most `cap` rows, a fixed sample per fact; every row when cap is None.
+
+    Only bounds run time: each masked set rescores this group, and with many
+    people loaded the other-people group would be most of the corpus.
+    """
+    if cap is None or len(rows) <= cap:
+        return rows
+    return sorted(random.Random(seed).sample(rows, cap), key=lambda r: r["row_id"])
+
+
 def _cumulative(ctx, discovered):
     facts, mass, profiles = discovered
     test = [row for row in ctx.corpus.facts if row["role"] == "test"]
@@ -15,6 +26,7 @@ def _cumulative(ctx, discovered):
     for row in test:
         by_key[row["fact_id"]].append(row)
     rng = random.Random(ctx.seed)
+    collateral_cap = getattr(ctx, "collateral_rows", None)
     cap = getattr(ctx, "max_prefix", 16)
     if cap is not None and cap < 1:
         raise ValueError("Maximum tested prefix must be positive")
@@ -85,7 +97,11 @@ def _cumulative(ctx, discovered):
             "same_person_other_facts": [
                 r for r in test if r["person"] == fact["person"] and r["fact_id"] != key
             ],
-            "other_people": [r for r in test if r["person"] != fact["person"]],
+            "other_people": _sample_rows(
+                [r for r in test if r["person"] != fact["person"]],
+                collateral_cap,
+                f"{ctx.seed}:{key}",
+            ),
         }.items():
             collateral[cohort] = {
                 "prompts": len(group),
@@ -107,15 +123,26 @@ def _cumulative(ctx, discovered):
     }
 
 
-def run(ctx):
-    rows = sorted(
+def discovery_rows(ctx):
+    """Frequent-tier discovery prompts (the main E2 group).
+
+    With a fixed fact list (`e2_facts`), only those facts, so every model is
+    tested on the same facts. Slots are still found again per checkpoint.
+    """
+    cohort = set(getattr(ctx, "e2_facts", ()) or ())
+    return sorted(
         (
             r
             for r in ctx.corpus.facts
-            if r["tier"] == "frequent" and r["role"] == "discovery"
+            if r["role"] == "discovery"
+            and (r["fact_id"] in cohort if cohort else r["tier"] == "frequent")
         ),
         key=lambda r: r["row_id"],
     )
+
+
+def run(ctx):
+    rows = discovery_rows(ctx)
     discovered = _discovery(ctx.scorer, rows)
     cumulative = _cumulative(ctx, discovered)
     single = _single_slot(ctx.scorer, ctx.corpus, discovered, ctx.seed, ctx.controls)

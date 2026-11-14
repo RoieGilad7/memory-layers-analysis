@@ -22,9 +22,26 @@ def effective_rank(rows):
 
 def run(ctx):
     table = ctx.model.memory.value_table().detach()
-    active = sorted(selection_counts(ctx.eval_reads))
+    counts = selection_counts(ctx.eval_reads)
+    active = sorted(counts)
     result = dict(active_rows=len(active), effective_rank=effective_rank(table[active]))
     rows = [["Active memory", len(active), result["effective_rank"]]]
+    # The active-row count changes with the slice and the model, and effective
+    # rank grows with the number of rows. A fixed count of most-read rows is
+    # the comparable number across seeds and the frozen-key twin.
+    fixed = getattr(ctx, "rank_rows", None)
+    if fixed:
+        top = sorted(counts, key=lambda s: (-counts[s], s))[:fixed]
+        result.update(
+            fixed_rows_requested=fixed,
+            fixed_rows=len(top),
+            effective_rank_fixed_rows=(
+                effective_rank(table[sorted(top)]) if len(top) == fixed else None
+            ),
+        )
+        rows.append(
+            [f"Most-read {fixed} rows", len(top), result["effective_rank_fixed_rows"]]
+        )
     dense = getattr(ctx, "dense_matrix", None)
     if dense is not None:
         size = min(len(active), len(dense))

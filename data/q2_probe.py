@@ -154,8 +154,13 @@ class ProbeSet:
         batch_tokens: int = 16384,
         block_size: int = 512,
         progress: bool = False,
+        collect_scores: bool = False,
     ) -> Dict[str, Any]:
         """Rank the true value among its attribute's candidates, per row.
+
+        collect_scores=True also returns every row's candidate log-probabilities
+        under `_scores` (row order), so another scorer can rank them. The
+        training metric `fact_recall` uses this with `metrics.q2.fact_metrics`.
 
         Rows are batched by EXACT prompt length. The model returns only the
         final position's logits when it is called without targets, so a padded
@@ -167,6 +172,7 @@ class ProbeSet:
         rank = np.zeros(n, dtype=np.int32)
         top1 = np.zeros(n, dtype=bool)
         margin = np.zeros(n, dtype=np.float32)
+        self._collected = [None] * n if collect_scores else None
 
         buckets: Dict[Tuple[bool, int], List[int]] = defaultdict(list)
         for i, r in enumerate(self.rows):
@@ -197,7 +203,16 @@ class ProbeSet:
                 done += len(chunk)
                 if progress and done % 5000 < per_batch:
                     print(f"[probe] {done}/{n}", flush=True)
-        return self._summary(rank, top1, margin)
+        out = self._summary(rank, top1, margin)
+        if collect_scores:
+            out["_scores"] = self._collected
+        self._collected = None
+        return out
+
+    def _keep(self, i, scores, true_index, rank, top1, margin):
+        if getattr(self, "_collected", None) is not None:
+            self._collected[i] = np.asarray(scores, dtype=np.float64)
+        self._record(i, scores, true_index, rank, top1, margin)
 
     def _last_logprobs(
         self, seqs: List[List[int]], model, device, block_size: int
@@ -223,12 +238,12 @@ class ProbeSet:
                 cc = self.candidates[self.rows[i].attribute]
                 tok = torch.as_tensor(cc.first, device=device)
                 scores = lp[j].index_select(0, tok).cpu().numpy()
-                self._record(i, scores, self.rows[i].true_index, rank, top1, margin)
+                self._keep(i, scores, self.rows[i].true_index, rank, top1, margin)
             return
         tok = torch.as_tensor(c.first, device=device)
         scores = lp.index_select(1, tok).cpu().numpy()  # (B, n_candidates)
         for j, i in enumerate(chunk):
-            self._record(i, scores[j], self.rows[i].true_index, rank, top1, margin)
+            self._keep(i, scores[j], self.rows[i].true_index, rank, top1, margin)
 
     def _score_two(self, chunk, model, device, rank, top1, margin, block_size):
         """Dates: log p(month | prompt) + log p(day | prompt, month).
@@ -255,7 +270,7 @@ class ProbeSet:
 
         scores = (month_scores + day_scores).cpu().numpy()
         for j, i in enumerate(chunk):
-            self._record(i, scores[j], self.rows[i].true_index, rank, top1, margin)
+            self._keep(i, scores[j], self.rows[i].true_index, rank, top1, margin)
 
     @staticmethod
     def _record(i, scores, true_index, rank, top1, margin):
