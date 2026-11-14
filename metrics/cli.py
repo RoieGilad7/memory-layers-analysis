@@ -112,9 +112,9 @@ def main(argv=None):
         help="also score held-out subjects absent from training (phase 2)",
     )
     p.add_argument("--controls", type=positive, default=3)
-    # E1 switches off each subject's top-m slots (plan). The plan does not fix
-    # m; 2 of 65,536 slots barely moves the output. The headline m and the
-    # extra sizes are provisional until the sample-size pilot picks them.
+    # E1 switches off each subject's top-m slots. 2 of 65,536 slots barely
+    # moves the output. The headline m and the extra sizes are provisional
+    # until the sample-size pilot picks them.
     p.add_argument("--lesion-size", type=positive, default=64)
     p.add_argument(
         "--lesion-sizes",
@@ -129,7 +129,7 @@ def main(argv=None):
         help="JSON list of fact ids: a fixed E2 cohort, rediscovered per checkpoint",
     )
     p.add_argument("--collateral-rows", type=positive, default=200)
-    p.add_argument("--permutations", type=positive, default=99)  # plan: about 100
+    p.add_argument("--permutations", type=positive, default=99)  # p-value floor 0.01
     p.add_argument(
         "--v2-stride",
         type=positive,

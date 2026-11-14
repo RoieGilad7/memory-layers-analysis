@@ -124,7 +124,7 @@ def _cumulative(ctx, discovered):
 
 
 def discovery_rows(ctx):
-    """Frequent-tier discovery prompts (the plan's main E2 group).
+    """Frequent-tier discovery prompts (the main E2 group).
 
     With a fixed fact list (`e2_facts`), only those facts, so every model is
     tested on the same facts. Slots are still found again per checkpoint.

@@ -1,9 +1,8 @@
 """E1. Selectivity of a subject-directed memory lesion on held-out text.
 
-Plan (Methodology, E1): switch off subject D's top-m slots from U4's TF-IDF
-ranking and compare with m matched random slots. The plan does not fix m. The
-headline uses `lesion_size`; `lesion_sizes` reruns the same test at other m so
-the sample-size pilot can choose m.
+Switch off subject D's top-m slots from U4's TF-IDF ranking and compare with m
+matched random slots. The headline uses `lesion_size`; `lesion_sizes` reruns
+the same test at other m so the sample-size pilot can choose m.
 """
 
 from functools import lru_cache
