@@ -325,7 +325,8 @@ class PKMMemory(MemoryLayer):
         if not self._capture_needed():
             self._last = None
         with fp32_region(x):
-            return self.pkm(x.float())
+            # At least fp32; a float64 model (the metrics parity recheck) stays float64.
+            return self.pkm(x if x.dtype == torch.float64 else x.float())
 
     def key_parameters(self):
         yield self.pkm.keys
@@ -436,7 +437,7 @@ class PEERMemory(MemoryLayer):
             self._last = None
         self._pending_indices = None
         with fp32_region(x):
-            return self.peer(x.float())
+            return self.peer(x if x.dtype == torch.float64 else x.float())
 
     def key_parameters(self):
         yield self.peer.keys

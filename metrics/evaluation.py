@@ -84,7 +84,7 @@ class Evaluator:
                 subject, seq = doc["subject"], doc["tokens"]
                 count = len(seq) - 1
                 counts[subject] += count
-                sums[subject] += nll[i, :count].double().sum().item()
+                sums[subject] += nll[i, :count].cpu().double().sum().item()
                 correct[subject] += int(hits[i, :count].sum())
                 if trace is not None:
                     for p in range(count):

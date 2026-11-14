@@ -16,7 +16,7 @@ def check_documents(scorer, parity, atol, rtol):
             x, y = scorer._matrix([seq[:-1]]), scorer._matrix([seq[1:]])
             logits, _ = scorer.model(x)
             token_lp = logits[0].float().log_softmax(-1)
-            loss_sum = float(-token_lp.gather(1, y.T).double().sum())
+            loss_sum = float(-token_lp.gather(1, y.T).cpu().double().sum())
             pred = logits.argmax(-1)
             hits = int((pred == y).sum())
             del logits, token_lp
