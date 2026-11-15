@@ -1,6 +1,8 @@
 """Results-only Phase 1 metrics report: one self-contained HTML page with figures.
 
     python reports/build_results_report.py runs/final reports/final_metrics_results.html
+    python reports/build_results_report.py runs/final reports/final_metrics_analysis.html --analysis
+    (the PDF is the --analysis page printed with headless Chrome)
 
 Reads the final per-checkpoint reports (runs/final/cohort/<run>, runs/final/dense-s0),
 the training runs' own metrics (runs/final/hf_meta/<run>) and the X2 margins.
@@ -82,7 +84,7 @@ def dots(ax, x, runs, value, spread=0.12):
                    color=COLOR[r], edgecolor=base.SURFACE, linewidth=1.2, zorder=3)
 
 
-def main(root, dest):
+def main(root, dest, analysis=False):
     root, dest = Path(root), Path(dest)
     reports = base.load(root / "cohort")
     d = base.digest(reports)
@@ -447,15 +449,44 @@ def main(root, dest):
         ["Prefill throughput (tokens/s)", f"{res['pkm-s0']['Prefill throughput']:,.0f}", f"{res['dense-s0']['Prefill throughput']:,.0f}"],
     ]))
 
+    if analysis:
+        import results_analysis as A
+        out, current = [], None
+
+        def block(key):
+            paras = A.SECTIONS.get(key)
+            if not paras:
+                return ""
+            body = "".join(p if p.startswith("<ul>") else f"<p>{p}</p>" for p in paras)
+            return f'<div class="analysis"><h3>Analysis</h3>{body}</div>'
+
+        for part in H:
+            if part.startswith("<h2>"):
+                if current:
+                    out.append(block(current))
+                title = part[4:]
+                current = next((k for k in A.SECTIONS if title.startswith(k)), None)
+            out.append(part)
+        if current:
+            out.append(block(current))
+        for title, paras in A.OVERALL:
+            out.append(f'<h2>{title}</h2><div class="analysis">' + "".join(p if p.startswith("<ul>") else f"<p>{p}</p>" for p in paras) + "</div>")
+        H = out
+        H[0] = "<h1>Phase 1 metric results, with analysis</h1>"
+        H[1] = H[1].replace("Results only; each section says what the metric measures.", "Each section says what the metric measures, gives the results, and ends with an analysis (blue box). The overall view is at the end.")
+
     css = ("body{font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:1050px;margin:2em auto;padding:0 1em;"
            "color:#0b0b0b;background:#fcfcfb;line-height:1.5}table{border-collapse:collapse;margin:1em 0;font-size:13px}"
            "td,th{border:1px solid #e4e3df;padding:4px 8px;text-align:left;vertical-align:top}th{background:#f0efec}"
            "img{max-width:100%;margin:1em 0}code{background:#f0efec;padding:1px 4px;border-radius:3px;font-size:12px}"
-           "h1{font-size:24px}h2{margin-top:1.8em;border-bottom:1px solid #e4e3df}")
+           "h1{font-size:24px}h2{margin-top:1.8em;border-bottom:1px solid #e4e3df}"
+           ".analysis{background:#eef4fc;border-left:4px solid #2a78d6;padding:0.4em 1em;margin:1em 0}"
+           ".analysis h3{margin:0.4em 0;font-size:15px;color:#1c5cab}"
+           "*{-webkit-print-color-adjust:exact;print-color-adjust:exact}@media print{body{max-width:none;margin:0;background:#fff}h2{break-after:avoid}img,table,.analysis{break-inside:avoid}}")
     dest.write_text(f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>Phase 1 metric results</title>'
                     f"<style>{css}</style></head><body>" + "\n".join(H) + "</body></html>")
     print(dest)
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    main(sys.argv[1], sys.argv[2], len(sys.argv) > 3 and sys.argv[3] == "--analysis")
