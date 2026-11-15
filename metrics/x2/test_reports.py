@@ -39,3 +39,17 @@ def test_locked_report_comparison_checks_data_order(tmp_path):
     twin["provenance"]["data_seed"] = 12
     with pytest.raises(ValueError, match="data order"):
         run(twin, margin)
+
+
+def test_in_memory_twin_with_tuples_matches_json_margins(tmp_path):
+    paths = []
+    for seed, value in [(11, 2.0), (12, 3.0), (13, 4.0)]:
+        r = _checkpoint_report(seed, value)
+        r["model"]["train_settings"]["betas"] = (0.9, 0.95)
+        paths.append(tmp_path / f"{seed}.json")
+        paths[-1].write_text(json.dumps(r))
+    margin = tmp_path / "margins.json"
+    margin.write_text(json.dumps(lock(paths)))
+    twin = _checkpoint_report(11, 2.5, True)
+    twin["model"]["train_settings"]["betas"] = (0.9, 0.95)  # as the runner holds it
+    assert run(twin, margin)["result"]["metrics"]["Q1.overall.ppl"]["within_margin"]
