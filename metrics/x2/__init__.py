@@ -22,14 +22,20 @@ def source(report):
         "seed": meta["seed"],
         "tokens_seen": report["tokens_seen"],
     }
+    # The margin file is read back from JSON, so compare the twin in the same
+    # form: an in-memory report keeps tuples (e.g. Adam betas) that JSON turns
+    # into lists, and the signature check would reject the twin.
+    settings, config, analysis = json.loads(
+        json.dumps([settings, meta["config"], report["analysis"]])
+    )
     return dict(
         **results,
         data_hash=report["data_sha256"],
         step=report["step"],
         fixture=False,
-        config=meta["config"],
+        config=config,
         settings=settings,
-        analysis=report["analysis"],
+        analysis=analysis,
         training_check=(report.get("training_check") or {}).get("verdict"),
     )
 
