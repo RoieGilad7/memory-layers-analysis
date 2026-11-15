@@ -129,6 +129,9 @@ class V1Scorer:
         return all(
             abs(v - r) <= atol + rtol * abs(r)
             for v, r in zip(scores, reference, strict=True)
+        ) and (
+            fact_metrics(scores, fact["answer"])["native_rank_convention"]
+            == fact_metrics(reference, fact["answer"])["native_rank_convention"]
         )
 
     @torch.inference_mode()
@@ -143,6 +146,7 @@ class V1Scorer:
             "candidate_score_failures": 0,
             "float64_rechecked_facts": 0,
             "float64_rechecked_candidates": 0,
+            "float64_rechecked_rank_mismatches": 0,
             "native_rank_mismatches": 0,
             "documents_checked": 0,
             "max_doc_nll_abs_error": 0.0,
