@@ -1,0 +1,808 @@
+{
+ "pkm-s0": {
+  "parity": {
+   "passed": true,
+   "atol": 5e-05,
+   "rtol": 2e-05,
+   "candidate_scores_checked": 924000,
+   "max_candidate_abs_error": 2.384185791015625e-05,
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 0,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 0,
+   "native_rank_mismatches": 0,
+   "documents_checked": 640,
+   "max_doc_nll_abs_error": 5.669871825375594e-07,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1_nll": 3.5422622749264354,
+  "q1_by_subject": {
+   "FreeLaw": 2.4520734750522237,
+   "Github": 2.725176546502222,
+   "Pile-CC": 4.9505312311705225,
+   "PubMed Central": 3.645306154452235,
+   "Wikipedia (en)": 4.134762747032032
+  },
+  "q2_top1": {
+   "rare/test": 0.03,
+   "rare/paraphrase": 0.01,
+   "frequent/test": 0.895,
+   "frequent/paraphrase": 0.126875,
+   "normal/test": 0.49,
+   "normal/paraphrase": 0.05,
+   "control/test": 0.02,
+   "control/paraphrase": 0.0
+  },
+  "q2_rank": {
+   "rare/paraphrase": 92.615,
+   "frequent/paraphrase": 59.095625,
+   "normal/paraphrase": 85.715,
+   "control/paraphrase": 105.57
+  },
+  "u1": {
+   "coverage": 0.999267578125,
+   "top1_coverage": 0.21295166015625,
+   "kl_bits": 0.7338011323945111
+  },
+  "u4": {
+   "excess_bits": 0.16889362595788232,
+   "mi_bits": 0.63746208018314,
+   "shuffle_bits": 0.46856845422525767,
+   "p": 0.01
+  },
+  "v2": {
+   "Subject text": {
+    "top1": 0.07208926393578212,
+    "top2": 0.12022116130696828,
+    "paired_excess": 0.01691134060034966
+   },
+   "Fact probes": {
+    "top1": 0.09042676221054019,
+    "top2": 0.14941421605221591,
+    "paired_excess": 0.010352374287509866
+   }
+  },
+  "c6": {
+   "active": 366.3746133193437,
+   "top512": 313.6773880576947
+  },
+  "e1_mean": {
+   "16": 0.0018971841774682104,
+   "64": 0.009880697913114316,
+   "256": 0.03473629512639822
+  },
+  "e1_matched": {
+   "16": 5,
+   "64": 5,
+   "256": 5
+  },
+  "e1_by_subject": {
+   "FreeLaw": 0.023668961412864564,
+   "Github": 0.007943600355841221,
+   "Pile-CC": 0.0058350779509076895,
+   "PubMed Central": 0.004978571246716153,
+   "Wikipedia (en)": 0.006977278599241947
+  },
+  "e2": {
+   "cohort": 339,
+   "matched": 19,
+   "status_counts": {
+    "prefix_limit_reached": 298,
+    "no_matched_controls": 22,
+    "matched": 19
+   },
+   "core_fraction": 0.02195885809128603,
+   "erasure_rate": 0.03508771929824561,
+   "single_slot_status": "matched"
+  },
+  "whole_off": {
+   "All text": 0.834979442340444,
+   "FreeLaw": 1.131492411864468,
+   "Github": 0.8078892150218056,
+   "Pile-CC": 0.6446925743271574,
+   "PubMed Central": 0.7794656183521522,
+   "Wikipedia (en)": 0.7884375963130488
+  },
+  "whole_off_recall": {
+   "control / paraphrase": [
+    0.0,
+    0.0
+   ],
+   "control / test": [
+    0.02,
+    0.0
+   ],
+   "frequent / paraphrase": [
+    0.126875,
+    0.066875
+   ],
+   "frequent / test": [
+    0.895,
+    0.31375
+   ],
+   "normal / paraphrase": [
+    0.05,
+    0.03
+   ],
+   "normal / test": [
+    0.49,
+    0.13
+   ],
+   "rare / paraphrase": [
+    0.01,
+    0.01
+   ],
+   "rare / test": [
+    0.03,
+    0.01
+   ]
+  }
+ },
+ "pkm-s1": {
+  "parity": {
+   "passed": true,
+   "atol": 5e-05,
+   "rtol": 2e-05,
+   "candidate_scores_checked": 924000,
+   "max_candidate_abs_error": 2.288818359375e-05,
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 0,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 0,
+   "native_rank_mismatches": 0,
+   "documents_checked": 640,
+   "max_doc_nll_abs_error": 7.619683666248989e-07,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1_nll": 3.551259912499157,
+  "q1_by_subject": {
+   "FreeLaw": 2.460394783836426,
+   "Github": 2.733565501340822,
+   "Pile-CC": 4.96132210880592,
+   "PubMed Central": 3.64844827677939,
+   "Wikipedia (en)": 4.150931300427725
+  },
+  "q2_top1": {
+   "rare/test": 0.02,
+   "rare/paraphrase": 0.005,
+   "frequent/test": 0.90875,
+   "frequent/paraphrase": 0.115,
+   "normal/test": 0.42,
+   "normal/paraphrase": 0.045,
+   "control/test": 0.0,
+   "control/paraphrase": 0.0
+  },
+  "q2_rank": {
+   "rare/paraphrase": 89.54,
+   "frequent/paraphrase": 61.599375,
+   "normal/paraphrase": 79.98,
+   "control/paraphrase": 109.87
+  },
+  "u1": {
+   "coverage": 0.999420166015625,
+   "top1_coverage": 0.223907470703125,
+   "kl_bits": 0.7182429882453647
+  },
+  "u4": {
+   "excess_bits": 0.1835032295780895,
+   "mi_bits": 0.6493045213407931,
+   "shuffle_bits": 0.4658012917627036,
+   "p": 0.01
+  },
+  "v2": {
+   "Subject text": {
+    "top1": 0.07707054988939856,
+    "top2": 0.12829942268436167,
+    "paired_excess": 0.01788100076065117
+   },
+   "Fact probes": {
+    "top1": 0.0809357889278021,
+    "top2": 0.13668795498906003,
+    "paired_excess": 0.01041376891813374
+   }
+  },
+  "c6": {
+   "active": 366.38933214080504,
+   "top512": 315.21202229947
+  },
+  "e1_mean": {
+   "16": 0.0013438260025645965,
+   "64": 0.006012342612713458,
+   "256": 0.02842148663191721
+  },
+  "e1_matched": {
+   "16": 5,
+   "64": 4,
+   "256": 4
+  },
+  "e1_by_subject": {
+   "FreeLaw": null,
+   "Github": 0.004708517540723285,
+   "Pile-CC": 0.006397751469848778,
+   "PubMed Central": 0.0025332374225632837,
+   "Wikipedia (en)": 0.010409864017718484
+  },
+  "e2": {
+   "cohort": 339,
+   "matched": 28,
+   "status_counts": {
+    "prefix_limit_reached": 299,
+    "matched": 28,
+    "no_matched_controls": 12
+   },
+   "core_fraction": 0.024919736684658137,
+   "erasure_rate": 0.023809523809523808,
+   "single_slot_status": "matched"
+  },
+  "whole_off": {
+   "All text": 0.8112781286786337,
+   "FreeLaw": 1.1364085421304462,
+   "Github": 0.7925226876678155,
+   "Pile-CC": 0.5693236228994794,
+   "PubMed Central": 0.7849707155114456,
+   "Wikipedia (en)": 0.7394511906607883
+  },
+  "whole_off_recall": {
+   "control / paraphrase": [
+    0.0,
+    0.005
+   ],
+   "control / test": [
+    0.0,
+    0.0
+   ],
+   "frequent / paraphrase": [
+    0.115,
+    0.063125
+   ],
+   "frequent / test": [
+    0.90875,
+    0.315
+   ],
+   "normal / paraphrase": [
+    0.045,
+    0.04
+   ],
+   "normal / test": [
+    0.42,
+    0.11
+   ],
+   "rare / paraphrase": [
+    0.005,
+    0.0
+   ],
+   "rare / test": [
+    0.02,
+    0.0
+   ]
+  }
+ },
+ "pkm-s2": {
+  "parity": {
+   "passed": true,
+   "atol": 5e-05,
+   "rtol": 2e-05,
+   "candidate_scores_checked": 924000,
+   "max_candidate_abs_error": 2.3365020751953125e-05,
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 0,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 0,
+   "native_rank_mismatches": 0,
+   "documents_checked": 640,
+   "max_doc_nll_abs_error": 6.231052678273841e-07,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1_nll": 3.55277142338252,
+  "q1_by_subject": {
+   "FreeLaw": 2.4606266429789505,
+   "Github": 2.729792792255158,
+   "Pile-CC": 4.966035936369373,
+   "PubMed Central": 3.6542660037936905,
+   "Wikipedia (en)": 4.151054830013795
+  },
+  "q2_top1": {
+   "rare/test": 0.03,
+   "rare/paraphrase": 0.0,
+   "frequent/test": 0.9025,
+   "frequent/paraphrase": 0.1,
+   "normal/test": 0.52,
+   "normal/paraphrase": 0.075,
+   "control/test": 0.01,
+   "control/paraphrase": 0.0
+  },
+  "q2_rank": {
+   "rare/paraphrase": 91.49,
+   "frequent/paraphrase": 67.255,
+   "normal/paraphrase": 82.235,
+   "control/paraphrase": 105.825
+  },
+  "u1": {
+   "coverage": 0.9996185302734375,
+   "top1_coverage": 0.22308349609375,
+   "kl_bits": 0.7103567300074154
+  },
+  "u4": {
+   "excess_bits": 0.16505194232532527,
+   "mi_bits": 0.6371970916817382,
+   "shuffle_bits": 0.47214514935641294,
+   "p": 0.01
+  },
+  "v2": {
+   "Subject text": {
+    "top1": 0.07391824265721243,
+    "top2": 0.1229470811123592,
+    "paired_excess": 0.0169172194810044
+   },
+   "Fact probes": {
+    "top1": 0.08080449801069631,
+    "top2": 0.13642531709968828,
+    "paired_excess": 0.010119145611288322
+   }
+  },
+  "c6": {
+   "active": 366.3094131948613,
+   "top512": 313.48686416872056
+  },
+  "e1_mean": {
+   "16": 0.0026460451032094567,
+   "64": 0.008516471715330728,
+   "256": 0.03814426178501928
+  },
+  "e1_matched": {
+   "16": 5,
+   "64": 4,
+   "256": 4
+  },
+  "e1_by_subject": {
+   "FreeLaw": 0.016640670227193215,
+   "Github": null,
+   "Pile-CC": 0.005681128585028265,
+   "PubMed Central": 0.0034711116000146758,
+   "Wikipedia (en)": 0.008272976449086755
+  },
+  "e2": {
+   "cohort": 339,
+   "matched": 40,
+   "status_counts": {
+    "matched": 40,
+    "prefix_limit_reached": 294,
+    "no_matched_controls": 5
+   },
+   "core_fraction": 0.029608357738179318,
+   "erasure_rate": 0.06666666666666667,
+   "single_slot_status": "matched"
+  },
+  "whole_off": {
+   "All text": 0.8207899082935137,
+   "FreeLaw": 1.1232047205147473,
+   "Github": 0.8217219370299671,
+   "Pile-CC": 0.612283210325546,
+   "PubMed Central": 0.7743505184510857,
+   "Wikipedia (en)": 0.7425166762335316
+  },
+  "whole_off_recall": {
+   "control / paraphrase": [
+    0.0,
+    0.0
+   ],
+   "control / test": [
+    0.01,
+    0.0
+   ],
+   "frequent / paraphrase": [
+    0.1,
+    0.05125
+   ],
+   "frequent / test": [
+    0.9025,
+    0.27
+   ],
+   "normal / paraphrase": [
+    0.075,
+    0.04
+   ],
+   "normal / test": [
+    0.52,
+    0.12
+   ],
+   "rare / paraphrase": [
+    0.0,
+    0.01
+   ],
+   "rare / test": [
+    0.03,
+    0.0
+   ]
+  }
+ },
+ "pkm_randkey-s0": {
+  "parity": {
+   "passed": true,
+   "atol": 5e-05,
+   "rtol": 2e-05,
+   "candidate_scores_checked": 924000,
+   "max_candidate_abs_error": 2.765655517578125e-05,
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 2,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 2,
+   "native_rank_mismatches": 0,
+   "documents_checked": 640,
+   "max_doc_nll_abs_error": 8.291073063659837e-07,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1_nll": 3.5496438176374343,
+  "q1_by_subject": {
+   "FreeLaw": 2.463953728179879,
+   "Github": 2.7384304042851784,
+   "Pile-CC": 4.952077513412225,
+   "PubMed Central": 3.655548169828929,
+   "Wikipedia (en)": 4.132503018069487
+  },
+  "q2_top1": {
+   "rare/test": 0.06,
+   "rare/paraphrase": 0.005,
+   "frequent/test": 0.86375,
+   "frequent/paraphrase": 0.103125,
+   "normal/test": 0.46,
+   "normal/paraphrase": 0.06,
+   "control/test": 0.0,
+   "control/paraphrase": 0.0
+  },
+  "q2_rank": {
+   "rare/paraphrase": 97.95,
+   "frequent/paraphrase": 57.685625,
+   "normal/paraphrase": 83.215,
+   "control/paraphrase": 108.04
+  },
+  "u1": {
+   "coverage": 0.99969482421875,
+   "top1_coverage": 0.19793701171875,
+   "kl_bits": 0.7786050246425891
+  },
+  "u4": {
+   "excess_bits": 0.15187516474216584,
+   "mi_bits": 0.6224935144275584,
+   "shuffle_bits": 0.47061834968539257,
+   "p": 0.01
+  },
+  "v2": {
+   "Subject text": {
+    "top1": 0.06001840025035569,
+    "top2": 0.10109351955958654,
+    "paired_excess": 0.016952132432458793
+   },
+   "Fact probes": {
+    "top1": 0.05689110463426711,
+    "top2": 0.0954149950791472,
+    "paired_excess": 0.010566452992353002
+   }
+  },
+  "c6": {
+   "active": 366.12831922230305,
+   "top512": 314.42936166758744
+  },
+  "e1_mean": {
+   "16": 0.0015176049000236614,
+   "64": 0.007407340756528387,
+   "256": 0.03141465280589863
+  },
+  "e1_matched": {
+   "16": 5,
+   "64": 5,
+   "256": 5
+  },
+  "e1_by_subject": {
+   "FreeLaw": 0.021790211922936287,
+   "Github": 0.005080842573043791,
+   "Pile-CC": 0.0029096517421395665,
+   "PubMed Central": 0.004508492669549742,
+   "Wikipedia (en)": 0.0027475048749725506
+  },
+  "e2": {
+   "cohort": 339,
+   "matched": 7,
+   "status_counts": {
+    "prefix_limit_reached": 320,
+    "no_matched_controls": 12,
+    "matched": 7
+   },
+   "core_fraction": 0.029788627821411555,
+   "erasure_rate": 0.09523809523809523,
+   "single_slot_status": "matched"
+  },
+  "whole_off": {
+   "All text": 0.7431838079460431,
+   "FreeLaw": 1.0257059605958574,
+   "Github": 0.7075496272703528,
+   "Pile-CC": 0.5833781133375924,
+   "PubMed Central": 0.6739011270741848,
+   "Wikipedia (en)": 0.7077840361738703
+  },
+  "whole_off_recall": {
+   "control / paraphrase": [
+    0.0,
+    0.005
+   ],
+   "control / test": [
+    0.0,
+    0.0
+   ],
+   "frequent / paraphrase": [
+    0.103125,
+    0.0525
+   ],
+   "frequent / test": [
+    0.86375,
+    0.295
+   ],
+   "normal / paraphrase": [
+    0.06,
+    0.015
+   ],
+   "normal / test": [
+    0.46,
+    0.07
+   ],
+   "rare / paraphrase": [
+    0.005,
+    0.005
+   ],
+   "rare / test": [
+    0.06,
+    0.02
+   ]
+  }
+ },
+ "x2": {
+  "interpretation": "study",
+  "limitations": [],
+  "learned_seeds": [
+   0,
+   1,
+   2
+  ],
+  "seed_count": 3,
+  "twin_seed": 0,
+  "twin_seed_in_calibration": true,
+  "training_checks": {
+   "0": null,
+   "1": null,
+   "2": null,
+   "twin": null
+  },
+  "metrics": {
+   "Q1.overall.ppl": {
+    "predicted_direction": "lower",
+    "learned_values": [
+     34.544981103395386,
+     34.857206864022984,
+     34.909933750154096
+    ],
+    "available_seeds": 3,
+    "support": null,
+    "learned_mean": 34.77070723919082,
+    "learned_sample_sd": 0.19725427097055578,
+    "learned_min": 34.544981103395386,
+    "learned_max": 34.909933750154096,
+    "margin": 0.3649526467587094,
+    "reason": null,
+    "twin_value": 34.800919805979376,
+    "learned_minus_twin": -0.030212566788556217,
+    "observed_learned_direction": "lower",
+    "within_margin": true
+   },
+   "U4.excess_bits": {
+    "predicted_direction": "higher",
+    "learned_values": [
+     0.16889362595788232,
+     0.1835032295780895,
+     0.16505194232532527
+    ],
+    "available_seeds": 3,
+    "support": null,
+    "learned_mean": 0.17248293262043238,
+    "learned_sample_sd": 0.009735237134213764,
+    "learned_min": 0.16505194232532527,
+    "learned_max": 0.1835032295780895,
+    "margin": 0.018451287252764237,
+    "reason": null,
+    "twin_value": 0.15187516474216584,
+    "learned_minus_twin": 0.020607767878266542,
+    "observed_learned_direction": "higher",
+    "within_margin": false
+   },
+   "E1.mean_specificity_excess_nll": {
+    "predicted_direction": "higher",
+    "learned_values": [
+     0.009880697913114316,
+     0.006012342612713458,
+     0.008516471715330728
+    ],
+    "available_seeds": 3,
+    "support": [
+     "FreeLaw",
+     "Github",
+     "Pile-CC",
+     "PubMed Central",
+     "Wikipedia (en)"
+    ],
+    "learned_mean": null,
+    "learned_sample_sd": null,
+    "learned_min": null,
+    "learned_max": null,
+    "margin": null,
+    "reason": "matched discovery/evaluation cohort differs across learned seeds",
+    "twin_value": 0.007407340756528387,
+    "learned_minus_twin": null,
+    "observed_learned_direction": null,
+    "within_margin": null
+   },
+   "E2.mean_matched_core_fraction": {
+    "predicted_direction": "lower",
+    "learned_values": [
+     0.02195885809128603,
+     0.024919736684658137,
+     0.029608357738179318
+    ],
+    "available_seeds": 3,
+    "support": [
+     "p000165-major",
+     "p000453-major",
+     "p000571-major",
+     "p000757-major",
+     "p001004-birth_city",
+     "p001004-university",
+     "p001011-birth_date",
+     "p001220-birth_city",
+     "p001220-birth_date",
+     "p001220-university",
+     "p001348-birth_date",
+     "p001659-university",
+     "p001706-birth_city",
+     "p001744-birth_date",
+     "p001949-major",
+     "p002027-major",
+     "p002132-birth_date",
+     "p002450-major",
+     "p002492-birth_date"
+    ],
+    "learned_mean": null,
+    "learned_sample_sd": null,
+    "learned_min": null,
+    "learned_max": null,
+    "margin": null,
+    "reason": "matched discovery/evaluation cohort differs across learned seeds",
+    "twin_value": 0.029788627821411555,
+    "learned_minus_twin": null,
+    "observed_learned_direction": null,
+    "within_margin": null
+   },
+   "V2.text.top1_share": {
+    "predicted_direction": "higher",
+    "learned_values": [
+     0.07208926393578212,
+     0.07707054988939856,
+     0.07391824265721243
+    ],
+    "available_seeds": 3,
+    "support": null,
+    "learned_mean": 0.0743593521607977,
+    "learned_sample_sd": 0.0025197689643177684,
+    "learned_min": 0.07208926393578212,
+    "learned_max": 0.07707054988939856,
+    "margin": 0.004981285953616438,
+    "reason": null,
+    "twin_value": 0.06001840025035569,
+    "learned_minus_twin": 0.014340951910442011,
+    "observed_learned_direction": "higher",
+    "within_margin": false
+   },
+   "V2.text.top2_share": {
+    "predicted_direction": "higher",
+    "learned_values": [
+     0.12022116130696828,
+     0.12829942268436167,
+     0.1229470811123592
+    ],
+    "available_seeds": 3,
+    "support": null,
+    "learned_mean": 0.12382255503456306,
+    "learned_sample_sd": 0.00410967366851867,
+    "learned_min": 0.12022116130696828,
+    "learned_max": 0.12829942268436167,
+    "margin": 0.008078261377393398,
+    "reason": null,
+    "twin_value": 0.10109351955958654,
+    "learned_minus_twin": 0.022729035474976525,
+    "observed_learned_direction": "higher",
+    "within_margin": false
+   },
+   "V2.text.cosine_excess": {
+    "predicted_direction": "two_sided",
+    "learned_values": [
+     0.01691134060034966,
+     0.01788100076065117,
+     0.0169172194810044
+    ],
+    "available_seeds": 3,
+    "support": null,
+    "learned_mean": 0.01723652028066841,
+    "learned_sample_sd": 0.0005581442081743265,
+    "learned_min": 0.01691134060034966,
+    "learned_max": 0.01788100076065117,
+    "margin": 0.0009696601603015123,
+    "reason": null,
+    "twin_value": 0.016952132432458793,
+    "learned_minus_twin": 0.00028438784820961766,
+    "observed_learned_direction": "higher",
+    "within_margin": true
+   },
+   "V2.fact.top1_share": {
+    "predicted_direction": "higher",
+    "learned_values": [
+     0.09042676221054019,
+     0.0809357889278021,
+     0.08080449801069631
+    ],
+    "available_seeds": 3,
+    "support": null,
+    "learned_mean": 0.08405568304967953,
+    "learned_sample_sd": 0.005517906902231438,
+    "learned_min": 0.08080449801069631,
+    "learned_max": 0.09042676221054019,
+    "margin": 0.009622264199843883,
+    "reason": null,
+    "twin_value": 0.05689110463426711,
+    "learned_minus_twin": 0.02716457841541242,
+    "observed_learned_direction": "higher",
+    "within_margin": false
+   },
+   "V2.fact.top2_share": {
+    "predicted_direction": "higher",
+    "learned_values": [
+     0.14941421605221591,
+     0.13668795498906003,
+     0.13642531709968828
+    ],
+    "available_seeds": 3,
+    "support": null,
+    "learned_mean": 0.14084249604698806,
+    "learned_sample_sd": 0.007424488706385834,
+    "learned_min": 0.13642531709968828,
+    "learned_max": 0.14941421605221591,
+    "margin": 0.012988898952527639,
+    "reason": null,
+    "twin_value": 0.0954149950791472,
+    "learned_minus_twin": 0.04542750096784086,
+    "observed_learned_direction": "higher",
+    "within_margin": false
+   },
+   "V2.fact.cosine_excess": {
+    "predicted_direction": "two_sided",
+    "learned_values": [
+     0.010352374287509866,
+     0.01041376891813374,
+     0.010119145611288322
+    ],
+    "available_seeds": 3,
+    "support": null,
+    "learned_mean": 0.010295096272310643,
+    "learned_sample_sd": 0.00015543906041598485,
+    "learned_min": 0.010119145611288322,
+    "learned_max": 0.01041376891813374,
+    "margin": 0.00029462330684541793,
+    "reason": null,
+    "twin_value": 0.010566452992353002,
+    "learned_minus_twin": -0.00027135672004235944,
+    "observed_learned_direction": "lower",
+    "within_margin": true
+   }
+  }
+ }
+}
