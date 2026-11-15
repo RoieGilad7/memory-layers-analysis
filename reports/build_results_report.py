@@ -92,17 +92,23 @@ def main(root, dest):
     x2 = d["x2"]["metrics"]
     figs = {}
 
-    # Q1: how much lower each PKM model's held-out loss is than the dense model's.
-    fig, ax = plt.subplots(figsize=(9, 3.6))
+    # Q1: all five models, one panel per subject (each panel has its own y-range).
     groups = ["pile_avg"] + [SUBJ_KEY[s] for s in SUBJECTS]
-    grouped_bars(ax, groups, PKM, lambda r, g: off["dense-s0"][f"heldout_quality/loss/{g}"] - off[r][f"heldout_quality/loss/{g}"],
-                 label_fmt=lambda v: f"{v:.3f}")
-    ax.set_xticklabels(["Average (5 subjects)"] + [SHORT_SUBJ[s] for s in SUBJECTS])
-    ax.set_ylabel("Dense loss − PKM loss (nats/token)\nhigher = PKM better")
-    ax.set_title("Q1: held-out loss improvement over the dense model (same compute)")
-    ax.margins(y=0.15)
-    legend_below(ax, PKM, ncol=2)
-    fig.subplots_adjust(bottom=0.3)
+    titles = ["Average (5 subjects)"] + [SHORT_SUBJ[s] for s in SUBJECTS]
+    fig, axes = plt.subplots(1, 6, figsize=(12, 3.4))
+    for ax, g, t in zip(axes, groups, titles):
+        for j, r in enumerate(RUNS):
+            v = off[r][f"heldout_quality/loss/{g}"]
+            ax.bar(j, v, 0.8, color=COLOR[r])
+        vals = [off[r][f"heldout_quality/loss/{g}"] for r in RUNS]
+        lo, hi = min(vals), max(vals)
+        ax.set_ylim(lo - (hi - lo) * 1.2, hi + (hi - lo) * 0.4)
+        ax.set_xticks([])
+        ax.set_title(t, fontsize=9.5)
+    axes[0].set_ylabel("Held-out loss (nats/token)\nlower is better")
+    fig.suptitle("Q1: next-token loss on held-out text (y-axis zoomed per panel)", fontsize=11, fontweight="bold", y=1.02)
+    legend_below(axes[0], RUNS, ncol=3)
+    fig.subplots_adjust(bottom=0.28, wspace=0.55)
     figs["q1"] = png(fig)
 
     # Q2: one chart, all five models, by exposure tier and wording.
@@ -268,35 +274,47 @@ def main(root, dest):
              "<li><b>Biographies.</b> Made-up people with five facts each (birth date, birth city, university, major, employer). People are in four exposure tiers by how often their biography appeared in training: <i>frequent</i> (~300 copies), <i>normal</i> (~100), <i>rare</i> (~30), <i>control</i> (never). Each fact has 8 prompts: 2 discovery and 2 test prompts in training wordings, and 4 paraphrase prompts in wordings never used in training.</li>"
              "<li><b>Official</b> numbers (Q1, Q2) are each training run's own final evaluation: the whole test half (about 2.5M tokens per subject) and every person.</li>"
              "<li><b>Slice</b> numbers (everything else) come from <code>metrics.py</code> on a fixed sample, the same for every model: 64 test-half documents per subject, first 256 tokens of each (about 72k tokens in all); 80 frequent people and 10 per other tier (all 8 prompts of every fact). The slice is smaller because the removal tests (E1, E2) rerun the model many times.</li>"
-             "<li><b>Learned</b> column = mean [lowest, highest] over the three learned-key seeds.</li></ul>")
+             "<li><b>\"Learned seeds: mean [min, max]\"</b> column = the average of the three learned-key models (seeds 0, 1, 2), with the lowest and highest of the three in brackets.</li></ul>")
 
     H.append("<h2>Training check</h2>")
-    H.append("<p>Each run's own check before analysis. Green = rule passed, red = failed, grey = not evaluated.</p>")
-    rules = ["finite", "no_divergence", "learned", "not_rising", "coverage", "fact_learning", "flattening"]
-    rule_names = {"finite": "Loss always finite (no NaN or inf)",
-                  "no_divergence": "No training-loss spike above 1.5× its running minimum (value shown: worst ratio)",
-                  "learned": "Loss fell at least 40% from the start",
-                  "not_rising": "Held-out loss not rising at the end",
-                  "coverage": "At least 80% of memory slots used",
-                  "fact_learning": "Frequent-tier facts recalled at least 2× more than control",
-                  "flattening": "Held-out loss flattening (informational, not required)"}
-    present = [k for k in rules if any(k in chk[r]["rules"] for r in RUNS)]
-    present += [k for k in chk["pkm-s0"]["rules"] if k not in present]
+    H.append("<p>Each run's own check before analysis, from its training log. Cell = the measured value; green = within the required limit, red = outside it, grey = not evaluated.</p>")
+    def cell(k, rule):
+        if k == "finite":
+            return "no NaN/inf" if rule["first_bad_train_step"] is None and not rule["bad_eval"] else f"bad at step {rule['first_bad_train_step']}"
+        if k == "no_divergence":
+            return f"{rule['worst_ratio_to_running_min']:.3f}× at step {rule['at_step']:,}"
+        if k == "learned":
+            return f"{rule['init_loss']:.2f} → {rule['final_loss']:.2f} (−{rule['drop']:.1%})"
+        if k == "not_rising":
+            return f"{rule['excess']:.3f} above its minimum"
+        if k == "coverage":
+            return ", ".join(f"{v:.0%}" for v in rule["coverage"].values())
+        if k == "fact_learning":
+            return f"{rule['frequent_test_top1']:.3f} vs {rule['control_test_top1']:.4f} ({rule['ratio']:.0f}×)"
+        if k == "flattening":
+            return f"{rule['last_interval_relative_drop']:.1%} drop over steps {rule['last_interval'][0]:,}–{rule['last_interval'][1]:,}"
+        return ""
+    checks = [
+        ("finite", "Losses finite"),
+        ("no_divergence", "Worst training-loss spike ÷ running minimum (limit 1.5)"),
+        ("learned", "Loss at start → end of training (needs ≥ 40% drop)"),
+        ("not_rising", "Final held-out loss above its lowest value (limit 0.005)"),
+        ("coverage", "Memory slots used (needs ≥ 80%)"),
+        ("fact_learning", "Fact recall, frequent vs control (needs ≥ 2×)"),
+        ("flattening", "Held-out loss drop in the last stretch (informational)"),
+    ]
     rows = []
-    for k in present:
-        row = [rule_names.get(k, k)]
+    for k, label in checks:
+        row = [label]
         for r in RUNS:
             rule = chk[r]["rules"].get(k)
-            if rule is None or rule.get("pass") is None:
-                why = (rule or {}).get("why") or ("informational only" if rule else "not applicable")
-                row.append((why, "#f0efec"))
+            if rule is None or "why" in rule:
+                row.append(((rule or {}).get("why", "not applicable"), "#f0efec"))
                 continue
-            text = ""
-            if k == "no_divergence":
-                text = f"{rule['worst_ratio_to_running_min']:.3f}" + (f" (step {rule['at_step']:,})" if not rule["pass"] else "")
-            row.append((text or ("pass" if rule["pass"] else "fail"), GREEN_BG if rule["pass"] else RED_BG))
+            bg = "#f0efec" if rule.get("pass") is None else (GREEN_BG if rule["pass"] else RED_BG)
+            row.append((cell(k, rule), bg))
         rows.append(row)
-    H.append(table(["Rule"] + [SHORT[r] for r in RUNS], rows))
+    H.append(table(["Check"] + [SHORT[r] for r in RUNS], rows))
 
     H.append("<h2>Q1: next-token quality on held-out text</h2>")
     H.append("<p><b>What it measures.</b> How well each model predicts the next token in text it never trained on: the average loss (negative log-probability of the true next token, in nats; lower is better), per subject and averaged. Perplexity is e<sup>loss</sup>. Official numbers: whole test half, ~2.5M tokens per subject.</p>")
@@ -331,7 +349,12 @@ def main(root, dest):
     H.append("<p><b>What it measures.</b> Whether knowing <i>which slot was read</i> tells you <i>which subject the text is from</i>, beyond what the token itself already tells you. Many words are typical of one subject (e.g. <code>def</code> in Github), so a slot that simply serves that word would look subject-specific. U4 removes that by comparing reads <b>of the same token</b> across subjects.</p>")
     H.append("<p><b>Example.</b> Take the token <code> court</code>. Suppose it appears in FreeLaw and in Wikipedia text. If in FreeLaw documents it mostly reads slots {12, 870, 4031} and in Wikipedia documents mostly {55, 902, 7718}, then the slot reveals the subject even though the token is the same: high U4. If it reads the same slots wherever it appears, U4 is zero for that token. U4 averages this over all tokens, as the mutual information between slot and subject given the token (bits).</p>")
     H.append("<p><b>Shuffle baseline.</b> Even with no specialization the estimate is above zero by chance. So the subject labels are shuffled between whole documents 99 times and U4 recomputed each time. <b>Excess</b> = real value − shuffle average. p = share of shuffles at least as high as the real value (0.01 = none of 99).</p>")
-    H.append(table(["", *[SHORT[r] for r in PKM], "Learned"], [
+    H.append("<p>Rows of the table:</p><ul>"
+             "<li><b>U4, real</b>: the slot–subject mutual information given the token, measured with the true subject labels.</li>"
+             "<li><b>U4, shuffled average</b>: the same quantity after randomly reassigning subject labels between whole documents, averaged over 99 shuffles. This is what chance alone gives.</li>"
+             "<li><b>Excess</b>: real − shuffled average. The part of U4 that is due to actual subject specialization.</li>"
+             "<li><b>p</b>: share of the 99 shuffles that reached the real value or higher (plus one, divided by 100). 0.01 means no shuffle reached it.</li></ul>")
+    H.append(table(["", *[SHORT[r] for r in PKM], "Learned seeds: mean [min, max]"], [
         ["U4, real (bits)"] + [f"{d[r]['u4']['mi_bits']:.3f}" for r in PKM] + [learned_col(lambda r: d[r]["u4"]["mi_bits"], "{:.3f}")],
         ["U4, shuffled average (bits)"] + [f"{d[r]['u4']['shuffle_bits']:.3f}" for r in PKM] + [learned_col(lambda r: d[r]["u4"]["shuffle_bits"], "{:.3f}")],
         ["<b>Excess (bits)</b>"] + [f"{d[r]['u4']['excess_bits']:.4f}" for r in PKM] + [learned_col(lambda r: d[r]["u4"]["excess_bits"])],
@@ -346,7 +369,7 @@ def main(root, dest):
     H.append(f"<p><b>Example (learned s0, FreeLaw, m = 64).</b> Switching off FreeLaw's top 64 slots raised FreeLaw's loss by {e1x['delta_nll_by_subject']['FreeLaw']:.4f} nats/token and the other subjects' by {fmean(others):+.4f} on average, a gap of {e1x['target_minus_other_nll']:.4f}. Three matched random sets of 64 slots gave an average gap of {e1x['target_minus_other_nll'] - e1x['specificity_excess_nll']:.4f}. Result: {e1x['specificity_excess_nll']:.4f} nats.</p>")
     H.append("<p>Run at m = 16, 64 (main) and 256 slots. \"n/a\" = no set of random slots matched that subject's slots closely enough, so that subject has no result for that model and is left out of its average.</p>")
     H.append(img("e1"))
-    H.append(table(["Average over subjects (nats)", *[SHORT[r] for r in PKM], "Learned"], [
+    H.append(table(["Average over subjects (nats)", *[SHORT[r] for r in PKM], "Learned seeds: mean [min, max]"], [
         [f"{m} slots"] + [f"{d[r]['e1_mean'][m]:.4f}" for r in PKM] + [learned_col(lambda r, m=m: d[r]["e1_mean"][m])] for m in ["16", "64", "256"]
     ] + [["Subjects with a result (64 slots)"] + [str(d[r]["e1_matched"]["64"]) for r in PKM] + [""]]))
     H.append(table(["Per subject, 64 slots (nats)", *[SHORT[r] for r in PKM]], [
@@ -356,8 +379,14 @@ def main(root, dest):
 
     H.append("<h2>E2: are single facts stored in a few slots?</h2>")
     H.append("<p><b>What it measures.</b> For each fact, the slots its prompts read are switched off one at a time, most-used first, until the model's recall of that fact on the test prompts drops to chance, up to 16 slots. If that happens, those slots are the fact's <b>core set</b>; <b>core fraction</b> = core set size ÷ slots the fact reads. As a check, the same number of random slots from the fact's own reads (matched for read count and output size) are switched off instead; <b>control erasure rate</b> = how often that also erases the fact. Run on the 339 facts that all four PKM models recall, so every model is tested on the same facts.</p>")
+    H.append("<p>Each of the 339 facts ends in one of three outcomes (bars and first three table rows):</p><ul>"
+             "<li><b>Fact erased, control done</b>: switching off some of the fact's slots (16 or fewer) made the model lose the fact, and we could also find a matching set of random slots (same number, similar read counts and output sizes, taken from the fact's own reads) to switch off for comparison. Only these facts get a core fraction and a control erasure rate.</li>"
+             "<li><b>Fact erased, no control found</b>: the fact was lost within 16 slots, but no matching random set could be found (the core slots were unusually busy or large compared with the fact's other slots), so there is no comparison for it.</li>"
+             "<li><b>Not erased within 16 slots</b>: the 16 most-used slots were switched off and the model still recalled the fact above chance. The search stops at 16, so these facts' core sets, if any, are larger than 16 slots.</li>"
+             "<li><b>Core fraction</b>: for facts in the first group, the number of slots that erased the fact ÷ the number of slots the fact reads, averaged.</li>"
+             "<li><b>Control erasure rate</b>: for the same facts, how often switching off the matched random slots also erased the fact.</li></ul>")
     H.append(img("e2"))
-    H.append(table(["", *[SHORT[r] for r in PKM], "Learned"], [
+    H.append(table(["", *[SHORT[r] for r in PKM], "Learned seeds: mean [min, max]"], [
         ["Fact erased, control done"] + [str(d[r]["e2"]["matched"]) for r in PKM] + [learned_col(lambda r: d[r]["e2"]["matched"], "{:.0f}")],
         ["Fact erased, no control found"] + [str(d[r]["e2"]["status_counts"].get("no_matched_controls", 0)) for r in PKM] + [learned_col(lambda r: d[r]["e2"]["status_counts"].get("no_matched_controls", 0), "{:.0f}")],
         ["Not erased within 16 slots"] + [str(d[r]["e2"]["status_counts"].get("prefix_limit_reached", 0)) for r in PKM] + [learned_col(lambda r: d[r]["e2"]["status_counts"].get("prefix_limit_reached", 0), "{:.0f}")],
@@ -369,7 +398,7 @@ def main(root, dest):
     H.append("<h2>V2: is a read dominated by one value?</h2>")
     H.append("<p><b>What it measures.</b> A memory read adds up 128 weighted values. V2 asks how much of that sum comes from the largest single value (and the two largest), as a share of the output, on held-out text and on fact prompts. It also measures whether values read together point in similar directions: mean cosine between co-read values minus that of random pairs with the same sizes (<b>alignment</b>; 0 = no more aligned than chance).</p>")
     H.append(img("v2"))
-    H.append(table(["", *[SHORT[r] for r in PKM], "Learned"], [
+    H.append(table(["", *[SHORT[r] for r in PKM], "Learned seeds: mean [min, max]"], [
         [lab] + [f"{d[r]['v2'][c][k]:.4f}" for r in PKM] + [learned_col(lambda r, c=c, k=k: d[r]["v2"][c][k])]
         for lab, c, k in [("Largest value share, text", "Subject text", "top1"), ("Two largest share, text", "Subject text", "top2"),
                           ("Alignment, text", "Subject text", "paired_excess"), ("Largest value share, facts", "Fact probes", "top1"),
@@ -403,7 +432,7 @@ def main(root, dest):
     H.append(table(["Slot", "Reads", "Tokens pushed up most"], [
         [str(r[0]), f"{r[1]:,}", html.escape(r[2])] for r in reports["pkm-s0"]["metrics"]["C4"]["rows"]
     ]))
-    H.append("<p><b>Whole memory layer off.</b> The entire memory layer is switched off and the change in held-out loss and fact recall is measured on the slice.</p>")
+    H.append("<p><b>Whole memory layer off.</b> How it is done: in the trained model, every one of the 65,536 memory slots is switched off at once, the same way single slots are switched off in E1 and E2 (the slot's value is set to zero after the key search, so each read returns zero). The memory layer then adds nothing to a token's representation; every other layer is unchanged and nothing is retrained. The slice text (Q1) and the test and new-wording fact prompts (Q2) are run again and compared with the intact model on the same inputs. Change = switched-off minus intact.</p>")
     H.append(img("off"))
     H.append(table(["", *[SHORT[r] for r in PKM]], [
         ["Loss increase, all text (nats)"] + [f"{d[r]['whole_off']['All text']:.3f}" for r in PKM],
