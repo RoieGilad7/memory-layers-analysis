@@ -12,7 +12,7 @@ SECTIONS = {
         "Held-out loss still fell 1.6–1.7% over the last 2,000 steps in every run, so the models are close to, but not fully at, convergence. The same is true for all five, so comparisons between them are fair.",
     ],
     "Q1": [
-        "The memory layer helps at equal compute. Every PKM model beats dense on every subject, by 0.05–0.08 nats/token (average perplexity 42.0–42.4 against 45.0). The gain also holds on USPTO, a subject none of the models trained on.",
+        "The memory layer helps at equal compute. Every PKM model beats dense on every subject, by 0.05–0.08 nats/token (average perplexity 42.0–42.4 against 45.0). The gain also holds on USPTO, a subject none of the models trained on, but it is smaller there: 0.042–0.065 nats (learned-seed mean 0.053) against a 0.059–0.068 average on the trained subjects. The drop varies by seed: s0 and random keys lose almost nothing (0.065 and 0.062), while s1's USPTO gain (0.042) is below its gain on every trained subject. Part of the memory's benefit is therefore specific to the subjects it was trained on.",
         "Learning the keys makes no difference to quality. The random-key model (3.743) falls inside the learned seeds' range (3.739–3.748) on the average and on every subject. Seed-to-seed differences between the learned models are about 0.01 nats.",
     ],
     "Q2": [
