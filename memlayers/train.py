@@ -78,6 +78,15 @@ class OptimCfg:
     read_log_steps: int = 0  # 0 = every step while read_logging
     read_log_weights: bool = True
     track_slot_usage: bool = True
+    # phase 2: same-document memory loss (memlayers/doc_loss.py), off by default
+    doc_loss_weight: float = (
+        0.0  # lambda after the ramp; 0 = off: no hook, no extra work
+    )
+    doc_loss_ramp_steps: int = 1000  # linear ramp from 0; 0 = no ramp
+    doc_loss_temperature: float = 0.5
+    doc_loss_min_piece_tokens: int = 32
+    doc_loss_layer: Optional[int] = None  # None = the model's only memory layer
+    doc_loss_eot_id: int = 50256  # GPT-2 end-of-text
 
 
 @dataclass
@@ -353,6 +362,8 @@ class Trainer:
         self.forward_model = (
             torch.compile(self.model) if cfg.runtime.compile else self.model
         )
+        # phase 2 same-document loss: the layer whose queries it reads, or None (off)
+        self.doc_layer: Optional[int] = self._setup_doc_loss()
         self.optimizer = build_optimizer(self.model, cfg.train)
         self.scheduler = torch.optim.lr_scheduler.LambdaLR(
             self.optimizer,
@@ -422,6 +433,76 @@ class Trainer:
         self.logger = RunLogger(
             FilesSink(self.out_dir, self.layout.train_log, write_status_on_finish=False)
         )
+
+    # ---- same-document loss -------------------------------------------------
+    def _setup_doc_loss(self) -> Optional[int]:
+        """Check the doc_loss_* keys and switch query keeping on. Off (weight 0):
+        returns None and touches nothing, so training is exactly as before."""
+        t = self.cfg.train
+        w = float(t.doc_loss_weight)
+        if w < 0:
+            raise ValueError(f"train.doc_loss_weight must be >= 0, got {w}")
+        if w == 0:
+            return None
+        mems = self.model.memory_layers
+        if not mems:
+            raise ValueError(
+                "train.doc_loss_weight > 0 needs a memory layer; this model has none"
+            )
+        layer = t.doc_loss_layer
+        if layer is None:
+            if len(mems) > 1:
+                raise ValueError(
+                    f"the model has several memory layers {sorted(mems)}; set "
+                    "train.doc_loss_layer to the one the doc loss should read"
+                )
+            layer = next(iter(mems))
+        elif layer not in mems:
+            raise ValueError(
+                f"train.doc_loss_layer={layer} is not a memory layer; "
+                f"have {sorted(mems)}"
+            )
+        if self.cfg.runtime.compile:
+            raise ValueError(
+                "train.doc_loss_weight > 0 is not supported with runtime.compile=true "
+                "(the query hook needs eager mode)"
+            )
+        if float(t.doc_loss_temperature) <= 0:
+            raise ValueError(
+                f"train.doc_loss_temperature must be > 0, got {t.doc_loss_temperature}"
+            )
+        if int(t.doc_loss_min_piece_tokens) < 2:
+            raise ValueError(
+                "train.doc_loss_min_piece_tokens must be >= 2, got "
+                f"{t.doc_loss_min_piece_tokens}"
+            )
+        if int(t.doc_loss_ramp_steps) < 0:
+            raise ValueError(
+                f"train.doc_loss_ramp_steps must be >= 0, got {t.doc_loss_ramp_steps}"
+            )
+        self.model.set_keep_queries(True, layer)
+        return int(layer)
+
+    def doc_loss_lambda(self, step: Optional[int] = None) -> float:
+        """The doc-loss weight at `step` (default: the step about to run)."""
+        t = self.cfg.train
+        step = self.step if step is None else step
+        w = float(t.doc_loss_weight)
+        ramp = int(t.doc_loss_ramp_steps)
+        return w * min(1.0, step / ramp) if ramp > 0 else w
+
+    def _doc_loss_term(self, x: torch.Tensor):
+        from .doc_loss import doc_loss, find_halves, half_vectors
+
+        t = self.cfg.train
+        q = self.model.memory_layers[self.doc_layer].kept_queries()
+        if q is None:
+            raise RuntimeError("the doc loss found no kept queries after the forward")
+        half_id, n = find_halves(
+            x, int(t.doc_loss_eot_id), int(t.doc_loss_min_piece_tokens)
+        )
+        v = half_vectors(q, half_id, n)
+        return doc_loss(v, float(t.doc_loss_temperature))
 
     # ---- real data ----------------------------------------------------------
     def _build_real_dataset(self):
@@ -697,6 +778,10 @@ class Trainer:
             cfg.read_log_steps == 0 or self.step < cfg.read_log_steps
         )
 
+        doc_on = self.doc_layer is not None
+        lam = self.doc_loss_lambda() if doc_on else 0.0
+        doc_rows: List[tuple] = []  # (unweighted doc loss, stats) per micro-batch
+
         for micro in range(cfg.grad_accum_steps):
             x, y = self.data.get_batch(
                 self.step, cfg.micro_batch_size, micro, self.device
@@ -704,11 +789,18 @@ class Trainer:
             tokens += x.numel()
             with self._autocast():
                 _, loss = self.forward_model(x, y)
-            total_loss += loss.item()
-            scaled = loss.float() / cfg.grad_accum_steps
+            total_loss += loss.item()  # the LM loss only
+            if doc_on:
+                dl, st = self._doc_loss_term(x)
+                doc_rows.append((float(dl.detach()), st))
+                scaled = (loss + lam * dl).float() / cfg.grad_accum_steps
+            else:
+                scaled = loss.float() / cfg.grad_accum_steps
             if self.scaler is not None:
                 scaled = self.scaler.scale(scaled)
             scaled.backward()
+            if doc_on:
+                self.model.release_kept_queries()
             if want_reads:
                 reads = self.model.read_logs()
                 if reads:
@@ -739,6 +831,20 @@ class Trainer:
         self.peak_mem = max(self.peak_mem, mem_now)
 
         lrs = {g.get("name"): g["lr"] for g in self.optimizer.param_groups}
+        doc_cols = {"doc_loss": "", "doc_weight": "", "doc_gap": "", "doc_halves": ""}
+        if doc_on:
+            good = [(d, st) for d, st in doc_rows if st["gap"] is not None]
+            doc_cols = {
+                "doc_loss": sum(d for d, _ in good) / len(good) if good else 0.0,
+                "doc_weight": lam,
+                "doc_gap": sum(st["gap"] for _, st in good) / len(good) if good else "",
+                # micro-batches without a pair still count here: 0 or 2 halves
+                "doc_halves": (
+                    sum(st["halves"] for _, st in good) / len(good)
+                    if good
+                    else sum(st["halves"] for _, st in doc_rows) / len(doc_rows)
+                ),
+            }
         return {
             "step": self.step,
             "data_version": self.data_provenance.get("version", ""),
@@ -751,6 +857,7 @@ class Trainer:
             "tokens_seen": self.tokens_seen,
             "peak_mem_bytes": mem_now,
             "grad_norm": gnorm,
+            **doc_cols,
         }
 
     def train(self, steps: Optional[int] = None, progress: bool = True) -> List[dict]:
