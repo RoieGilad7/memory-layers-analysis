@@ -1,0 +1,73 @@
+{
+  "note": "20 training steps of the tiny PKM model on CPU, fake data, written from main before the doc loss existed. With train.doc_loss_weight 0 these losses must be reproduced exactly. runtime.out_dir is filled in by the test.",
+  "torch": "2.14.1",
+  "config": {
+    "name": "doc-loss-off-golden",
+    "model": {
+      "vocab_size": 257,
+      "block_size": 64,
+      "n_layer": 3,
+      "n_head": 4,
+      "n_embd": 64,
+      "dropout": 0.0,
+      "bias": true,
+      "tie_embeddings": true,
+      "memory_layers": [
+        1
+      ],
+      "memory_kind": "pkm",
+      "memory": {
+        "num_keys": 16,
+        "topk": 4,
+        "heads": 2,
+        "dim_head": 32,
+        "query_batchnorm": true
+      }
+    },
+    "data": {
+      "kind": "repeat",
+      "chunk_len": 8,
+      "n_distinct": 257,
+      "seed": 7
+    },
+    "train": {
+      "steps": 20,
+      "micro_batch_size": 4,
+      "grad_accum_steps": 2,
+      "lr": 0.001,
+      "lr_memory_values": 0.004,
+      "weight_decay": 0.1,
+      "warmup_steps": 5,
+      "min_lr_ratio": 0.1,
+      "seed": 99,
+      "log_every": 0,
+      "ckpt_every": 0,
+      "grad_clip": 1.0
+    },
+    "runtime": {
+      "device": "cpu"
+    }
+  },
+  "losses": [
+    5.558464050292969,
+    5.5813071727752686,
+    5.558932304382324,
+    5.565989971160889,
+    5.574822187423706,
+    5.571332931518555,
+    5.544100999832153,
+    5.557116746902466,
+    5.556229591369629,
+    5.5525963306427,
+    5.534384489059448,
+    5.521371603012085,
+    5.565967559814453,
+    5.565981388092041,
+    5.576044082641602,
+    5.542272567749023,
+    5.5771355628967285,
+    5.5729217529296875,
+    5.543232440948486,
+    5.52437424659729
+  ]
+}
