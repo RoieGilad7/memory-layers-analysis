@@ -18,7 +18,7 @@ defaults:
   - eval: standard
   - logging: files
   - runtime: auto
-  - experiment: ???      # required: pkm | pkm_randkey | dense | peer | smoke[_randkey|_dense]
+  - experiment: ???      # required: pkm | pkm_doc | pkm_randkey | dense | peer | smoke[_randkey|_dense]
 
 # The one seed: model init, data order (the loader permutation) and dropout.
 # data.seed and train.seed are ${seed}; override them only in tests.

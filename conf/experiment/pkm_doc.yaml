@@ -1,0 +1,21 @@
+# @package _global_
+# Phase 2: the main PKM run plus the same-document memory loss
+# (memlayers/doc_loss.py). Identical to experiment=pkm except for the train.doc_loss_*
+# keys and an absolute eval schedule, so the only difference from pkm-s0 is the loss.
+defaults:
+  - override /model: pkm
+  - override /data: v1
+  - override /train: tier1
+
+name: pkm_doc
+
+train:
+  doc_loss_weight: 0.01        # lambda after the ramp
+  doc_loss_ramp_steps: 1000
+  doc_loss_temperature: 0.5
+  doc_loss_min_piece_tokens: 32
+
+eval:
+  # the exact list pkm-s0 used (runs/final/hf_meta/pkm-s0/config.yaml), so both runs
+  # are evaluated and checkpointed at the same steps
+  steps: [0, 247, 504, 998, 1500, 1996, 3498, 4999, 7004, 9156]

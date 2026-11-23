@@ -22,6 +22,7 @@ OLD = ROOT / "memlayers" / "configs"
 
 EXPERIMENTS = [
     "pkm",
+    "pkm_doc",
     "pkm_randkey",
     "dense",
     "peer",
