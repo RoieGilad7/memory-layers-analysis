@@ -7,6 +7,8 @@ Both wrappers expose:
     last_read()               -> MemoryRead(indices, weights) | None
     set_read_logging(flag)
     set_mask_slots(ids)       -> disable slots AFTER the top-k search
+    set_keep_queries(flag)    -> keep the normalized queries of the last forward
+    kept_queries()            -> Tensor [batch, seq, query_dim] | None (WITH grad)
     key_parameters() / value_parameters()
     n_slots / n_heads / topk
 
@@ -125,6 +127,54 @@ class MemoryLayer(nn.Module):
         self.renormalize_after_mask = False
         # analysis-time tool, deliberately not part of the checkpoint
         self.register_buffer("slot_mask", None, persistent=False)
+        # query keeping (phase 2 same-document loss); no hook while it is off
+        self._keep_queries = False
+        self._kept: Optional[torch.Tensor] = None
+        self._query_hook_handle = None
+
+    # ---- query keeping ------------------------------------------------------
+    def _query_module(self) -> nn.Module:
+        """The inner module whose output is the queries the top-k search uses."""
+        raise NotImplementedError
+
+    def _queries_from_output(self, out: torch.Tensor) -> torch.Tensor:
+        """Rearrange the query module's output to [batch, seq, query_dim]."""
+        raise NotImplementedError
+
+    def _query_hook_fn(self, module, args, output):
+        # NOT detached: the same-document loss backpropagates through it
+        self._kept = self._queries_from_output(output)
+        return None  # never changes the output
+
+    def set_keep_queries(self, flag: bool) -> None:
+        """On: register a forward hook that keeps the queries of every forward.
+        Off: remove the hook and drop the kept tensor."""
+        flag = bool(flag)
+        if flag and self._query_hook_handle is None:
+            self._query_hook_handle = self._query_module().register_forward_hook(
+                self._query_hook_fn
+            )
+        elif not flag:
+            if self._query_hook_handle is not None:
+                self._query_hook_handle.remove()
+            self._query_hook_handle = None
+            self._kept = None
+        self._keep_queries = flag
+
+    @property
+    def keep_queries(self) -> bool:
+        return self._keep_queries
+
+    def kept_queries(self) -> Optional[torch.Tensor]:
+        return self._kept
+
+    def release_kept_queries(self) -> None:
+        """Drop the kept tensor (and the graph it holds) without removing the hook."""
+        self._kept = None
+
+    @property
+    def query_dim(self) -> int:
+        raise NotImplementedError
 
     # ---- read logging -------------------------------------------------------
     def set_read_logging(self, flag: bool) -> None:
@@ -321,12 +371,28 @@ class PKMMemory(MemoryLayer):
         return (args, kwargs) if self.slot_mask is not None else None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        self._b = x.shape[0]  # the hook needs it to unflatten (b t)
+        self._b = x.shape[0]  # the hooks need it to unflatten (b t) / (b p h)
+        self._kept = None
         if not self._capture_needed():
             self._last = None
         with fp32_region(x):
             # At least fp32; a float64 model (the metrics parity recheck) stays float64.
             return self.pkm(x if x.dtype == torch.float64 else x.float())
+
+    def _query_module(self) -> nn.Module:
+        return self.pkm.norm
+
+    def _queries_from_output(self, out: torch.Tensor) -> torch.Tensor:
+        # PKM.forward: 'b t (p h d) -> (b p h) t d', then the norm; undo it
+        b, h = self._b, self.n_heads
+        bph, t, d = out.shape
+        return (
+            out.reshape(b, 2, h, t, d).permute(0, 3, 1, 2, 4).reshape(b, t, 2 * h * d)
+        )
+
+    @property
+    def query_dim(self) -> int:
+        return 2 * int(self.pkm.heads) * int(self.pkm.keys.shape[-1])
 
     def key_parameters(self):
         yield self.pkm.keys
@@ -436,8 +502,21 @@ class PEERMemory(MemoryLayer):
         if not self._capture_needed():
             self._last = None
         self._pending_indices = None
+        self._kept = None
         with fp32_region(x):
             return self.peer(x if x.dtype == torch.float64 else x.float())
+
+    def _query_module(self) -> nn.Module:
+        return self.peer.to_queries
+
+    def _queries_from_output(self, out: torch.Tensor) -> torch.Tensor:
+        # PEER.to_queries ends in Rearrange('b n (p h d) -> p b n h d')
+        p, b, n, h, d = out.shape
+        return out.permute(1, 2, 0, 3, 4).reshape(b, n, p * h * d)
+
+    @property
+    def query_dim(self) -> int:
+        return 2 * int(self.peer.heads) * int(self.peer.keys.shape[-1])
 
     def key_parameters(self):
         yield self.peer.keys
