@@ -27,6 +27,11 @@ TRAIN_FIELDS = [
     # a loss curve is meaningless without knowing which data made it
     "data_version",
     "data_sha256",
+    # phase 2 same-document loss; empty strings when it is off
+    "doc_loss",
+    "doc_weight",
+    "doc_gap",
+    "doc_halves",
 ]
 
 
