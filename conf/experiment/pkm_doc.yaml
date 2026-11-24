@@ -10,7 +10,7 @@ defaults:
 name: pkm_doc
 
 train:
-  doc_loss_weight: 0.01        # lambda after the ramp
+  doc_loss_weight: 0.1         # lambda after the ramp (pilot 2: reports/doc_loss_pilot2_report.md)
   doc_loss_ramp_steps: 1000
   doc_loss_temperature: 0.5
   doc_loss_min_piece_tokens: 32

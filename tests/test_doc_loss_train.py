@@ -107,7 +107,7 @@ def test_pkm_doc_experiment_composes_with_the_fixed_values():
     tc = to_train_config(cfg)
     assert tc.name == "pkm_doc"
     t = tc.train
-    assert t.doc_loss_weight == 0.01
+    assert t.doc_loss_weight == 0.1
     assert t.doc_loss_ramp_steps == 1000
     assert t.doc_loss_temperature == 0.5
     assert t.doc_loss_min_piece_tokens == 32
