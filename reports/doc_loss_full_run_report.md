@@ -8,7 +8,7 @@
 **Cohort metrics.**
 - Command: `runs/final/run_one.sh runs/final/cohort/pkm_doc-s0 runs/pkm_doc-s0/checkpoints/step_009156.pt --e2-facts runs/final/e2-cohort.json`, the same flags and code as pkm-s0/s1/s2.
 - Ran 13:46–14:06 UTC; parity passed with no rechecks needed.
-- Report: `runs/final/cohort/pkm_doc-s0/step_009156-*.json` and `.html`. Extracted numbers: `runs/final/cohort/pkm_doc-s0/compare.json`.
+- Report: `runs/final/cohort/pkm_doc-s0/step_009156-*.json` and `.html`. Extracted numbers: `reports/doc_loss_full_run_compare.json`.
 - Slot-overlap measures on the final checkpoints: `reports/doc_loss_full_run_slots.json`.
 
 **How to read the comparison.**
