@@ -47,6 +47,11 @@ TRAIN_KEYS = [
     "tokens_per_s",
     "peak_mem_bytes",
     "grad_norm",
+    # phase 2 same-document loss; empty (not sent) when it is off
+    "doc_loss",
+    "doc_weight",
+    "doc_gap",
+    "doc_halves",
 ]
 RUN_FILES = ("meta.json", "training_check.json", "final_metrics.json")
 

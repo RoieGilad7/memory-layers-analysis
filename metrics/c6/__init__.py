@@ -12,7 +12,9 @@ def effective_rank(rows):
         return None
     # Use singular values directly so lower precision in a Gram matrix cannot
     # spuriously inflate the entropy of a nearly rank-deficient table.
-    singular = torch.linalg.svdvals(rows.detach().to(device="cpu", dtype=torch.float64))
+    # Copy to CPU before casting: on MPS a single .to(device="cpu",
+    # dtype=torch.float64) call returns zeros, so every rank came out empty.
+    singular = torch.linalg.svdvals(rows.detach().cpu().to(torch.float64))
     singular = singular[singular > 0]
     if not len(singular):
         return None

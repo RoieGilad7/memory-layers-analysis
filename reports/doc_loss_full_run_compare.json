@@ -1,0 +1,2129 @@
+{
+ "pkm_doc-s0": {
+  "parity": true,
+  "parity_detail": {
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 0,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 0,
+   "native_rank_mismatches": 0,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1": {
+   "All": 3.557349765839607,
+   "FreeLaw": 2.4654492478111845,
+   "Github": 2.7489078253387316,
+   "Pile-CC": 4.963755207599811,
+   "PubMed Central": 3.659304584026913,
+   "Wikipedia (en)": 4.1452609129533196
+  },
+  "q1_acc": {
+   "All": 0.442193894480699,
+   "FreeLaw": 0.5877325619617382,
+   "Github": 0.5668032786885245,
+   "Pile-CC": 0.26541071170781,
+   "PubMed Central": 0.40438542310067943,
+   "Wikipedia (en)": 0.3636290517172042
+  },
+  "q2": {
+   "control/discovery": {
+    "top1": 0.02,
+    "rank": 110.13,
+    "margin": -4.319947662353516
+   },
+   "control/paraphrase": {
+    "top1": 0.005,
+    "rank": 104.055,
+    "margin": -5.1992372995615
+   },
+   "control/test": {
+    "top1": 0.02,
+    "rank": 109.04,
+    "margin": -4.2831758332252505
+   },
+   "frequent/discovery": {
+    "top1": 0.89875,
+    "rank": 1.84125,
+    "margin": 1.9712293461197987
+   },
+   "frequent/paraphrase": {
+    "top1": 0.1225,
+    "rank": 63.16,
+    "margin": -3.8473679783195256
+   },
+   "frequent/test": {
+    "top1": 0.92375,
+    "rank": 1.33625,
+    "margin": 2.066657107360661
+   },
+   "normal/discovery": {
+    "top1": 0.54,
+    "rank": 9.05,
+    "margin": 0.02345892697572708
+   },
+   "normal/paraphrase": {
+    "top1": 0.065,
+    "rank": 81.125,
+    "margin": -4.451963780820369
+   },
+   "normal/test": {
+    "top1": 0.48,
+    "rank": 11.81,
+    "margin": -0.17785839527845382
+   },
+   "rare/discovery": {
+    "top1": 0.08,
+    "rank": 59.11,
+    "margin": -2.687027090191841
+   },
+   "rare/paraphrase": {
+    "top1": 0.005,
+    "rank": 94.93,
+    "margin": -4.982648066282272
+   },
+   "rare/test": {
+    "top1": 0.05,
+    "rank": 59.41,
+    "margin": -2.745139945745468
+   },
+   "control/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 110.25,
+    "margin": -5.212546855211258
+   },
+   "control/with_preceding_facts": {
+    "top1": 0.00625,
+    "rank": 102.50625,
+    "margin": -5.195909910649061
+   },
+   "frequent/no_preceding_facts": {
+    "top1": 0.028125,
+    "rank": 72.309375,
+    "margin": -4.510199615731835
+   },
+   "frequent/with_preceding_facts": {
+    "top1": 0.14609375,
+    "rank": 60.87265625,
+    "margin": -3.6816600689664485
+   },
+   "normal/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 85.175,
+    "margin": -5.166536825895309
+   },
+   "normal/with_preceding_facts": {
+    "top1": 0.08125,
+    "rank": 80.1125,
+    "margin": -4.273320519551635
+   },
+   "rare/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 119.925,
+    "margin": -5.556979787349701
+   },
+   "rare/with_preceding_facts": {
+    "top1": 0.00625,
+    "rank": 88.68125,
+    "margin": -4.8390651360154155
+   }
+  },
+  "u1": [
+   65495,
+   65536,
+   99.93743896484375,
+   21.7376708984375,
+   0.7274515484922368
+  ],
+  "u4": [
+   0.7099872326026436,
+   0.4821502924181841,
+   0.22783694018445955,
+   0.01,
+   77.70655040538406,
+   320
+  ],
+  "v2": {
+   "Subject text": [
+    0.06647927998526208,
+    0.11089485396286748,
+    0.23055880338752055,
+    0.021185439742887315,
+    0.004749144927488533,
+    0.016436294815398784,
+    73743431
+   ],
+   "Fact probes": [
+    0.08556443597914622,
+    0.1447472623070483,
+    0.2496854206971848,
+    0.016088396054982624,
+    0.006048001681109555,
+    0.010040394373873069,
+    4031107
+   ]
+  },
+  "c6": {
+   "Active memory": 365.62451747316106,
+   "Most-read 512 rows": 312.7621848628114
+  },
+  "e1": {
+   "FreeLaw": 0.01861346711455847,
+   "Github": null,
+   "Pile-CC": 0.004809364291060936,
+   "PubMed Central": 0.002964413632576157,
+   "Wikipedia (en)": 0.007587373167158702
+  },
+  "e1_mean": 0.008493654551338567,
+  "e1_by_size": {
+   "16": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.001089651872634915
+   },
+   "64": {
+    "matched_subjects": 4,
+    "mean_specificity_excess_nll": 0.008493654551338567
+   },
+   "256": {
+    "matched_subjects": 4,
+    "mean_specificity_excess_nll": 0.04191300154303978
+   }
+  },
+  "e2_counts": {
+   "prefix limit reached": 313,
+   "matched": 17,
+   "unlearned discovery": 4,
+   "at chance on test": 2,
+   "no matched controls": 3
+  },
+  "e2_matched_mean_excess": 1.552610250956872,
+  "e2_matched_mean_recall_drop": 0.7352941176470589,
+  "e2_matched_mean_ctrl_drop": -0.019607843137254898,
+  "e2_single": [
+   [
+    "p002450-birth_date",
+    "Slot 18897 \u00b7 test",
+    1,
+    0.0,
+    0.0,
+    -0.02402627468109131,
+    "matched"
+   ],
+   [
+    "p002450-birth_date",
+    "Slot 18897 \u00b7 paraphrase",
+    1,
+    -0.25,
+    0.08333333333333333,
+    0.06262052059173584,
+    "matched"
+   ],
+   [
+    "p002450-birth_date",
+    "Slot 18897 \u00b7 same person other facts test",
+    1,
+    0.0,
+    0.0,
+    -0.014023419469594955,
+    "matched"
+   ]
+  ],
+  "layer_off": {
+   "All text | NLL (nats/token)": [
+    3.557349765839607,
+    4.317288124547377,
+    0.7599383587077702
+   ],
+   "FreeLaw | NLL (nats/token)": [
+    2.4654492478111845,
+    3.5157445710858184,
+    1.050295323274634
+   ],
+   "Github | NLL (nats/token)": [
+    2.7489078253387316,
+    3.465698874474229,
+    0.7167910491354976
+   ],
+   "Pile-CC | NLL (nats/token)": [
+    4.963755207599811,
+    5.552410153158406,
+    0.588654945558595
+   ],
+   "PubMed Central | NLL (nats/token)": [
+    3.659304584026913,
+    4.368674244201276,
+    0.7093696601743624
+   ],
+   "Wikipedia (en) | NLL (nats/token)": [
+    4.1452609129533196,
+    4.857481460926441,
+    0.7122205479731214
+   ],
+   "control / paraphrase | Top-1 accuracy": [
+    0.005,
+    0.0,
+    -0.005
+   ],
+   "control / paraphrase | Gold margin (nats)": [
+    -5.1992372995615,
+    -5.0759207785129545,
+    0.12331652104854562
+   ],
+   "control / test | Top-1 accuracy": [
+    0.02,
+    0.01,
+    -0.01
+   ],
+   "control / test | Gold margin (nats)": [
+    -4.2831758332252505,
+    -4.274141691923141,
+    0.009034141302109333
+   ],
+   "frequent / paraphrase | Top-1 accuracy": [
+    0.1225,
+    0.08125,
+    -0.041249999999999995
+   ],
+   "frequent / paraphrase | Gold margin (nats)": [
+    -3.8473679783195256,
+    -3.7342266197502614,
+    0.11314135856926422
+   ],
+   "frequent / test | Top-1 accuracy": [
+    0.92375,
+    0.3975,
+    -0.5262499999999999
+   ],
+   "frequent / test | Gold margin (nats)": [
+    2.066657107360661,
+    -0.4580902538634837,
+    -2.5247473612241444
+   ],
+   "normal / paraphrase | Top-1 accuracy": [
+    0.065,
+    0.06,
+    -0.0050000000000000044
+   ],
+   "normal / paraphrase | Gold margin (nats)": [
+    -4.451963780820369,
+    -4.35200656414032,
+    0.09995721668004975
+   ],
+   "normal / test | Top-1 accuracy": [
+    0.48,
+    0.11,
+    -0.37
+   ],
+   "normal / test | Gold margin (nats)": [
+    -0.17785839527845382,
+    -1.9633796310424805,
+    -1.7855212357640267
+   ],
+   "rare / paraphrase | Top-1 accuracy": [
+    0.005,
+    0.005,
+    0.0
+   ],
+   "rare / paraphrase | Gold margin (nats)": [
+    -4.982648066282272,
+    -4.966274274587631,
+    0.01637379169464115
+   ],
+   "rare / test | Top-1 accuracy": [
+    0.05,
+    0.01,
+    -0.04
+   ],
+   "rare / test | Gold margin (nats)": [
+    -2.745139945745468,
+    -3.768601096868515,
+    -1.0234611511230467
+   ]
+  },
+  "x2": [],
+  "x2_status": "Requires a frozen-key twin and a margin file from three or more learned-key seeds."
+ },
+ "pkm_doc-s1": {
+  "parity": true,
+  "parity_detail": {
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 0,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 0,
+   "native_rank_mismatches": 0,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1": {
+   "All": 3.5671093952515727,
+   "FreeLaw": 2.4747161598301184,
+   "Github": 2.753006994902804,
+   "Pile-CC": 4.9681312648459075,
+   "PubMed Central": 3.67352396769215,
+   "Wikipedia (en)": 4.162480081001496
+  },
+  "q1_acc": {
+   "All": 0.4423459794270545,
+   "FreeLaw": 0.5870094010913155,
+   "Github": 0.5685792349726776,
+   "Pile-CC": 0.2667099754583514,
+   "PubMed Central": 0.40636195182211243,
+   "Wikipedia (en)": 0.35928577173650766
+  },
+  "q2": {
+   "control/discovery": {
+    "top1": 0.0,
+    "rank": 104.43,
+    "margin": -4.373264507949353
+   },
+   "control/paraphrase": {
+    "top1": 0.005,
+    "rank": 103.095,
+    "margin": -4.812522986233234
+   },
+   "control/test": {
+    "top1": 0.0,
+    "rank": 100.3,
+    "margin": -4.357675813436508
+   },
+   "frequent/discovery": {
+    "top1": 0.8975,
+    "rank": 1.515,
+    "margin": 2.0173192619066684
+   },
+   "frequent/paraphrase": {
+    "top1": 0.139375,
+    "rank": 61.415625,
+    "margin": -3.4410675913095474
+   },
+   "frequent/test": {
+    "top1": 0.92625,
+    "rank": 1.38,
+    "margin": 2.0883209234010427
+   },
+   "normal/discovery": {
+    "top1": 0.42,
+    "rank": 8.48,
+    "margin": -0.24387105405330659
+   },
+   "normal/paraphrase": {
+    "top1": 0.075,
+    "rank": 80.57,
+    "margin": -4.114787948429584
+   },
+   "normal/test": {
+    "top1": 0.43,
+    "rank": 8.37,
+    "margin": -0.29465170741081237
+   },
+   "rare/discovery": {
+    "top1": 0.03,
+    "rank": 49.82,
+    "margin": -2.8098209178447724
+   },
+   "rare/paraphrase": {
+    "top1": 0.015,
+    "rank": 90.39,
+    "margin": -4.613901727497578
+   },
+   "rare/test": {
+    "top1": 0.05,
+    "rank": 45.24,
+    "margin": -2.7739117562770845
+   },
+   "control/no_preceding_facts": {
+    "top1": 0.025,
+    "rank": 92.2,
+    "margin": -4.476128473877907
+   },
+   "control/with_preceding_facts": {
+    "top1": 0.0,
+    "rank": 105.81875,
+    "margin": -4.896621614322067
+   },
+   "frequent/no_preceding_facts": {
+    "top1": 0.071875,
+    "rank": 73.8625,
+    "margin": -3.8698715597391127
+   },
+   "frequent/with_preceding_facts": {
+    "top1": 0.15625,
+    "rank": 58.30390625,
+    "margin": -3.333866599202156
+   },
+   "normal/no_preceding_facts": {
+    "top1": 0.025,
+    "rank": 91.825,
+    "margin": -4.3693462938070295
+   },
+   "normal/with_preceding_facts": {
+    "top1": 0.0875,
+    "rank": 77.75625,
+    "margin": -4.0511483620852236
+   },
+   "rare/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 100.475,
+    "margin": -4.619905185699463
+   },
+   "rare/with_preceding_facts": {
+    "top1": 0.01875,
+    "rank": 87.86875,
+    "margin": -4.612400862947107
+   }
+  },
+  "u1": [
+   65483,
+   65536,
+   99.91912841796875,
+   21.62017822265625,
+   0.7130741696226242
+  ],
+  "u4": [
+   0.71569697747719,
+   0.4779328611913956,
+   0.23776411628579436,
+   0.01,
+   77.70520723653034,
+   320
+  ],
+  "v2": {
+   "Subject text": [
+    0.07177389627135271,
+    0.11898520381725447,
+    0.23535540353725362,
+    0.020307752307698403,
+    0.004233557566683616,
+    0.016074194741014784,
+    73716504
+   ],
+   "Fact probes": [
+    0.09644883593511128,
+    0.1557488637423126,
+    0.24773312741200645,
+    0.014954368544825429,
+    0.0048342054703654795,
+    0.01012016307445995,
+    4031361
+   ]
+  },
+  "c6": {
+   "Active memory": 366.1467228048109,
+   "Most-read 512 rows": 312.4900890821898
+  },
+  "e1": {
+   "FreeLaw": 0.017015991357990996,
+   "Github": 0.005201550501047869,
+   "Pile-CC": 0.004532590995316037,
+   "PubMed Central": 0.00409059698258533,
+   "Wikipedia (en)": 0.009195612062347461
+  },
+  "e1_mean": 0.008007268379857537,
+  "e1_by_size": {
+   "16": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.0011437409970693536
+   },
+   "64": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.008007268379857537
+   },
+   "256": {
+    "matched_subjects": 3,
+    "mean_specificity_excess_nll": 0.042153079983673625
+   }
+  },
+  "e2_counts": {
+   "prefix limit reached": 293,
+   "matched": 38,
+   "no matched controls": 3,
+   "unlearned discovery": 3,
+   "at chance on test": 2
+  },
+  "e2_matched_mean_excess": 2.184715563431382,
+  "e2_matched_mean_recall_drop": 0.881578947368421,
+  "e2_matched_mean_ctrl_drop": 0.004385964912280701,
+  "e2_single": [
+   [
+    "p001614-employer",
+    "Slot 58418 \u00b7 test",
+    1,
+    0.0,
+    0.0,
+    -0.17241492867469788,
+    "matched"
+   ],
+   [
+    "p001614-employer",
+    "Slot 58418 \u00b7 paraphrase",
+    1,
+    0.0,
+    0.0,
+    -0.18453729152679443,
+    "matched"
+   ],
+   [
+    "p001614-employer",
+    "Slot 58418 \u00b7 same person other facts test",
+    1,
+    0.0,
+    -0.041666666666666664,
+    -0.000720006724198659,
+    "matched"
+   ]
+  ],
+  "layer_off": {
+   "All text | NLL (nats/token)": [
+    3.5671093952515727,
+    4.276417156697147,
+    0.7093077614455745
+   ],
+   "FreeLaw | NLL (nats/token)": [
+    2.4747161598301184,
+    3.4785686526533293,
+    1.0038524928232109
+   ],
+   "Github | NLL (nats/token)": [
+    2.753006994902804,
+    3.398790003003913,
+    0.6457830081011089
+   ],
+   "Pile-CC | NLL (nats/token)": [
+    4.9681312648459075,
+    5.492138977924407,
+    0.5240077130784995
+   ],
+   "PubMed Central | NLL (nats/token)": [
+    3.67352396769215,
+    4.354323967540155,
+    0.6807999998480048
+   ],
+   "Wikipedia (en) | NLL (nats/token)": [
+    4.162480081001496,
+    4.829832562974689,
+    0.6673524819731931
+   ],
+   "control / paraphrase | Top-1 accuracy": [
+    0.005,
+    0.0,
+    -0.005
+   ],
+   "control / paraphrase | Gold margin (nats)": [
+    -4.812522986233234,
+    -4.745646316409111,
+    0.06687666982412299
+   ],
+   "control / test | Top-1 accuracy": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "control / test | Gold margin (nats)": [
+    -4.357675813436508,
+    -4.553535523414612,
+    -0.1958597099781043
+   ],
+   "frequent / paraphrase | Top-1 accuracy": [
+    0.139375,
+    0.07875,
+    -0.060625
+   ],
+   "frequent / paraphrase | Gold margin (nats)": [
+    -3.4410675913095474,
+    -3.3551911790668965,
+    0.08587641224265097
+   ],
+   "frequent / test | Top-1 accuracy": [
+    0.92625,
+    0.35125,
+    -0.575
+   ],
+   "frequent / test | Gold margin (nats)": [
+    2.0883209234010427,
+    -0.6380504607409239,
+    -2.7263713841419666
+   ],
+   "normal / paraphrase | Top-1 accuracy": [
+    0.075,
+    0.035,
+    -0.039999999999999994
+   ],
+   "normal / paraphrase | Gold margin (nats)": [
+    -4.114787948429584,
+    -4.090048152208328,
+    0.024739796221256327
+   ],
+   "normal / test | Top-1 accuracy": [
+    0.43,
+    0.1,
+    -0.32999999999999996
+   ],
+   "normal / test | Gold margin (nats)": [
+    -0.29465170741081237,
+    -2.0656031918525697,
+    -1.7709514844417573
+   ],
+   "rare / paraphrase | Top-1 accuracy": [
+    0.015,
+    0.0,
+    -0.015
+   ],
+   "rare / paraphrase | Gold margin (nats)": [
+    -4.613901727497578,
+    -4.665877799987793,
+    -0.05197607249021541
+   ],
+   "rare / test | Top-1 accuracy": [
+    0.05,
+    0.0,
+    -0.05
+   ],
+   "rare / test | Gold margin (nats)": [
+    -2.7739117562770845,
+    -3.8034219843149186,
+    -1.029510228037834
+   ]
+  },
+  "x2": [],
+  "x2_status": "Requires a frozen-key twin and a margin file from three or more learned-key seeds."
+ },
+ "pkm-s0": {
+  "parity": true,
+  "parity_detail": {
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 0,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 0,
+   "native_rank_mismatches": 0,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1": {
+   "All": 3.5422622749264354,
+   "FreeLaw": 2.4520734750522237,
+   "Github": 2.725176546502222,
+   "Pile-CC": 4.9505312311705225,
+   "PubMed Central": 3.645306154452235,
+   "Wikipedia (en)": 4.134762747032032
+  },
+  "q1_acc": {
+   "All": 0.44553976330051986,
+   "FreeLaw": 0.5908881730326737,
+   "Github": 0.5665983606557377,
+   "Pile-CC": 0.2685866897646889,
+   "PubMed Central": 0.4122915379864114,
+   "Wikipedia (en)": 0.3656398294860452
+  },
+  "q2": {
+   "control/discovery": {
+    "top1": 0.0,
+    "rank": 97.26,
+    "margin": -4.2455879032611845
+   },
+   "control/paraphrase": {
+    "top1": 0.0,
+    "rank": 105.57,
+    "margin": -4.595141065716743
+   },
+   "control/test": {
+    "top1": 0.02,
+    "rank": 98.07,
+    "margin": -4.342812727093697
+   },
+   "frequent/discovery": {
+    "top1": 0.86375,
+    "rank": 2.3225,
+    "margin": 1.931673320280388
+   },
+   "frequent/paraphrase": {
+    "top1": 0.126875,
+    "rank": 59.095625,
+    "margin": -3.295764073319733
+   },
+   "frequent/test": {
+    "top1": 0.895,
+    "rank": 1.69375,
+    "margin": 2.0795913182850927
+   },
+   "normal/discovery": {
+    "top1": 0.48,
+    "rank": 10.45,
+    "margin": -0.15444011002779007
+   },
+   "normal/paraphrase": {
+    "top1": 0.05,
+    "rank": 85.715,
+    "margin": -4.125117015838623
+   },
+   "normal/test": {
+    "top1": 0.49,
+    "rank": 13.02,
+    "margin": -0.1872883939743042
+   },
+   "rare/discovery": {
+    "top1": 0.04,
+    "rank": 61.22,
+    "margin": -2.9890467065572737
+   },
+   "rare/paraphrase": {
+    "top1": 0.01,
+    "rank": 92.615,
+    "margin": -4.4427485692501065
+   },
+   "rare/test": {
+    "top1": 0.03,
+    "rank": 63.9,
+    "margin": -3.1472643959522246
+   },
+   "control/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 109.65,
+    "margin": -4.732587993144989
+   },
+   "control/with_preceding_facts": {
+    "top1": 0.0,
+    "rank": 104.55,
+    "margin": -4.560779333859682
+   },
+   "frequent/no_preceding_facts": {
+    "top1": 0.021875,
+    "rank": 75.884375,
+    "margin": -4.119796829670667
+   },
+   "frequent/with_preceding_facts": {
+    "top1": 0.153125,
+    "rank": 54.8984375,
+    "margin": -3.0897558842319994
+   },
+   "normal/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 109.7,
+    "margin": -4.966243958473205
+   },
+   "normal/with_preceding_facts": {
+    "top1": 0.0625,
+    "rank": 79.71875,
+    "margin": -3.9148352801799775
+   },
+   "rare/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 110.5,
+    "margin": -4.911002039909363
+   },
+   "rare/with_preceding_facts": {
+    "top1": 0.0125,
+    "rank": 88.14375,
+    "margin": -4.3256852015852925
+   }
+  },
+  "u1": [
+   65488,
+   65536,
+   99.9267578125,
+   21.295166015625,
+   0.7338011323945111
+  ],
+  "u4": [
+   0.63746208018314,
+   0.46856845422525767,
+   0.16889362595788232,
+   0.01,
+   77.70666527203073,
+   320
+  ],
+  "v2": {
+   "Subject text": [
+    0.07208926393578212,
+    0.12022116130696828,
+    0.23755694769916752,
+    0.021964566128817392,
+    0.005053225528467733,
+    0.01691134060034966,
+    73737028
+   ],
+   "Fact probes": [
+    0.09042676221054019,
+    0.14941421605221591,
+    0.24954889078059478,
+    0.0157181452609979,
+    0.005365770973488036,
+    0.010352374287509866,
+    4027057
+   ]
+  },
+  "c6": {
+   "Active memory": 366.3746133193437,
+   "Most-read 512 rows": 313.6773880576947
+  },
+  "e1": {
+   "FreeLaw": 0.023668961412864564,
+   "Github": 0.007943600355841221,
+   "Pile-CC": 0.0058350779509076895,
+   "PubMed Central": 0.004978571246716153,
+   "Wikipedia (en)": 0.006977278599241947
+  },
+  "e1_mean": 0.009880697913114316,
+  "e1_by_size": {
+   "16": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.0018971841774682104
+   },
+   "64": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.009880697913114316
+   },
+   "256": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.03473629512639822
+   }
+  },
+  "e2_counts": {
+   "prefix limit reached": 298,
+   "no matched controls": 22,
+   "matched": 19
+  },
+  "e2_matched_mean_excess": 1.7410240477245105,
+  "e2_matched_mean_recall_drop": 0.7631578947368421,
+  "e2_matched_mean_ctrl_drop": 0.0,
+  "e2_single": [
+   [
+    "p001604-university",
+    "Slot 42186 \u00b7 test",
+    1,
+    0.0,
+    0.0,
+    0.0,
+    "matched"
+   ],
+   [
+    "p001604-university",
+    "Slot 42186 \u00b7 paraphrase",
+    1,
+    0.0,
+    0.0,
+    7.700920104980469e-05,
+    "matched"
+   ],
+   [
+    "p001604-university",
+    "Slot 42186 \u00b7 same person other facts test",
+    1,
+    0.0,
+    0.0,
+    -0.003804288183649381,
+    "matched"
+   ]
+  ],
+  "layer_off": {
+   "All text | NLL (nats/token)": [
+    3.5422622749264354,
+    4.377241717266879,
+    0.834979442340444
+   ],
+   "FreeLaw | NLL (nats/token)": [
+    2.4520734750522237,
+    3.5835658869166918,
+    1.131492411864468
+   ],
+   "Github | NLL (nats/token)": [
+    2.725176546502222,
+    3.5330657615240275,
+    0.8078892150218056
+   ],
+   "Pile-CC | NLL (nats/token)": [
+    4.9505312311705225,
+    5.59522380549768,
+    0.6446925743271574
+   ],
+   "PubMed Central | NLL (nats/token)": [
+    3.645306154452235,
+    4.424771772804387,
+    0.7794656183521522
+   ],
+   "Wikipedia (en) | NLL (nats/token)": [
+    4.134762747032032,
+    4.923200343345081,
+    0.7884375963130488
+   ],
+   "control / paraphrase | Top-1 accuracy": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "control / paraphrase | Gold margin (nats)": [
+    -4.595141065716743,
+    -4.666985468268394,
+    -0.07184440255165114
+   ],
+   "control / test | Top-1 accuracy": [
+    0.02,
+    0.0,
+    -0.02
+   ],
+   "control / test | Gold margin (nats)": [
+    -4.342812727093697,
+    -4.076834862232208,
+    0.26597786486148856
+   ],
+   "frequent / paraphrase | Top-1 accuracy": [
+    0.126875,
+    0.066875,
+    -0.059999999999999984
+   ],
+   "frequent / paraphrase | Gold margin (nats)": [
+    -3.295764073319733,
+    -3.346057719066739,
+    -0.05029364574700601
+   ],
+   "frequent / test | Top-1 accuracy": [
+    0.895,
+    0.31375,
+    -0.58125
+   ],
+   "frequent / test | Gold margin (nats)": [
+    2.0795913182850927,
+    -0.7532931786216795,
+    -2.832884496906772
+   ],
+   "normal / paraphrase | Top-1 accuracy": [
+    0.05,
+    0.03,
+    -0.020000000000000004
+   ],
+   "normal / paraphrase | Gold margin (nats)": [
+    -4.125117015838623,
+    -4.231357758045196,
+    -0.1062407422065732
+   ],
+   "normal / test | Top-1 accuracy": [
+    0.49,
+    0.13,
+    -0.36
+   ],
+   "normal / test | Gold margin (nats)": [
+    -0.1872883939743042,
+    -2.147886264324188,
+    -1.9605978703498839
+   ],
+   "rare / paraphrase | Top-1 accuracy": [
+    0.01,
+    0.01,
+    0.0
+   ],
+   "rare / paraphrase | Gold margin (nats)": [
+    -4.4427485692501065,
+    -4.6235921621322635,
+    -0.180843592882157
+   ],
+   "rare / test | Top-1 accuracy": [
+    0.03,
+    0.01,
+    -0.019999999999999997
+   ],
+   "rare / test | Gold margin (nats)": [
+    -3.1472643959522246,
+    -3.737892463207245,
+    -0.5906280672550204
+   ]
+  },
+  "x2": [],
+  "x2_status": "Requires a frozen-key twin and a margin file from three or more learned-key seeds."
+ },
+ "pkm-s1": {
+  "parity": true,
+  "parity_detail": {
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 0,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 0,
+   "native_rank_mismatches": 0,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1": {
+   "All": 3.551259912499157,
+   "FreeLaw": 2.460394783836426,
+   "Github": 2.733565501340822,
+   "Pile-CC": 4.96132210880592,
+   "PubMed Central": 3.64844827677939,
+   "Wikipedia (en)": 4.150931300427725
+  },
+  "q1_acc": {
+   "All": 0.4445442981971021,
+   "FreeLaw": 0.5930576556439419,
+   "Github": 0.5668032786885245,
+   "Pile-CC": 0.2664212501804533,
+   "PubMed Central": 0.41074737492279184,
+   "Wikipedia (en)": 0.3613769806161023
+  },
+  "q2": {
+   "control/discovery": {
+    "top1": 0.0,
+    "rank": 105.2,
+    "margin": -4.418876587077976
+   },
+   "control/paraphrase": {
+    "top1": 0.0,
+    "rank": 109.87,
+    "margin": -4.873762392401695
+   },
+   "control/test": {
+    "top1": 0.0,
+    "rank": 103.26,
+    "margin": -4.42236079543829
+   },
+   "frequent/discovery": {
+    "top1": 0.895,
+    "rank": 1.735,
+    "margin": 1.9465551496949047
+   },
+   "frequent/paraphrase": {
+    "top1": 0.115,
+    "rank": 61.599375,
+    "margin": -3.562983947945759
+   },
+   "frequent/test": {
+    "top1": 0.90875,
+    "rank": 1.68875,
+    "margin": 2.00342784228269
+   },
+   "normal/discovery": {
+    "top1": 0.45,
+    "rank": 11.82,
+    "margin": -0.23256423324346542
+   },
+   "normal/paraphrase": {
+    "top1": 0.045,
+    "rank": 79.98,
+    "margin": -4.041471130847931
+   },
+   "normal/test": {
+    "top1": 0.42,
+    "rank": 9.11,
+    "margin": -0.3170228186249733
+   },
+   "rare/discovery": {
+    "top1": 0.03,
+    "rank": 38.5,
+    "margin": -2.2849258589744568
+   },
+   "rare/paraphrase": {
+    "top1": 0.005,
+    "rank": 89.54,
+    "margin": -4.522993385791779
+   },
+   "rare/test": {
+    "top1": 0.02,
+    "rank": 35.66,
+    "margin": -2.3316419565677644
+   },
+   "control/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 103.25,
+    "margin": -4.638455663621426
+   },
+   "control/with_preceding_facts": {
+    "top1": 0.0,
+    "rank": 111.525,
+    "margin": -4.932589074596763
+   },
+   "frequent/no_preceding_facts": {
+    "top1": 0.03125,
+    "rank": 73.4125,
+    "margin": -4.032952858880162
+   },
+   "frequent/with_preceding_facts": {
+    "top1": 0.1359375,
+    "rank": 58.64609375,
+    "margin": -3.445491720212158
+   },
+   "normal/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 88.6,
+    "margin": -4.455640733242035
+   },
+   "normal/with_preceding_facts": {
+    "top1": 0.05625,
+    "rank": 77.825,
+    "margin": -3.937928730249405
+   },
+   "rare/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 105.45,
+    "margin": -4.753477984666825
+   },
+   "rare/with_preceding_facts": {
+    "top1": 0.00625,
+    "rank": 85.5625,
+    "margin": -4.4653722360730175
+   }
+  },
+  "u1": [
+   65498,
+   65536,
+   99.9420166015625,
+   22.3907470703125,
+   0.7182429882453647
+  ],
+  "u4": [
+   0.6493045213407931,
+   0.4658012917627036,
+   0.1835032295780895,
+   0.01,
+   77.70729568530743,
+   320
+  ],
+  "v2": {
+   "Subject text": [
+    0.07707054988939856,
+    0.12829942268436167,
+    0.24330281169261922,
+    0.022783616480356268,
+    0.004902615719705097,
+    0.01788100076065117,
+    73752912
+   ],
+   "Fact probes": [
+    0.0809357889278021,
+    0.13668795498906003,
+    0.24230416600251675,
+    0.015915024462753242,
+    0.005501255544619502,
+    0.01041376891813374,
+    4028948
+   ]
+  },
+  "c6": {
+   "Active memory": 366.38933214080504,
+   "Most-read 512 rows": 315.21202229947
+  },
+  "e1": {
+   "FreeLaw": null,
+   "Github": 0.004708517540723285,
+   "Pile-CC": 0.006397751469848778,
+   "PubMed Central": 0.0025332374225632837,
+   "Wikipedia (en)": 0.010409864017718484
+  },
+  "e1_mean": 0.006012342612713458,
+  "e1_by_size": {
+   "16": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.0013438260025645965
+   },
+   "64": {
+    "matched_subjects": 4,
+    "mean_specificity_excess_nll": 0.006012342612713458
+   },
+   "256": {
+    "matched_subjects": 4,
+    "mean_specificity_excess_nll": 0.02842148663191721
+   }
+  },
+  "e2_counts": {
+   "prefix limit reached": 299,
+   "matched": 28,
+   "no matched controls": 12
+  },
+  "e2_matched_mean_excess": 1.722800128339302,
+  "e2_matched_mean_recall_drop": 0.8035714285714286,
+  "e2_matched_mean_ctrl_drop": 0.011904761904761906,
+  "e2_single": [
+   [
+    "p001604-university",
+    "Slot 8338 \u00b7 test",
+    1,
+    0.0,
+    0.0,
+    0.01199280470609665,
+    "matched"
+   ],
+   [
+    "p001604-university",
+    "Slot 8338 \u00b7 paraphrase",
+    1,
+    0.0,
+    0.0,
+    -0.04124959309895833,
+    "matched"
+   ],
+   [
+    "p001604-university",
+    "Slot 8338 \u00b7 same person other facts test",
+    1,
+    0.0,
+    0.0,
+    -0.0011362172663211823,
+    "matched"
+   ]
+  ],
+  "layer_off": {
+   "All text | NLL (nats/token)": [
+    3.551259912499157,
+    4.362538041177791,
+    0.8112781286786337
+   ],
+   "FreeLaw | NLL (nats/token)": [
+    2.460394783836426,
+    3.596803325966872,
+    1.1364085421304462
+   ],
+   "Github | NLL (nats/token)": [
+    2.733565501340822,
+    3.5260881890086377,
+    0.7925226876678155
+   ],
+   "Pile-CC | NLL (nats/token)": [
+    4.96132210880592,
+    5.530645731705399,
+    0.5693236228994794
+   ],
+   "PubMed Central | NLL (nats/token)": [
+    3.64844827677939,
+    4.433418992290836,
+    0.7849707155114456
+   ],
+   "Wikipedia (en) | NLL (nats/token)": [
+    4.150931300427725,
+    4.890382491088514,
+    0.7394511906607883
+   ],
+   "control / paraphrase | Top-1 accuracy": [
+    0.0,
+    0.005,
+    0.005
+   ],
+   "control / paraphrase | Gold margin (nats)": [
+    -4.873762392401695,
+    -4.805873124599457,
+    0.06788926780223825
+   ],
+   "control / test | Top-1 accuracy": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "control / test | Gold margin (nats)": [
+    -4.42236079543829,
+    -4.4369936323165895,
+    -0.014632836878299749
+   ],
+   "frequent / paraphrase | Top-1 accuracy": [
+    0.115,
+    0.063125,
+    -0.051875000000000004
+   ],
+   "frequent / paraphrase | Gold margin (nats)": [
+    -3.562983947945759,
+    -3.5350188453495504,
+    0.027965102596208435
+   ],
+   "frequent / test | Top-1 accuracy": [
+    0.90875,
+    0.315,
+    -0.59375
+   ],
+   "frequent / test | Gold margin (nats)": [
+    2.00342784228269,
+    -1.0158982014562934,
+    -3.0193260437389835
+   ],
+   "normal / paraphrase | Top-1 accuracy": [
+    0.045,
+    0.04,
+    -0.0049999999999999975
+   ],
+   "normal / paraphrase | Gold margin (nats)": [
+    -4.041471130847931,
+    -4.138204737901687,
+    -0.09673360705375611
+   ],
+   "normal / test | Top-1 accuracy": [
+    0.42,
+    0.11,
+    -0.31
+   ],
+   "normal / test | Gold margin (nats)": [
+    -0.3170228186249733,
+    -2.2339207220077513,
+    -1.916897903382778
+   ],
+   "rare / paraphrase | Top-1 accuracy": [
+    0.005,
+    0.0,
+    -0.005
+   ],
+   "rare / paraphrase | Gold margin (nats)": [
+    -4.522993385791779,
+    -4.523869169950485,
+    -0.000875784158706594
+   ],
+   "rare / test | Top-1 accuracy": [
+    0.02,
+    0.0,
+    -0.02
+   ],
+   "rare / test | Gold margin (nats)": [
+    -2.3316419565677644,
+    -3.5517313039302825,
+    -1.220089347362518
+   ]
+  },
+  "x2": [],
+  "x2_status": "Requires a frozen-key twin and a margin file from three or more learned-key seeds."
+ },
+ "pkm-s2": {
+  "parity": true,
+  "parity_detail": {
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 0,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 0,
+   "native_rank_mismatches": 0,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1": {
+   "All": 3.55277142338252,
+   "FreeLaw": 2.4606266429789505,
+   "Github": 2.729792792255158,
+   "Pile-CC": 4.966035936369373,
+   "PubMed Central": 3.6542660037936905,
+   "Wikipedia (en)": 4.151054830013795
+  },
+  "q1_acc": {
+   "All": 0.44430925782546177,
+   "FreeLaw": 0.5908224311353626,
+   "Github": 0.5705601092896175,
+   "Pile-CC": 0.26440017323516674,
+   "PubMed Central": 0.4089561457689932,
+   "Wikipedia (en)": 0.36290517172042147
+  },
+  "q2": {
+   "control/discovery": {
+    "top1": 0.0,
+    "rank": 106.22,
+    "margin": -4.566339486837387
+   },
+   "control/paraphrase": {
+    "top1": 0.0,
+    "rank": 105.825,
+    "margin": -4.699359420537949
+   },
+   "control/test": {
+    "top1": 0.01,
+    "rank": 104.58,
+    "margin": -4.591766129434109
+   },
+   "frequent/discovery": {
+    "top1": 0.88625,
+    "rank": 2.24875,
+    "margin": 1.9242188883200289
+   },
+   "frequent/paraphrase": {
+    "top1": 0.1,
+    "rank": 67.255,
+    "margin": -3.578433917881921
+   },
+   "frequent/test": {
+    "top1": 0.9025,
+    "rank": 2.17875,
+    "margin": 2.0543162757903337
+   },
+   "normal/discovery": {
+    "top1": 0.55,
+    "rank": 4.63,
+    "margin": 0.17652280867099762
+   },
+   "normal/paraphrase": {
+    "top1": 0.075,
+    "rank": 82.235,
+    "margin": -3.9845499259233477
+   },
+   "normal/test": {
+    "top1": 0.52,
+    "rank": 5.18,
+    "margin": 0.15736872524023057
+   },
+   "rare/discovery": {
+    "top1": 0.03,
+    "rank": 53.5,
+    "margin": -2.7210685616731642
+   },
+   "rare/paraphrase": {
+    "top1": 0.0,
+    "rank": 91.49,
+    "margin": -4.521230952739716
+   },
+   "rare/test": {
+    "top1": 0.03,
+    "rank": 49.92,
+    "margin": -2.7107703495025635
+   },
+   "control/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 100.275,
+    "margin": -4.572054141759873
+   },
+   "control/with_preceding_facts": {
+    "top1": 0.0,
+    "rank": 107.2125,
+    "margin": -4.731185740232467
+   },
+   "frequent/no_preceding_facts": {
+    "top1": 0.0375,
+    "rank": 78.06875,
+    "margin": -4.11643446944654
+   },
+   "frequent/with_preceding_facts": {
+    "top1": 0.115625,
+    "rank": 64.5515625,
+    "margin": -3.443933779990766
+   },
+   "normal/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 93.075,
+    "margin": -4.606159001588821
+   },
+   "normal/with_preceding_facts": {
+    "top1": 0.09375,
+    "rank": 79.525,
+    "margin": -3.829147657006979
+   },
+   "rare/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 95.275,
+    "margin": -4.649685156345368
+   },
+   "rare/with_preceding_facts": {
+    "top1": 0.0,
+    "rank": 90.54375,
+    "margin": -4.489117401838302
+   }
+  },
+  "u1": [
+   65511,
+   65536,
+   99.96185302734375,
+   22.308349609375,
+   0.7103567300074154
+  ],
+  "u4": [
+   0.6371970916817382,
+   0.47214514935641294,
+   0.16505194232532527,
+   0.01,
+   77.70936796289814,
+   320
+  ],
+  "v2": {
+   "Subject text": [
+    0.07391824265721243,
+    0.1229470811123592,
+    0.2402394081143305,
+    0.022516688602588424,
+    0.005599469121584024,
+    0.0169172194810044,
+    73736909
+   ],
+   "Fact probes": [
+    0.08080449801069631,
+    0.13642531709968828,
+    0.24718687548848356,
+    0.016259044394521468,
+    0.006139898783233148,
+    0.010119145611288322,
+    4027431
+   ]
+  },
+  "c6": {
+   "Active memory": 366.3094131948613,
+   "Most-read 512 rows": 313.48686416872056
+  },
+  "e1": {
+   "FreeLaw": 0.016640670227193215,
+   "Github": null,
+   "Pile-CC": 0.005681128585028265,
+   "PubMed Central": 0.0034711116000146758,
+   "Wikipedia (en)": 0.008272976449086755
+  },
+  "e1_mean": 0.008516471715330728,
+  "e1_by_size": {
+   "16": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.0026460451032094567
+   },
+   "64": {
+    "matched_subjects": 4,
+    "mean_specificity_excess_nll": 0.008516471715330728
+   },
+   "256": {
+    "matched_subjects": 4,
+    "mean_specificity_excess_nll": 0.03814426178501928
+   }
+  },
+  "e2_counts": {
+   "matched": 40,
+   "prefix limit reached": 294,
+   "no matched controls": 5
+  },
+  "e2_matched_mean_excess": 1.9013344164937735,
+  "e2_matched_mean_recall_drop": 0.825,
+  "e2_matched_mean_ctrl_drop": 0.04166666666666667,
+  "e2_single": [
+   [
+    "p001604-university",
+    "Slot 814 \u00b7 test",
+    1,
+    0.0,
+    0.0,
+    -1.1901060740152994e-05,
+    "matched"
+   ],
+   [
+    "p001604-university",
+    "Slot 814 \u00b7 paraphrase",
+    1,
+    0.0,
+    0.0,
+    0.001066724459330241,
+    "matched"
+   ],
+   [
+    "p001604-university",
+    "Slot 814 \u00b7 same person other facts test",
+    1,
+    0.0,
+    0.0,
+    -0.0002615476648012797,
+    "matched"
+   ]
+  ],
+  "layer_off": {
+   "All text | NLL (nats/token)": [
+    3.55277142338252,
+    4.373561331676034,
+    0.8207899082935137
+   ],
+   "FreeLaw | NLL (nats/token)": [
+    2.4606266429789505,
+    3.583831363493698,
+    1.1232047205147473
+   ],
+   "Github | NLL (nats/token)": [
+    2.729792792255158,
+    3.5515147292851252,
+    0.8217219370299671
+   ],
+   "Pile-CC | NLL (nats/token)": [
+    4.966035936369373,
+    5.578319146694919,
+    0.612283210325546
+   ],
+   "PubMed Central | NLL (nats/token)": [
+    3.6542660037936905,
+    4.428616522244776,
+    0.7743505184510857
+   ],
+   "Wikipedia (en) | NLL (nats/token)": [
+    4.151054830013795,
+    4.893571506247326,
+    0.7425166762335316
+   ],
+   "control / paraphrase | Top-1 accuracy": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "control / paraphrase | Gold margin (nats)": [
+    -4.699359420537949,
+    -4.834660848379135,
+    -0.1353014278411866
+   ],
+   "control / test | Top-1 accuracy": [
+    0.01,
+    0.0,
+    -0.01
+   ],
+   "control / test | Gold margin (nats)": [
+    -4.591766129434109,
+    -4.373752343654632,
+    0.21801378577947617
+   ],
+   "frequent / paraphrase | Top-1 accuracy": [
+    0.1,
+    0.05125,
+    -0.04875000000000001
+   ],
+   "frequent / paraphrase | Gold margin (nats)": [
+    -3.578433917881921,
+    -3.6836198142915966,
+    -0.10518589640967546
+   ],
+   "frequent / test | Top-1 accuracy": [
+    0.9025,
+    0.27,
+    -0.6325
+   ],
+   "frequent / test | Gold margin (nats)": [
+    2.0543162757903337,
+    -1.387033352982253,
+    -3.4413496287725867
+   ],
+   "normal / paraphrase | Top-1 accuracy": [
+    0.075,
+    0.04,
+    -0.034999999999999996
+   ],
+   "normal / paraphrase | Gold margin (nats)": [
+    -3.9845499259233477,
+    -4.019162042140961,
+    -0.034612116217612954
+   ],
+   "normal / test | Top-1 accuracy": [
+    0.52,
+    0.12,
+    -0.4
+   ],
+   "normal / test | Gold margin (nats)": [
+    0.15736872524023057,
+    -2.0171163547039033,
+    -2.1744850799441338
+   ],
+   "rare / paraphrase | Top-1 accuracy": [
+    0.0,
+    0.01,
+    0.01
+   ],
+   "rare / paraphrase | Gold margin (nats)": [
+    -4.521230952739716,
+    -4.819587861895561,
+    -0.2983569091558458
+   ],
+   "rare / test | Top-1 accuracy": [
+    0.03,
+    0.0,
+    -0.03
+   ],
+   "rare / test | Gold margin (nats)": [
+    -2.7107703495025635,
+    -3.7612638783454897,
+    -1.0504935288429262
+   ]
+  },
+  "x2": [],
+  "x2_status": "Requires a frozen-key twin and a margin file from three or more learned-key seeds."
+ },
+ "pkm_randkey-s0": {
+  "parity": true,
+  "parity_detail": {
+   "candidate_score_failures": 0,
+   "float64_rechecked_facts": 2,
+   "float64_rechecked_candidates": 0,
+   "float64_rechecked_rank_mismatches": 2,
+   "native_rank_mismatches": 0,
+   "doc_nll_mismatches": 0,
+   "doc_prediction_mismatches": 0
+  },
+  "q1": {
+   "All": 3.5496438176374343,
+   "FreeLaw": 2.463953728179879,
+   "Github": 2.7384304042851784,
+   "Pile-CC": 4.952077513412225,
+   "PubMed Central": 3.655548169828929,
+   "Wikipedia (en)": 4.132503018069487
+  },
+  "q1_acc": {
+   "All": 0.44284371197876343,
+   "FreeLaw": 0.5848399184800473,
+   "Github": 0.5672814207650273,
+   "Pile-CC": 0.26555507434675907,
+   "PubMed Central": 0.4083384805435454,
+   "Wikipedia (en)": 0.3650768117107697
+  },
+  "q2": {
+   "control/discovery": {
+    "top1": 0.0,
+    "rank": 107.65,
+    "margin": -4.246003453731537
+   },
+   "control/paraphrase": {
+    "top1": 0.0,
+    "rank": 108.04,
+    "margin": -4.872984127998352
+   },
+   "control/test": {
+    "top1": 0.0,
+    "rank": 105.91,
+    "margin": -4.430987646877766
+   },
+   "frequent/discovery": {
+    "top1": 0.86125,
+    "rank": 2.35625,
+    "margin": 1.8104284547641873
+   },
+   "frequent/paraphrase": {
+    "top1": 0.103125,
+    "rank": 57.685625,
+    "margin": -3.4985926836170256
+   },
+   "frequent/test": {
+    "top1": 0.86375,
+    "rank": 2.04375,
+    "margin": 1.929818156529218
+   },
+   "normal/discovery": {
+    "top1": 0.6,
+    "rank": 11.0,
+    "margin": 0.08436968430876732
+   },
+   "normal/paraphrase": {
+    "top1": 0.06,
+    "rank": 83.215,
+    "margin": -4.132655277252197
+   },
+   "normal/test": {
+    "top1": 0.46,
+    "rank": 12.75,
+    "margin": -0.27878974318504335
+   },
+   "rare/discovery": {
+    "top1": 0.05,
+    "rank": 63.36,
+    "margin": -2.8431233376264573
+   },
+   "rare/paraphrase": {
+    "top1": 0.005,
+    "rank": 97.95,
+    "margin": -4.687947407364845
+   },
+   "rare/test": {
+    "top1": 0.06,
+    "rank": 64.14,
+    "margin": -2.9051079571247103
+   },
+   "control/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 111.25,
+    "margin": -4.944462263584137
+   },
+   "control/with_preceding_facts": {
+    "top1": 0.0,
+    "rank": 107.2375,
+    "margin": -4.855114594101906
+   },
+   "frequent/no_preceding_facts": {
+    "top1": 0.015625,
+    "rank": 72.0875,
+    "margin": -4.145215468481183
+   },
+   "frequent/with_preceding_facts": {
+    "top1": 0.125,
+    "rank": 54.08515625,
+    "margin": -3.3369369874009864
+   },
+   "normal/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 105.975,
+    "margin": -4.926183235645294
+   },
+   "normal/with_preceding_facts": {
+    "top1": 0.075,
+    "rank": 77.525,
+    "margin": -3.934273287653923
+   },
+   "rare/no_preceding_facts": {
+    "top1": 0.0,
+    "rank": 113.8,
+    "margin": -5.078131067752838
+   },
+   "rare/with_preceding_facts": {
+    "top1": 0.00625,
+    "rank": 93.9875,
+    "margin": -4.590401492267847
+   }
+  },
+  "u1": [
+   65516,
+   65536,
+   99.969482421875,
+   19.793701171875,
+   0.7786050246425891
+  ],
+  "u4": [
+   0.6224935144275584,
+   0.47061834968539257,
+   0.15187516474216584,
+   0.01,
+   77.70790635397155,
+   320
+  ],
+  "v2": {
+   "Subject text": [
+    0.06001840025035569,
+    0.10109351955958654,
+    0.2204889408826361,
+    0.02174170176377463,
+    0.0047895693313158355,
+    0.016952132432458793,
+    73733823
+   ],
+   "Fact probes": [
+    0.05689110463426711,
+    0.0954149950791472,
+    0.2166333403885203,
+    0.015407816614599784,
+    0.004841363622246781,
+    0.010566452992353002,
+    4027553
+   ]
+  },
+  "c6": {
+   "Active memory": 366.12831922230305,
+   "Most-read 512 rows": 314.42936166758744
+  },
+  "e1": {
+   "FreeLaw": 0.021790211922936287,
+   "Github": 0.005080842573043791,
+   "Pile-CC": 0.0029096517421395665,
+   "PubMed Central": 0.004508492669549742,
+   "Wikipedia (en)": 0.0027475048749725506
+  },
+  "e1_mean": 0.007407340756528387,
+  "e1_by_size": {
+   "16": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.0015176049000236614
+   },
+   "64": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.007407340756528387
+   },
+   "256": {
+    "matched_subjects": 5,
+    "mean_specificity_excess_nll": 0.03141465280589863
+   }
+  },
+  "e2_counts": {
+   "prefix limit reached": 320,
+   "no matched controls": 12,
+   "matched": 7
+  },
+  "e2_matched_mean_excess": 1.111217260360718,
+  "e2_matched_mean_recall_drop": 0.7142857142857143,
+  "e2_matched_mean_ctrl_drop": 0.04761904761904762,
+  "e2_single": [
+   [
+    "p001604-university",
+    "Slot 30953 \u00b7 test",
+    1,
+    0.0,
+    0.0,
+    0.0,
+    "matched"
+   ],
+   [
+    "p001604-university",
+    "Slot 30953 \u00b7 paraphrase",
+    1,
+    0.0,
+    0.0,
+    0.00017674763997395834,
+    "matched"
+   ],
+   [
+    "p001604-university",
+    "Slot 30953 \u00b7 same person other facts test",
+    1,
+    0.0,
+    0.0,
+    1.8150856097539265e-05,
+    "matched"
+   ]
+  ],
+  "layer_off": {
+   "All text | NLL (nats/token)": [
+    3.5496438176374343,
+    4.292827625583477,
+    0.7431838079460431
+   ],
+   "FreeLaw | NLL (nats/token)": [
+    2.463953728179879,
+    3.4896596887757365,
+    1.0257059605958574
+   ],
+   "Github | NLL (nats/token)": [
+    2.7384304042851784,
+    3.445980031555531,
+    0.7075496272703528
+   ],
+   "Pile-CC | NLL (nats/token)": [
+    4.952077513412225,
+    5.535455626749817,
+    0.5833781133375924
+   ],
+   "PubMed Central | NLL (nats/token)": [
+    3.655548169828929,
+    4.329449296903114,
+    0.6739011270741848
+   ],
+   "Wikipedia (en) | NLL (nats/token)": [
+    4.132503018069487,
+    4.840287054243357,
+    0.7077840361738703
+   ],
+   "control / paraphrase | Top-1 accuracy": [
+    0.0,
+    0.005,
+    0.005
+   ],
+   "control / paraphrase | Gold margin (nats)": [
+    -4.872984127998352,
+    -5.219574218988418,
+    -0.3465900909900661
+   ],
+   "control / test | Top-1 accuracy": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "control / test | Gold margin (nats)": [
+    -4.430987646877766,
+    -4.418878083229065,
+    0.01210956364870075
+   ],
+   "frequent / paraphrase | Top-1 accuracy": [
+    0.103125,
+    0.0525,
+    -0.050624999999999996
+   ],
+   "frequent / paraphrase | Gold margin (nats)": [
+    -3.4985926836170256,
+    -3.68578540712595,
+    -0.18719272350892435
+   ],
+   "frequent / test | Top-1 accuracy": [
+    0.86375,
+    0.295,
+    -0.5687500000000001
+   ],
+   "frequent / test | Gold margin (nats)": [
+    1.929818156529218,
+    -0.9008825311623514,
+    -2.8307006876915697
+   ],
+   "normal / paraphrase | Top-1 accuracy": [
+    0.06,
+    0.015,
+    -0.045
+   ],
+   "normal / paraphrase | Gold margin (nats)": [
+    -4.132655277252197,
+    -4.427576988935471,
+    -0.29492171168327364
+   ],
+   "normal / test | Top-1 accuracy": [
+    0.46,
+    0.07,
+    -0.39
+   ],
+   "normal / test | Gold margin (nats)": [
+    -0.27878974318504335,
+    -2.349653720855713,
+    -2.0708639776706694
+   ],
+   "rare / paraphrase | Top-1 accuracy": [
+    0.005,
+    0.005,
+    0.0
+   ],
+   "rare / paraphrase | Gold margin (nats)": [
+    -4.687947407364845,
+    -4.938723104000092,
+    -0.25077569663524635
+   ],
+   "rare / test | Top-1 accuracy": [
+    0.06,
+    0.02,
+    -0.039999999999999994
+   ],
+   "rare / test | Gold margin (nats)": [
+    -2.9051079571247103,
+    -3.504580419957638,
+    -0.5994724628329275
+   ]
+  },
+  "x2": [
+   [
+    "Q1.overall.ppl",
+    34.77070723919082,
+    34.800919805979376,
+    0.3649526467587094,
+    true
+   ],
+   [
+    "U4.excess_bits",
+    0.17248293262043238,
+    0.15187516474216584,
+    0.018451287252764237,
+    false
+   ],
+   [
+    "E1.mean_specificity_excess_nll",
+    null,
+    0.007407340756528387,
+    null,
+    null
+   ],
+   [
+    "E2.mean_matched_core_fraction",
+    null,
+    0.029788627821411555,
+    null,
+    null
+   ],
+   [
+    "V2.text.top1_share",
+    0.0743593521607977,
+    0.06001840025035569,
+    0.004981285953616438,
+    false
+   ],
+   [
+    "V2.text.top2_share",
+    0.12382255503456306,
+    0.10109351955958654,
+    0.008078261377393398,
+    false
+   ],
+   [
+    "V2.text.cosine_excess",
+    0.01723652028066841,
+    0.016952132432458793,
+    0.0009696601603015123,
+    true
+   ],
+   [
+    "V2.fact.top1_share",
+    0.08405568304967953,
+    0.05689110463426711,
+    0.009622264199843883,
+    false
+   ],
+   [
+    "V2.fact.top2_share",
+    0.14084249604698806,
+    0.0954149950791472,
+    0.012988898952527639,
+    false
+   ],
+   [
+    "V2.fact.cosine_excess",
+    0.010295096272310643,
+    0.010566452992353002,
+    0.00029462330684541793,
+    true
+   ]
+  ],
+  "x2_status": "Range rule over the learned seeds. Each run's training check is listed under training_checks; read it before the gaps."
+ }
+}

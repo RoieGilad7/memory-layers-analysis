@@ -51,19 +51,23 @@ def check_facts(scorer, parity, atol, rtol):
         errors = [abs(v - r) for v, r in zip(scores, reference, strict=True)]
         largest = max(errors)
         failures = sum(e > atol + rtol * abs(r) for e, r in zip(errors, reference))
-        if failures and scorer.float64_agrees(f, atol, rtol):
-            # A float32 top-k tie, not an adapter error: the paths agree in float64.
+        rank_mismatch = (
+            measured["native_rank_convention"] != native["native_rank_convention"]
+        )
+        if (failures or rank_mismatch) and scorer.float64_agrees(f, atol, rtol):
+            # A float32 top-k tie, or two candidates tied within float32
+            # rounding, not an adapter error: the paths agree in float64.
             parity["float64_rechecked_facts"] += 1
             parity["float64_rechecked_candidates"] += failures
+            parity["float64_rechecked_rank_mismatches"] += int(rank_mismatch)
             failures = 0
+            rank_mismatch = False
         parity["candidate_scores_checked"] += len(scores)
         parity["max_candidate_abs_error"] = max(
             parity["max_candidate_abs_error"], largest
         )
         parity["candidate_score_failures"] += failures
-        parity["native_rank_mismatches"] += int(
-            measured["native_rank_convention"] != native["native_rank_convention"]
-        )
+        parity["native_rank_mismatches"] += int(rank_mismatch)
         row = {
             k: f[k]
             for k in ("row_id", "fact_id", "person", "attribute", "tier", "role")

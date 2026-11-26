@@ -150,6 +150,39 @@ class V1ScorerTests(unittest.TestCase):
         self.assertEqual(parity["float64_rechecked_facts"], 0)
         self.assertEqual(parity["float64_rechecked_candidates"], 0)
 
+    def _flip_gold_rank(self, only_float32):
+        """Move the date's gold score just past its neighbour, so only its rank changes."""
+        original = self.scorer.score
+
+        def flipped(fact, *args, **kwargs):
+            scores, reads = original(fact, *args, **kwargs)
+            dtype = next(self.scorer.model.parameters()).dtype
+            if fact is self.date and (dtype == torch.float32 or not only_float32):
+                gold = fact["answer"]
+                others = [s for i, s in enumerate(scores) if i != gold]
+                scores = list(scores)
+                above = [s for s in others if s > scores[gold]]
+                scores[gold] = min(above) + 1e-6 if above else max(others) - 1e-6
+            return scores, reads
+
+        return patch.object(self.scorer, "score", flipped)
+
+    def test_float32_rank_flip_within_tolerance_is_rechecked_in_float64(self):
+        with patch("metrics.scoring.ATOL", 100.0), self._flip_gold_rank(True):
+            result = self.scorer.check_baselines()
+        parity = result["parity"]
+        self.assertTrue(result["passed"], parity)
+        self.assertEqual(parity["candidate_score_failures"], 0)
+        self.assertEqual(parity["native_rank_mismatches"], 0)
+        self.assertEqual(parity["float64_rechecked_rank_mismatches"], 1)
+
+    def test_rank_flip_that_survives_float64_still_fails(self):
+        with patch("metrics.scoring.ATOL", 100.0), self._flip_gold_rank(False):
+            result = self.scorer.check_baselines()
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["parity"]["native_rank_mismatches"], 1)
+        self.assertEqual(result["parity"]["float64_rechecked_rank_mismatches"], 0)
+
     @unittest.skipUnless(torch.backends.mps.is_available(), "needs MPS")
     def test_float64_recheck_on_mps_uses_a_cpu_copy(self):
         self.model.to("mps")

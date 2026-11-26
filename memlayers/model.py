@@ -171,6 +171,26 @@ class GPT(nn.Module):
         for m in self.memory_layers.values():
             m.set_read_logging(flag)
 
+    def set_keep_queries(self, flag: bool, layer: Optional[int] = None) -> None:
+        """Keep the memory queries of every forward; layer None = every memory layer."""
+        mems = self.memory_layers
+        if layer is not None and layer not in mems:
+            raise KeyError(f"layer {layer} is not a memory layer; have {sorted(mems)}")
+        for i, m in mems.items():
+            if layer is None or i == layer:
+                m.set_keep_queries(flag)
+
+    def kept_queries(self) -> Dict[int, torch.Tensor]:
+        return {
+            i: m.kept_queries()
+            for i, m in self.memory_layers.items()
+            if m.kept_queries() is not None
+        }
+
+    def release_kept_queries(self) -> None:
+        for m in self.memory_layers.values():
+            m.release_kept_queries()
+
     def set_mask_slots(self, spec, renormalize: Optional[bool] = None) -> None:
         """spec: {layer_idx: iterable_of_slot_ids}, or one iterable for every
         memory layer, or None to clear."""
