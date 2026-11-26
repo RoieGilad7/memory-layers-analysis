@@ -1,0 +1,101 @@
+{
+  "rule": {
+    "n_common": 10000,
+    "lookback": 64,
+    "bank_train_tokens": 8000000
+  },
+  "subjects": {
+    "FreeLaw": {
+      "tokens": 10002446,
+      "anchors": 1474188,
+      "anchors_per_1k": 147.38275017930613,
+      "window_tokens_W": 1438635,
+      "with_partner_W": 0.015700846839073444,
+      "with_partner_8M": 0.030804076549259662,
+      "partner_anchors_per_1k_W": 2.3140339872867095
+    },
+    "Github": {
+      "tokens": 10002954,
+      "anchors": 1404217,
+      "anchors_per_1k": 140.38023167956186,
+      "window_tokens_W": 1438635,
+      "with_partner_W": 0.04207184502110429,
+      "with_partner_8M": 0.0708558577484819,
+      "partner_anchors_per_1k_W": 5.906055351249241
+    },
+    "Pile-CC": {
+      "tokens": 10000509,
+      "anchors": 2588975,
+      "anchors_per_1k": 258.8843227879701,
+      "window_tokens_W": 1438635,
+      "with_partner_W": 0.002324472040093087,
+      "with_partner_8M": 0.006001216697727865,
+      "partner_anchors_per_1k_W": 0.6017693699390702
+    },
+    "PubMed Central": {
+      "tokens": 10001250,
+      "anchors": 1754053,
+      "anchors_per_1k": 175.38337707786528,
+      "window_tokens_W": 1438635,
+      "with_partner_W": 0.012280130645995303,
+      "with_partner_8M": 0.02505340488571326,
+      "partner_anchors_per_1k_W": 2.1537307836520436
+    },
+    "Wikipedia (en)": {
+      "tokens": 10000056,
+      "anchors": 2966994,
+      "anchors_per_1k": 296.6977384926644,
+      "window_tokens_W": 1438635,
+      "with_partner_W": 0.009730050010212356,
+      "with_partner_8M": 0.019951506474229472,
+      "partner_anchors_per_1k_W": 2.8868838334505327
+    },
+    "bio": {
+      "tokens": 10000016,
+      "anchors": 531949,
+      "anchors_per_1k": 53.19481488829618,
+      "window_tokens_W": 806820,
+      "with_partner_W": 0.787156287538843,
+      "with_partner_8M": 0.9439175560063089,
+      "partner_anchors_per_1k_W": 41.87263300378719
+    }
+  },
+  "heldout_share": {
+    "Pile-CC": {
+      "docs": 300,
+      "tokens": 259193,
+      "value_token_fraction": 0.2795445864664555,
+      "nll_share_on_value_tokens": 0.3529311930191016
+    },
+    "Github": {
+      "docs": 300,
+      "tokens": 415115,
+      "value_token_fraction": 0.17153559856907122,
+      "nll_share_on_value_tokens": 0.28770903002912424
+    },
+    "PubMed Central": {
+      "docs": 300,
+      "tokens": 1052995,
+      "value_token_fraction": 0.18655929040498767,
+      "nll_share_on_value_tokens": 0.2648373616996767
+    },
+    "FreeLaw": {
+      "docs": 300,
+      "tokens": 772938,
+      "value_token_fraction": 0.16718676012823797,
+      "nll_share_on_value_tokens": 0.24414715161179382
+    },
+    "Wikipedia (en)": {
+      "docs": 300,
+      "tokens": 185554,
+      "value_token_fraction": 0.3464436228806709,
+      "nll_share_on_value_tokens": 0.43772304153849395
+    },
+    "USPTO Backgrounds": {
+      "docs": 300,
+      "tokens": 259272,
+      "value_token_fraction": 0.17956431855348823,
+      "nll_share_on_value_tokens": 0.22123873583990747
+    }
+  }
+}
