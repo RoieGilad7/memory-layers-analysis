@@ -1,4 +1,4 @@
-# Phase 2: the full `pkm_doc` run (λ = 0.1) against pkm-s0/s1/s2
+# Phase 2: the full `pkm_doc` runs (λ = 0.1, seeds 0 and 1) against pkm-s0/s1/s2
 
 **Run.** `pkm_doc-s0`:
 - `experiment=pkm_doc seed=0 runtime=mac logging=wandb` on branch `phase2/doc-loss`, launched detached on 2026-11-25 03:49 UTC.
@@ -16,7 +16,110 @@
 - A `pkm_doc` value inside that range is not distinguishable from seed noise.
 - **Precision caveat:** pkm-s0/s1/s2 trained on CUDA in bf16 autocast, `pkm_doc-s0` on the Mac in fp32. The memory layer is fp32 in both, but differences of a few tenths of a percent in loss may come from precision as much as from the loss. The clean λ-only comparison is the pilot at step 1,500 (`reports/doc_loss_pilot2_report.md`).
 
-## Takeaways
+## Update: second seed (`pkm_doc-s1`) and the two-seed picture
+
+**Run.**
+- `pkm_doc-s1`: `experiment=pkm_doc seed=1 runtime=mac logging=wandb`, W&B run `l1b5c7ff`.
+- Launched 2026-11-26 04:03 UTC. Trained 9,156 steps with all 10 eval points and finished `done` at 07:37 UTC.
+- **Training check: pass.** no_divergence worst ratio 1.416 at step 8,700, learned drop 0.673, coverage 1.0.
+- Cohort metrics ran with the same flags and code; parity passed with no rechecks.
+
+**Metrics wall time.** The metrics took 3 h 26 min instead of about 20 min. The watcher that started them did not hold `caffeinate`, so the Mac went into maintenance sleep partway through. The results are complete (rc 0, parity passed). Future watchers hold `caffeinate`.
+
+Below, "doc s0" and "doc s1" are the two `pkm_doc` (λ = 0.1) seeds, and "seed range" is pkm-s0/s1/s2 without the loss. The precision caveat still applies to both doc seeds: fp32 on the Mac vs bf16 on CUDA.
+
+### Which seed-0 findings hold
+
+| finding from seed 0 | seed 1 | holds? |
+|---|---|---|
+| Slot reads document-consistent: partner Jaccard 0.285 vs 0.234–0.237 | 0.283 | **yes** |
+| Partner / other-subject Jaccard ratio 4.72 vs 3.18–3.43 | 4.87 | **yes** |
+| Partner retrieval by slots 74% vs 50% | 81% | **yes** |
+| U4 excess 0.228 vs 0.165–0.184 | 0.238 | **yes** |
+| Held-out pile_avg +0.27% vs seed mean (above the worst seed) | +0.38% (3.7581) | **yes**: both doc seeds are above every baseline seed |
+| Layer-off ΔNLL −8% (0.760 vs 0.811–0.835) | 0.709 (−14%) | **yes**: both are below every baseline seed |
+| Frequent-people recall up | full sets 0.910, slice 0.926 (baselines ≤ 0.892 / ≤ 0.909) | **yes**: both doc seeds are above every baseline seed, on both sets |
+| Normal and rare people down | full sets: normal 0.432, rare 0.040, inside the range | **no**: seed 1 is inside the range, so seed 0's shortfall was seed noise |
+| E2 weaker (17 matched, excess 1.55 nats) | 38 matched, excess 2.18 nats | **no**: seed 1 is at or above the baselines |
+| E1 unchanged | 0.0080 | yes (inside 0.0060–0.0099) |
+
+### Two-seed tables
+
+Held-out loss: training-side `heldout_quality`, full test sets, nats/token.
+
+| subject | doc s0 | doc s1 | doc mean | pkm-s0 | pkm-s1 | pkm-s2 | seed range |
+|---|---|---|---|---|---|---|---|
+| pile_avg | 3.7539 | 3.7581 | 3.7560 (+0.33%) | 3.7386 | 3.7449 | 3.7477 | 3.7386–3.7477 |
+| pile_cc | 4.8847 | 4.8874 | 4.8861 | 4.8703 | 4.8749 | 4.8804 | 4.8703–4.8804 |
+| github | 2.4395 | 2.4379 | 2.4387 | 2.4216 | 2.4307 | 2.4278 | 2.4216–2.4307 |
+| pubmed_central | 3.5904 | 3.5959 | 3.5932 | 3.5760 | 3.5789 | 3.5860 | 3.5760–3.5860 |
+| freelaw | 3.3975 | 3.4023 | 3.3999 | 3.3831 | 3.3872 | 3.3892 | 3.3831–3.3892 |
+| wikipedia_en | 4.4598 | 4.4692 | 4.4645 | 4.4442 | 4.4554 | 4.4575 | 4.4442–4.4575 |
+| uspto_backgrounds (never trained) | 4.5422 | 4.5523 | 4.5473 | 4.5218 | 4.5445 | 4.5337 | 4.5218–4.5445 |
+| top-1 accuracy, pile_avg | 0.4130 | 0.4126 | 0.4128 | 0.4149 | 0.4142 | 0.4141 | 0.4141–0.4149 |
+
+The +0.33% is the doc mean against the baseline seed mean (3.7437).
+
+Fact recall top-1:
+
+| row | doc s0 | doc s1 | pkm-s0 | pkm-s1 | pkm-s2 | seed range |
+|---|---|---|---|---|---|---|
+| frequent / test, full sets | 0.8963 | 0.9097 | 0.8710 | 0.8923 | 0.8887 | 0.871–0.892 |
+| normal / test, full sets | 0.4054 | 0.4323 | 0.4329 | 0.4071 | 0.4520 | 0.407–0.452 |
+| rare / test, full sets | 0.0323 | 0.0398 | 0.0399 | 0.0349 | 0.0385 | 0.035–0.040 |
+| control / test, full sets | 0.0050 | 0.0056 | 0.0062 | 0.0052 | 0.0048 | 0.005–0.006 |
+| frequent / paraphrase, full sets | 0.1147 | 0.1428 | 0.1088 | 0.1177 | 0.1080 | 0.108–0.118 |
+| frequent / test, slice (800) | 0.924 | 0.926 | 0.895 | 0.909 | 0.903 | 0.895–0.909 |
+| frequent / test mean rank, slice | 1.34 | 1.38 | 1.69 | 1.69 | 2.18 | 1.69–2.18 |
+| normal / test, slice (100) | 0.48 | 0.43 | 0.49 | 0.42 | 0.52 | 0.42–0.52 |
+| rare / test, slice (100) | 0.05 | 0.05 | 0.03 | 0.02 | 0.03 | 0.02–0.03 |
+| frequent / paraphrase, slice (1,600) | 0.123 | 0.139 | 0.127 | 0.115 | 0.100 | 0.100–0.127 |
+
+Memory use, from the cohort reports:
+
+| metric | measure | doc s0 | doc s1 | pkm-s0 | pkm-s1 | pkm-s2 | seed range |
+|---|---|---|---|---|---|---|---|
+| U4 | excess over shuffles (bits) | 0.228 | 0.238 | 0.169 | 0.184 | 0.165 | 0.165–0.184 |
+| E1 | mean specificity excess, lesion 64 (nats) | 0.0085 | 0.0080 | 0.0099 | 0.0060 | 0.0085 | 0.0060–0.0099 |
+| E2 | facts matched / prefix limit (of 339) | 17 / 313 | 38 / 293 | 19 / 298 | 28 / 299 | 40 / 294 | 19–40 / 294–299 |
+| E2 | matched: mean excess gold log p drop (nats) | 1.55 | 2.18 | 1.74 | 1.72 | 1.90 | 1.72–1.90 |
+| V2 | subject text: top-1 share / paired excess | 0.0665 / 0.0164 | 0.0718 / 0.0161 | 0.0721 / 0.0169 | 0.0771 / 0.0179 | 0.0739 / 0.0169 | 0.0721–0.0771 / 0.0169–0.0179 |
+| V2 | fact probes: top-1 share / paired excess | 0.0856 / 0.0100 | 0.0964 / 0.0101 | 0.0904 / 0.0104 | 0.0809 / 0.0104 | 0.0808 / 0.0101 | 0.0808–0.0904 / 0.0101–0.0104 |
+| Whole layer off | ΔNLL all text (nats/token) | +0.760 | +0.709 | +0.835 | +0.811 | +0.821 | 0.811–0.835 |
+| Whole layer off | Δ frequent / test top-1 | −0.526 | −0.575 | −0.581 | −0.594 | −0.633 | −0.581 to −0.633 |
+| U1 | slots read on the slice | 99.94% | 99.92% | 99.93% | 99.94% | 99.96% | 99.93–99.96% |
+| C6 | effective rank, active memory | 365.6 | 366.1 | 366.4 | 366.4 | 366.3 | 366.3–366.4 |
+
+Same-document slot reads: `bench/doc_loss_precheck.py` measures on the final checkpoints, same 20 fixed batches.
+
+| pair type | measure | doc s0 | doc s1 | pkm-s0 | pkm-s1 | pkm-s2 |
+|---|---|---|---|---|---|---|
+| partner | slot Jaccard | 0.285 | 0.283 | 0.234 | 0.236 | 0.237 |
+| Pile, same subject | slot Jaccard | 0.139 | 0.137 | 0.138 | 0.135 | 0.138 |
+| Pile, other subject | slot Jaccard | 0.060 | 0.058 | 0.074 | 0.069 | 0.074 |
+| bio–bio, different people | slot Jaccard | 0.189 | 0.177 | 0.173 | 0.181 | 0.178 |
+| bio–bio, same person (n = 8) | slot Jaccard | 0.216 | 0.235 | 0.209 | 0.219 | 0.224 |
+| — | partner / other-subject Jaccard | 4.72 | 4.87 | 3.18 | 3.43 | 3.21 |
+| — | partner retrieval by slot Jaccard | 0.742 | 0.809 | 0.500 | 0.504 | 0.496 |
+| partner | query cosine | 0.966 | 0.962 | 0.780 | 0.785 | 0.780 |
+
+### Two-seed takeaways
+
+- **Robust, with both doc seeds outside the baseline range in the same direction:**
+  - the slot-read reorganization (partner overlap, ratio, retrieval);
+  - U4 (+35% vs the baseline mean);
+  - held-out loss +0.33%;
+  - less reliance on the memory (layer-off −11% vs the baseline mean);
+  - **frequent-people fact recall up**: +1.9 points on the full sets (0.903 vs 0.884 mean), +2.3 points on the slice (0.925 vs 0.902), mean rank 1.36 vs 1.85.
+- **Not robust:** seed 0's normal/rare shortfall and its weaker E2. Seed 1 is inside or above the baseline range on both.
+- **Net picture:** the loss makes the memory document-organized. That costs about 0.3% LM loss and some reliance on the memory. It gives a small, consistent gain on the most-repeated facts and no measurable change on normal or rare facts.
+- **The precision caveat still applies** to the LM-side differences and to the frequent-recall gain, which are a few tenths of a percent and about 2 points: both doc seeds ran in fp32 and all baselines in bf16. A Mac fp32 λ = 0 run would show which part comes from the loss.
+
+---
+
+*The sections below are the original seed-0 report.*
+
+## Takeaways (seed 0)
 
 - **The loss did what it is meant to, and the effect lasts to the end of training.**
   - The two halves of a document read more of the same slots: partner slot Jaccard 0.285 vs 0.234–0.237. Different-subject pairs read fewer shared slots: 0.060 vs 0.069–0.074.
